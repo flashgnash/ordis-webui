@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link href="./style.css" rel="stylesheet" />
 </head>
-<body style="margin: 0px; padding: 0px; height: 100vh;">
+<body style="margin: 0px; padding: 0px">
   <div class="bg-dark text-title">ordis</div>
 
-  <div class="main-flex bg-light">
+  <div class="main-flex scrollable bg-light">
     <div class="flex-row">
       <div class="bg-dark w-100 text-title">Hank</div>
       <div class="bg-dark w-100 text-title">Level 5</div>
@@ -49,8 +49,8 @@
       </div>
     </div>
 
-    <div class="flex-row">
-      <div class="card w-100 m-10">
+    <div class="flex-row wrap-on-mobile">
+      <div class="card m-10 p-10 flex-grow-5">
         <div class="card-header">Health</div>
 
         <div class="card-body">
@@ -76,7 +76,7 @@
         </div>
       </div>
 
-      <div class="card w-100 m-10">
+      <div class="card p-10 m-10 flex-grow-5">
         <div class="card-header">Energy</div>
 
         <div class="card-body">
@@ -102,7 +102,7 @@
         </div>
       </div>
 
-      <div class="card w-100 m-10">
+      <div class="card m-10 p-10 flex-grow-5">
         <div class="card-header">Soul</div>
 
         <div class="card-body">
@@ -127,7 +127,7 @@
           <div style="margin-bottom: 10px">♻️ 15</div>
         </div>
       </div>
-      <div class="card w-100 m-10">
+      <div class="card flex-grow-5 p-10 m-10">
         <div class="card-header">Armour</div>
 
         <div class="card-body">
@@ -152,8 +152,8 @@
       </div>
     </div>
     <!-- Closing div for main-flex -->
-    <div class="flex-row">
-      <div class="card w-100" style="max-width:400px;">
+    <div class="flex-row wrap-on-mobile w-100">
+      <div class="card" style="min-width:400px; flex-grow:5;" >
 
         <div class="card-header">
         Status
@@ -217,7 +217,7 @@
           </div>
         </div>      
       </div> 
-      <div class="card w-100 flex-grow">
+      <div class="card flex-grow-5">
 
         <div class="card-header">
           Rolls
