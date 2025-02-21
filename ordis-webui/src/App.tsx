@@ -76,6 +76,15 @@ function App() {
     Armour: { value: 5, max: 10, col: "yellow" },
   };
 
+  const stats= {
+    str: 5,
+    agl: 5,
+    con: 5,
+    kno: 5,
+    cha: 5
+
+  };
+  
   const name = "Hank";
   const level = "1";
   const race = "Human";
@@ -87,9 +96,12 @@ function App() {
       <TopBanner values={`${name},${level},${race}`}/>
 
       <div className="flex-row">
-        <SolidCard title="Test" body="testing"/>
-        <SolidCard title="Test" body="testing"/>
-        <SolidCard title="Test" body="testing"/>
+
+
+        {Object.entries(stats).map(([name, value]) => (
+          <SolidCard key={name} title={name} body={value}  />
+        ))}
+        
       </div>
 
     
