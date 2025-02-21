@@ -113,7 +113,7 @@ function FlexRow({ children }) {
 function App() {
 
 
-
+  // Data
   const globes = {
     Health: { value: 5, max: 10, col: "red" },
     Energy: { value: 5, max: 10, col: "blue" },
@@ -140,30 +140,30 @@ function App() {
   const level = "1";
   const race = "Human";
 
+
+  
+
   return (
     <div className="App">
 
 
       <TopBanner values={`${name},${level},${race}`} />
 
-
-
-
-      {/* Str agl con kno etc*/} 
+      {/* Str agl con kno etc*/}
       <FlexRow>
         {Object.entries(stats).map(([name, value]) => (
           <SolidCard key={name} title={name} body={value} />
         ))}
       </FlexRow>
 
-      {/* Health, energy etc*/} 
+      {/* Health, energy etc*/}
       <FlexRow>
         {Object.entries(globes).map(([name, { value, max, col }]) => (
           <Globe key={name} name={name} value={value} max={max} col={col} />
         ))}
       </FlexRow>
 
-      {/* Statuses (hunger, exhaustion, death saves) */} 
+      {/* Statuses (hunger, exhaustion, death saves) */}
       <StatusPanel>
         {Object.entries(statuses).map(([name, { value, symbol }]) => (
           <StatusRow key={name} name={name} value={value} symbol={symbol} />
