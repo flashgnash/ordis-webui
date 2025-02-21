@@ -26,7 +26,6 @@ function Globe({name, value, max, col="red", regen = null}) {
           </div>
 
           {regen != null && 
-
             <div className="m-bottom-10">♻️{regen}</div>
           }
 
@@ -40,7 +39,14 @@ function Globe({name, value, max, col="red", regen = null}) {
 function App() {
   return (
     <div className="App">
-      <Globe name="Armour" value="5" max="10" col="yellow" />
+
+
+      <div className="flex-row wrap-on-mobile">
+        <Globe name="Health" value="5" max="10" col="red" />
+        <Globe name="Energy" value="5" max="10" col="blue" />
+        <Globe name="Soul" value="5" max="10" col="purple" />
+        <Globe name="Armour" value="5" max="10" col="yellow" />
+      </div>
     </div>
   );
 }
