@@ -1,8 +1,24 @@
 import "./App.css";
 import React from "react";
 
+
+function TopBanner({values}) {
+  const values_array = values.split(",");
+  
+  return (
+    <div className="flex-row">
+      {values_array.map((item,_) => (
+        <div className="bg-dark w-100 text-title">{item}</div>
+      ))}
+
+
+    </div>
+  )
+  
+}
  
 function Globe({name, value, max, col="red", regen = null}) {
+  
   return (
 
 
@@ -37,16 +53,33 @@ function Globe({name, value, max, col="red", regen = null}) {
 }
 
 function App() {
+
+
+
+  const globes = {
+    Health: { value: 5, max: 10, col: "red" },
+    Energy: { value: 5, max: 10, col: "blue" },
+    Soul: { value: 5, max: 10, col: "purple" },
+    Armour: { value: 5, max: 10, col: "yellow" },
+  };
+
+  const name = "Hank";
+  const level = "1";
+  const race = "Human";
+    
   return (
     <div className="App">
 
 
-      <div className="flex-row wrap-on-mobile">
-        <Globe name="Health" value="5" max="10" col="red" />
-        <Globe name="Energy" value="5" max="10" col="blue" />
-        <Globe name="Soul" value="5" max="10" col="purple" />
-        <Globe name="Armour" value="5" max="10" col="yellow" />
-      </div>
+      <TopBanner values={`${name},${level},${race}`}/>
+
+       <div className="flex-row wrap-on-mobile">
+        {Object.entries(globes).map(([name, { value, max, col }]) => (
+          <Globe key={name} name={name} value={value} max={max} col={col} />
+        ))}
+      </div>     
+
+    
     </div>
   );
 }
