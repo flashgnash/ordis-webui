@@ -11,11 +11,12 @@
 
     --accent: #9dff00;
     --accent-dark: #8acc00;
-    --text-color: #ffffff;
+    --text-colour: #ffffff;
 
     --button-color: #27383B;
      
     font-family: "Comic Mono";
+    color: var(--text-colour);
 }
 
 
@@ -74,12 +75,12 @@
   
 .roll-list tr:nth-child(even) {
   background-color: var(--bg-dark);
-  color: white;
+  color: var(--text-colour);
 }
 
 .roll-list tr:nth-child(odd) {
   background-color: var(--bg-light);
-  color: white;
+  color: var(--text-colour);
 }
 
 .p-10 {
@@ -112,7 +113,7 @@
 
 .card-header {
  background-color: var(--bg-dark);
- color: white;
+ color: var(--text-colour);
   margin: auto;
   padding: 8px;
   font-size:20;
@@ -233,7 +234,7 @@
 .form-group label {
   
   padding: 5px;
-  color: white;
+  color: var(--text-colour);
   border-width:0;
   font-size: 18px;
   margin: auto;

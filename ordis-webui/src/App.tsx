@@ -35,13 +35,13 @@ function Globe({name, value, max, col="red", regen = null}) {
   return (
 
 
-      <div className="card flex-grow-5 p-10 m-10 mw-25">
+      <div className="card flex-grow-5 p-10 m-10 mw-25 m-bottom-10">
         <div className="card-header">{name}</div>
 
         <div className="card-body">
-        <div className="orb m-auto">
+        <div className="orb m-auto m-bottom-10">
           <progress
-            className={`orb-${col} m-bottom-10`}
+            className={`orb-${col}`}
             value={value}
             max={max}
           ></progress>
@@ -55,7 +55,7 @@ function Globe({name, value, max, col="red", regen = null}) {
           </div>
 
           {regen != null && 
-            <div className="m-bottom-10">♻️{regen}</div>
+            <div>♻️{regen}</div>
           }
 
         </div>
