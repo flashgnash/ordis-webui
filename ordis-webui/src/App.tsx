@@ -60,14 +60,15 @@ function App() {
       </FlexRow>
 
       {/* Statuses (hunger, exhaustion, death saves) */}
-      <StatusPanel>
-        {Object.entries(statuses).map(([name, { value, symbol }]) => (
-          <StatusRow key={name} name={name} value={value} symbol={symbol} />
-        ))}
-      </StatusPanel>
+      <FlexRow>
+        <StatusPanel>
+          {Object.entries(statuses).map(([name, { value, symbol }]) => (
+            <StatusRow key={name} name={name} value={value} symbol={symbol} />
+          ))}
+        </StatusPanel>
 
-      <RollPanel/>
-
+        <RollPanel/>
+      </FlexRow>
     </div >
   );
 }
