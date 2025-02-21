@@ -280,6 +280,13 @@ input[type="checkbox"] {
 }
 
 
+.mw-400px {
+  min-width:400px;
+}
+
+.grow-4 {
+  flex-grow:4;
+}
 
 
 @media (max-width: 900px) {
