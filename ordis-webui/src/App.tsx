@@ -2,7 +2,7 @@ import "./App.css";
 import React from "react";
 
 import {SolidCard, Banner, FlexRow} from "./components/common.tsx" 
-import "./components/rolls.tsx" 
+import RollPanel from "./components/rolls.tsx" 
 import {StatusPanel, StatusRow} from "./components/status.tsx" 
 import {Globe} from "./components/globe.tsx"
 
@@ -65,6 +65,8 @@ function App() {
           <StatusRow key={name} name={name} value={value} symbol={symbol} />
         ))}
       </StatusPanel>
+
+      <RollPanel/>
 
     </div >
   );

@@ -17,6 +17,7 @@
      
     font-family: "Comic Mono";
     color: var(--text-colour);
+    background: var(--bg-light);
 }
 
 
