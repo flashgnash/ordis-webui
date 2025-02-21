@@ -1,0 +1,156 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+:root {
+    --bg-light: #263238;
+    --bg-dark: #192227;
+    --bg-dark-transparent: #192227bb;
+    --bg-light-transparent: #263238bb;
+    
+    --selected-list-item-color: #384951;
+
+    --accent: #9dff00;
+    --accent-dark: #8acc00;
+    --text-color: #ffffff;
+
+    --button-color: #27383B;
+     
+    font-family: "Comic Mono";
+}
+
+
+.main-flex {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-wrap: 1;
+  margin: 0px;
+  flex-direction: column;
+  
+}
+
+.card {
+   background-color: var(--bg-light);
+  margin: 10px;
+  border-radius: 10px 10px 10px 10px; 
+}
+
+.card-header {
+ background-color: var(--bg-light);
+ color: white;
+  margin: auto;
+  padding: 8px;
+  font-size:20;
+  border-radius: 10px 10px 0px 0px; 
+  text-align:center;
+}
+
+.orb {
+  --size: 100px; /* Orb size */
+  --progress: calc((var(--value, 0) / var(--max, 100)) * 360deg);
+
+  appearance: none;
+  -webkit-appearance: none;
+  width: var(--size);
+  height: var(--size);
+  border-radius: 50%;
+  background: radial-gradient(circle, #000 70%, #222 100%);
+
+  transform: rotate(-90deg); /* Start from the top */  
+}
+
+
+.orb-red::-webkit-progress-value {
+  background: red; /* For WebKit browsers */
+}
+
+.orb-red::-moz-progress-bar {
+  background: red; /* For Firefox */
+}
+
+.orb-blue::-webkit-progress-value {
+  background: blue; /* For WebKit browsers */
+}
+
+.orb-blue::-moz-progress-bar {
+  background: blue; /* For Firefox */
+}
+
+.orb-yellow::-webkit-progress-value {
+  background: orange; /* For WebKit browsers */
+}
+
+.orb-yellow::-moz-progress-bar {
+  background: orange; /* For Firefox */
+}
+.m-auto {
+  margin: auto;
+}
+
+.m-10 {
+  margin: 10px;
+}
+
+.w-10 {
+  width: 10%;
+}
+
+.w-80 {
+  width: 80%;
+}
+
+.w-100 {
+  width: 100%
+}
+
+.card-body {
+  margin: auto;
+  text-align:center;
+}
+
+.top-stat-box {
+  background-color: var(--bg-light);
+  color: white;
+  margin: auto;
+  padding: 10px;
+  font-size:40;
+  border-radius: 0px 0px 10px 10px;
+}
+
+.text-title {
+  font-size:40;
+  text-align: center;
+  margin: auto;
+}
+
+.flex-row {
+  display: flex;
+  flex-direction: row;
+  margin: 5px;
+}
+
+
+.btn-primary {
+  background-color: var(--accent);
+  color: black;
+  padding:5px;
+  border-radius: 10px;
+}
+
+.bg-dark {
+  background-color: var(--bg-dark);
+  color: white;
+}
+
+.bg-light {
+  background-color: var(--bg-light);
+  color: white;
+}
+
+.bg-accent {
+  background-color: var(--accent);
+  color: black;
+}
+
