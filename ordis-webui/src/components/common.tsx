@@ -1,9 +1,14 @@
 import "../App.css";
 import React from "react";
 
-function FlexRow({ children }) {
+function FlexRow({ children, wrap_on_mobile = false }) {
+  let extraClass = "";
+  if(wrap_on_mobile){
+    extraClass = "wrap-on-mobile";
+  }
+  
   return (
-    <div className="flex-row">
+    <div className={`flex-row w-100 ${extraClass}`}>
       {children}
     </div>
   )

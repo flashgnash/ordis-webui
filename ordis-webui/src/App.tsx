@@ -60,7 +60,7 @@ function App() {
       </FlexRow>
 
       {/* Statuses (hunger, exhaustion, death saves) */}
-      <FlexRow>
+      <FlexRow wrapOnMobile="true">
         <StatusPanel>
           {Object.entries(statuses).map(([name, { value, symbol }]) => (
             <StatusRow key={name} name={name} value={value} symbol={symbol} />
