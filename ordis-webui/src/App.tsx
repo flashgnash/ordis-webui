@@ -2,6 +2,19 @@ import "./App.css";
 import React from "react";
 
 
+function SolidCard({title,body}) {
+  return (
+
+      <div className="card w-100 m-10">
+        <div className="card-header">{title}</div>
+        <div className="card-body">
+          <div className="m-bottom-10">{body}</div>
+        </div>
+      </div>
+    
+  )  
+}
+
 function TopBanner({values}) {
   const values_array = values.split(",");
   
@@ -73,6 +86,13 @@ function App() {
 
       <TopBanner values={`${name},${level},${race}`}/>
 
+      <div className="flex-row">
+        <SolidCard title="Test" body="testing"/>
+        <SolidCard title="Test" body="testing"/>
+        <SolidCard title="Test" body="testing"/>
+      </div>
+
+    
        <div className="flex-row wrap-on-mobile">
         {Object.entries(globes).map(([name, { value, max, col }]) => (
           <Globe key={name} name={name} value={value} max={max} col={col} />
