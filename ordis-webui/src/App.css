@@ -1,25 +1,75 @@
-
-
 :root {
-    --bg-light: #263238;
-    --bg-lighter: #3c474c;
-    --bg-dark: #192227;
-    --bg-dark-transparent: #192227bb;
-    --bg-light-transparent: #263238bb;
-    
-    --selected-list-item-color: #384951;
+  --bg-light: #263238;
+  --bg-lighter: #3c474c;
+  --bg-dark: #192227;
+  --bg-dark-transparent: #192227bb;
+  --bg-light-transparent: #263238bb;
 
-    --accent: #9dff00;
-    --accent-dark: #8acc00;
-    --text-colour: #ffffff;
+  --selected-list-item-color: #384951;
 
-    --button-color: #27383B;
-     
-    font-family: "Comic Mono";
-    color: var(--text-colour);
-    background: var(--bg-light);
+  --accent: #9dff00;
+  --accent-dark: #8acc00;
+  --text-colour: #ffffff;
+
+  --button-color: #27383b;
+
+  font-family: "Comic Mono";
+  color: var(--text-colour);
+  background: var(--bg-light);
 }
 
+.App {
+  width: 100%;
+}
+
+.sidebar {
+  background: var(--bg-dark);
+  backdrop-filter: blur(4px);
+  height: 100vh;
+  max-width:40vw;
+  min-width: 200px;
+
+  display: flex;
+  flex-direction: column;
+  padding: 5px;
+}
+.sidebar a {
+  margin: 10px;
+  /* width: 100%; */
+  color: white;
+  text-size: 30px;
+  font-weight: bold;
+  padding: 10px;
+  background: var(--bg-light);
+  text-decoration: none;
+  text-align: center;
+}
+.sidebar .sidebar-title{
+  margin: 10px;
+     margin-top: auto;
+  margin-bottom: auto;
+  font-size: 25px;
+}
+.sidebar .sidebar-close {
+  width: 40px;
+  /* margin-top: 10px; */
+  margin-right: 10px;
+  font-size: 20px;
+  margin-left: auto;
+
+}
+
+
+button {
+  background-color: var(--bg-light);
+  color: var(--text-colour);
+  border: 0;
+}
+
+.vertical-center {
+  margin-top: auto;
+  margin-bottom: auto;
+}
 
 .main-flex {
   width: 100%;
@@ -29,7 +79,6 @@
   margin: 0px;
   flex-direction: column;
   overflow: hidden;
-  
 }
 .wrap {
   flex-wrap: wrap;
@@ -44,18 +93,17 @@
   font-size: 20px;
   height: 100%;
   margin: auto;
-  flex-grow:1;
+  flex-grow: 1;
 }
 
-
 .flex-grow-5 {
-  flex-grow:5;
+  flex-grow: 5;
 }
 
 .flex-grow-6 {
-  flex-grow:6;
+  flex-grow: 6;
 }
-.wrapped-label .body{
+.wrapped-label .body {
   /* flex-grow:2; */
 }
 .scrollable {
@@ -64,16 +112,15 @@
 
 .roll-list {
   margin: 5px;
-  padding: 0;  
+  padding: 0;
   table-layout: fixed;
   overflow: scroll;
-  
 }
 
 .float-right {
   float: right;
 }
-  
+
 .roll-list tr:nth-child(even) {
   background-color: var(--bg-dark);
   color: var(--text-colour);
@@ -89,11 +136,10 @@
 }
 
 .rounded {
-  border-radius:15px;
+  border-radius: 15px;
 }
 
-
-.roll-list th{
+.roll-list th {
   padding: 15px;
   text-align: left;
 }
@@ -101,25 +147,25 @@
   padding: 15px;
 
   word-wrap: break-word; /* Breaks the text if needed but without breaking words */
-  overflow-wrap: break-word; /* Ensure wrapping for long text */  
+  overflow-wrap: break-word; /* Ensure wrapping for long text */
 
   white-space: normal; /* Wrap at spaces and commas */
 }
 
 .card {
-   background-color: var(--bg-dark);
+  background-color: var(--bg-dark);
   margin: 10px;
-  border-radius: 10px 10px 10px 10px; 
+  border-radius: 10px 10px 10px 10px;
 }
 
 .card-header {
- background-color: var(--bg-dark);
- color: var(--text-colour);
+  background-color: var(--bg-dark);
+  color: var(--text-colour);
   margin: auto;
   padding: 8px;
-  font-size:20;
-  border-radius: 10px 10px 0px 0px; 
-  text-align:center;
+  font-size: 20;
+  border-radius: 10px 10px 0px 0px;
+  text-align: center;
 }
 
 .orb progress {
@@ -141,7 +187,7 @@
 
   width: var(--size);
   height: var(--size);
-    border-radius:50%;
+  border-radius: 50%;
   overflow: hidden;
 }
 
@@ -192,16 +238,16 @@
 }
 
 .w-100 {
-  width: 100%
+  width: 100%;
 }
 
 .card-body {
   margin: auto;
-  text-align:center;
+  text-align: center;
 }
 
 .text-title {
-  font-size:40px;
+  font-size: 40px;
   text-align: center;
   margin: auto;
 }
@@ -223,8 +269,8 @@
 
 .form-group {
   display: flex;
-  align-items:center;
-  justify-content:space-around;
+  align-items: center;
+  justify-content: space-around;
   gap: 5px;
   flex-grow: 5;
   margin-left: 10px;
@@ -233,10 +279,9 @@
 }
 
 .form-group label {
-  
   padding: 5px;
   color: var(--text-colour);
-  border-width:0;
+  border-width: 0;
   font-size: 18px;
   margin: auto;
 }
@@ -244,32 +289,29 @@
 .form-group a,
 .form-group button,
 .form-group input[type="text"],
-.form-group select
-  {
+.form-group select {
   background-color: var(--bg-lighter);
   padding: 5px;
   color: white;
-  border-width:0;
+  border-width: 0;
   font-size: 18px;
   width: 100%;
   margin: auto;
 }
 
-.button-row .form-group
-  {
+.button-row .form-group {
   background-color: var(--bg-light);
   color: white;
-  border-width:0;
+  border-width: 0;
   font-size: 18px;
   padding: 15px;
-  min-width: 150px;;
+  min-width: 150px;
   /* margin: 5px; */
 
   display: flex;
 }
 
-
-input[type="radio"], 
+input[type="radio"],
 input[type="checkbox"] {
   margin: auto;
   height: 30px;
@@ -277,24 +319,22 @@ input[type="checkbox"] {
 }
 
 .mw-40 {
-  min-width:40%;
+  min-width: 40%;
 }
 
-
 .mw-400px {
-  min-width:400px;
+  min-width: 400px;
 }
 
 .grow-4 {
-  flex-grow:4;
+  flex-grow: 4;
 }
-
 
 @media (max-width: 900px) {
   .wrap-on-mobile {
-    /* flex-direction: column; /* Stack panels vertically */ 
+    /* flex-direction: column; /* Stack panels vertically */
     flex-wrap: wrap;
-    align-items: center;    /* Center align items (optional) */
+    align-items: center; /* Center align items (optional) */
   }
 
   .text-title {
@@ -308,22 +348,20 @@ input[type="checkbox"] {
   .button-row .form-group {
     /* width: 20%; */
   }
-
 }
 
 .button-row button:last-child {
-  
-  border-radius:0px 10px 10px 0px;
-  }
+  border-radius: 0px 10px 10px 0px;
+}
 
 .button-row button:first-child {
-  border-radius:10px 0px 0px 10px;
-  }
+  border-radius: 10px 0px 0px 10px;
+}
 .btn-primary {
   background-color: var(--accent);
   border-width: 0;
   color: black;
-  padding:5px;
+  padding: 5px;
   border-radius: 10px;
 }
 
@@ -342,6 +380,6 @@ input[type="checkbox"] {
   color: black;
 }
 
-.m-bottom-10{
+.m-bottom-10 {
   margin-bottom: 10px;
 }
