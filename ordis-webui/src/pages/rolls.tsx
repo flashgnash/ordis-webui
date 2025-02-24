@@ -4,7 +4,7 @@ import React from "react";
 function RollPanel() {
 
   return (
-    <div>
+    <>
       <div className="card flex-grow-5">
 
         <div className="card-header">
@@ -25,15 +25,15 @@ function RollPanel() {
               </div>
               <div className="form-group">
                 <label>Norm</label>
-                <input type="radio" name="adv-dis" checked classNameName="ml-20px" />
+                <input type="radio" name="adv-dis" checked className="ml-20px" />
               </div>
               <div className="form-group">
                 <label>Disadv</label>
-                <input type="radio" name="adv-dis" classNameName="ml-20px" />
+                <input type="radio" name="adv-dis" className="ml-20px" />
               </div>
               <div className="form-group">
                 <label>Adv</label>
-                <input type="radio" name="adv-dis" classNameName="ml-20px" />
+                <input type="radio" name="adv-dis" className="ml-20px" />
               </div>
             </div>
 
@@ -137,7 +137,7 @@ function RollPanel() {
       </div>        
       </div>
 
-    </div>
+    </>
   )
 
 }

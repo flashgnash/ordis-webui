@@ -40,7 +40,7 @@ function CharacterSheet() {
 
 
   return (
-    <div className="App">
+    <>
 
       <Banner values={`${name},${level},${race}`} />
 
@@ -67,7 +67,7 @@ function CharacterSheet() {
         </StatusPanel>
 
       </FlexRow>
-    </div >
+    </>
   );
 }
 
