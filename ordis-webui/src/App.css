@@ -196,7 +196,6 @@ button {
 .orb-red::-webkit-progress-value {
   background: red; /* For WebKit browsers */
 }
-
 .orb-red::-moz-progress-bar {
   background: red; /* For Firefox */
 }
@@ -223,6 +222,15 @@ button {
 .orb-yellow::-moz-progress-bar {
   background: orange; /* For Firefox */
 }
+
+
+.orb-gray::-webkit-progress-value {
+  background: gray; /* For WebKit browsers */
+}
+.orb-gray::-moz-progress-bar {
+  background: gray; /* For Firefox */
+}
+
 .m-auto {
   margin: auto;
 }

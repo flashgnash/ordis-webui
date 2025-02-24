@@ -14,7 +14,7 @@ function CharacterSheet() {
     Health: { value: 5, max: 10, col: "red" },
     Energy: { value: 5, max: 10, col: "blue" },
     Soul: { value: 5, max: 10, col: "purple" },
-    Armour: { value: 5, max: 10, col: "yellow" },
+    Armour: { value: 5, max: 10, col: "gray" },
   };
 
   const stats = {
