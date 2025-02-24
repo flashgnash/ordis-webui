@@ -7,6 +7,7 @@ import App from './App.tsx';
 
 import CharacterSheet from "./pages/character_sheet.tsx"
 import RollPanel from "./pages/rolls.tsx"
+import SkillTreePage from "./pages/skill_tree.tsx"
 
 
 import reportWebVitals from './reportWebVitals';
@@ -29,6 +30,7 @@ root.render(
           <Route path="/" element={<App />} />
           <Route path="/character_sheet" element={<CharacterSheet />} />
           <Route path="/rolls" element={<RollPanel />} />
+          <Route path="/skill_tree" element={<SkillTreePage />} />
           <Route path="/map" element={<App />} />
           <Route path="/images" element={<App />} />
 
