@@ -13,6 +13,8 @@ function Sidenav() {
         <Link to="/rolls"> Rolls</Link>
         <Link to="/character_sheet">Sheet</Link>      
         <Link to="/skill_tree">Skills</Link>      
+        <Link to="/map">Map</Link>
+        <Link to="/images">Images</Link>
     </div>
   );
 }

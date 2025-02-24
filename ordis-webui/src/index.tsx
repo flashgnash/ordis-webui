@@ -26,11 +26,10 @@ root.render(
       <Routes>
         <Route path="/" element={<App />} />
         <Route path="/character_sheet" element={<CharacterSheet />} />
-        <Route path="/rolls" element={
+        <Route path="/rolls" element={<RollPanel />} />
+        <Route path="/map" element={<App />} />
+        <Route path="/images" element={<App />} />
 
-          <RollPanel />
-
-        } />
 
       </Routes>
     </FlexRow>
