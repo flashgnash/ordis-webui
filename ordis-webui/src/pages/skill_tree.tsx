@@ -1766,6 +1766,7 @@ const data: SkillType[] = [
 ];
 
 function SkillTreePage() {
+  document.title = "Skills"
   return (
 <div></div>
     // <SkillProvider>

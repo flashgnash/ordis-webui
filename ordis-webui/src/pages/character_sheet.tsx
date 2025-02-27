@@ -9,6 +9,9 @@ import { StatusPanel, StatusRow } from "../components/status.tsx"
 import { Globe } from "../components/globe.tsx";
 
 function CharacterSheet() {
+
+  document.title = "Character Sheet"
+  
   // Data
   const globes = {
     Health: { value: 5, max: 10, col: "red" },

@@ -2,6 +2,7 @@ import "../App.css";
 import React from "react";
 
 function RollPanel() {
+  document.title = "Rolls";
 
   return (
     <>

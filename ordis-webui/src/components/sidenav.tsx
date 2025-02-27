@@ -20,6 +20,7 @@ function NavLink({to,icon,label}) {
 
 function Sidenav() {
 
+
   function ToggleVisibility() {
     const sidebar = document.querySelector(".sidebar");
     const button = document.querySelector(".sidebar-toggle");
@@ -31,7 +32,7 @@ function Sidenav() {
   return (
     <div className="sidebar sidebar-hidden">
       <FlexRow>
-        <span className="sidebar-title"> Menu </span>
+        <span className="sidebar-title"> {document.title}</span>
         <button className="sidebar-toggle" onClick={ToggleVisibility}>{">"}</button>
       </FlexRow>
 
