@@ -27,7 +27,7 @@ root.render(
       <div className="App">
 
         <Routes>
-          <Route path="/" element={<App />} />
+          <Route path="/" element={<CharacterSheet />} />
           <Route path="/character_sheet" element={<CharacterSheet />} />
           <Route path="/rolls" element={<RollPanel />} />
           <Route path="/skill_tree" element={<SkillTreePage />} />

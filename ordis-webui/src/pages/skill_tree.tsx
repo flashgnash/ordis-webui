@@ -1767,28 +1767,28 @@ const data: SkillType[] = [
 
 function SkillTreePage() {
   return (
+<div></div>
+    // <SkillProvider>
+    //   <SkillTreeGroup
+    //     theme={{
+    //       headingFont: 'Comic Mono',
+    //       nodeAlternativeActiveBackgroundColor: 'blue',
+    //       nodeAlternativeFontColor: '#F7B538',
+    //       nodeAltenativeActiveFontColor: 'white',
+    //     }}
+    //   >
+    //     {({ skillCount }: SkillGroupDataType) => (
+    //       <SkillTree
 
-    <SkillProvider>
-      <SkillTreeGroup
-        theme={{
-          headingFont: 'Comic Mono',
-          nodeAlternativeActiveBackgroundColor: 'blue',
-          nodeAlternativeFontColor: '#F7B538',
-          nodeAltenativeActiveFontColor: 'white',
-        }}
-      >
-        {({ skillCount }: SkillGroupDataType) => (
-          <SkillTree
-
-            treeId="first-tree"
-            title="Skill Tree"
-            data={data}
-            collapsible
-            description="My first skill tree"
-          />
-        )}
-      </SkillTreeGroup>
-    </SkillProvider>
+    //         treeId="first-tree"
+    //         title="Skill Tree"
+    //         data={data}
+    //         collapsible
+    //         description="My first skill tree"
+    //       />
+    //     )}
+    //   </SkillTreeGroup>
+    // </SkillProvider>
   )
 }
 export default SkillTreePage;
