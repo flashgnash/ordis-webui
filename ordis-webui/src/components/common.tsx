@@ -3,9 +3,11 @@ import React from "react";
 
 function FlexRow({ children, wrapOnMobile = false }) {
   let extraClass = "";
-  if(wrapOnMobile === true){
+
+  if(wrapOnMobile){
     extraClass = "wrap-on-mobile";
   }
+
   
   return (
     <div className={`flex-row w-100 ${extraClass}`}>

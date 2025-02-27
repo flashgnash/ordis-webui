@@ -43,7 +43,7 @@ function CharacterSheet() {
 
 
   return (
-    <>
+    <div className="w-100">
 
       <Banner values={`${name},${level},${race}`} />
 
@@ -55,7 +55,7 @@ function CharacterSheet() {
       </FlexRow>
 
       {/* Health, energy etc*/}
-      <FlexRow>
+      <FlexRow wrapOnMobile={true}>
         {Object.entries(globes).map(([name, { value, max, col }]) => (
           <Globe key={name} name={name} value={value} max={max} col={col} />
         ))}
@@ -70,7 +70,7 @@ function CharacterSheet() {
         </StatusPanel>
 
       </FlexRow>
-    </>
+    </div>
   );
 }
 

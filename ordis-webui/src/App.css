@@ -32,8 +32,8 @@
   background: var(--bg-dark);
   backdrop-filter: blur(4px);
   height: 100vh;
-  max-width: 40vw;
-  min-width: 200px;
+  /* max-width: 40vw; */
+  /* min-width: 200px; */
 
   display: flex;
   flex-direction: column;
@@ -51,6 +51,12 @@
   max-width: unset;
   min-width: unset;
 }
+
+.sidebar-title{
+  padding-right: 15px;
+  
+}
+
 .sidebar-hidden .sidebar-title,
 .sidebar-hidden .nav-label {
     display: none;
@@ -117,6 +123,10 @@ button {
   height: 100%;
   margin: auto;
   flex-grow: 1;
+}
+
+.full-width {
+  width: 100vw
 }
 
 .flex-grow-5 {

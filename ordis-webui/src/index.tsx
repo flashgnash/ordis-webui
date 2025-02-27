@@ -24,7 +24,7 @@ root.render(
   <Router>
     <FlexRow>
       <Sidenav />
-      <div className="App">
+      <div className="flex-grow-5">
 
         <Routes>
           <Route path="/" element={<CharacterSheet />} />
