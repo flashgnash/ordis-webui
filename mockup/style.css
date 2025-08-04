@@ -110,6 +110,9 @@
   border-radius: 10px 10px 10px 10px; 
 }
 
+.color-white {
+  color: white !important;
+}
 .card-header {
  background-color: var(--bg-dark);
  color: white;
@@ -118,6 +121,10 @@
   font-size:20;
   border-radius: 10px 10px 0px 0px; 
   text-align:center;
+}
+
+.card-text {
+  color: white;
 }
 
 .orb progress {
