@@ -1,35 +1,32 @@
-﻿@page "/character"
+﻿@page "/character/{characterId:int}"
 @inject PlayerCharacterService CharService
 
 <div class="container mt-4">
-  <h2>@Char.Name — Level @Char.Level — @Char.Race</h2>
+  <h2>@Char.Name — Level @Char.Level </h2>
 
 
   <!-- Stats -->
-  <div class="row mt-3">
+  <div class="d-flex">
     @if(Char?.Stats != null){
-    <span>Testing </span>
     @foreach (var stat in Char.Stats) {
-    <div class="col-6 col-md-2 mb-2">
-      <div class="card text-center">
-        <div class="card-header text-uppercase">@stat.Name</div>
-        <div class="card-body">
-          <p class="card-text color-white h4" style="color: white !important">@stat.Value</p>
-        </div>
+        <div class="card flex-fill m-2">
+          <div class="card-header text-uppercase">@stat.Name</div>
+          <div class="card-body">
+            <p class="card-text color-white h4">@stat.Value</p>
+          </div>
       </div>
-    </div>
     } }
   </div>
 
   @if(Char?.Gauges != null){
   <!-- Globes -->
-  <div class="row mt-4">
+  <div class="d-flex">
     @foreach (var gauge in Char.Gauges) {
-   <div class="card flex-grow-5 p-10 m-10 mw-25 m-bottom-10">
+   <div class="card flex-fill m-2">
       <div class="card-header">@gauge.Name</div>
 
       <div class="card-body">
-        <div class="orb m-auto m-bottom-10">
+        <div class="orb m-bottom-10">
           <progress
             class="orb-@(gauge.Colour)"
             value="@gauge.Value"
@@ -53,9 +50,24 @@
     }
   </div>
 
-  } @if(Char?.Statuses != null){
+  }
+
+  @if(Char?.Hunger != null) {
+    <div class = "card">
+      <div class="card-body fs-3">
+      Hunger:
+        @for (int i = 0; i < @Char.Hunger; i++) {
+            <span>🍖</span>
+        }
+      </div>
+    </div>
+  }
+
+   @if(Char?.Statuses != null){
+
   <!-- Statuses -->
   <div class="row mt-4">
+
     <div class="col">
       <div class="card">
         <ul class="list-group list-group-flush">
@@ -78,5 +90,13 @@
   }
 </div>
 
-@code { PlayerCharacter Char; protected override void OnInitialized() { Char =
-CharService.GetById(1); } }
+@code {
+  PlayerCharacter Char;
+
+  [Parameter]
+  public int CharacterId { get; set; }
+
+  protected override void OnInitialized() {
+    Char = CharService.GetById(CharacterId);
+  }
+}

@@ -44,20 +44,6 @@
   text-decoration: none;
   text-align: center;
 }
-.sidebar .sidebar-title{
-  margin: 10px;
-     margin-top: auto;
-  margin-bottom: auto;
-  font-size: 25px;
-}
-.sidebar .sidebar-close {
-  width: 40px;
-  /* margin-top: 10px; */
-  margin-right: 10px;
-  font-size: 20px;
-  margin-left: auto;
-
-}
 
 
 button {
@@ -384,3 +370,17 @@ input[type="checkbox"] {
   margin-bottom: 10px;
 }
 
+.row > * {
+	flex-shrink: 0;
+	width: unset !important;
+	max-width: 100%;
+	padding-right: calc(var(--bs-gutter-x) * .5);
+	padding-left: calc(var(--bs-gutter-x) * .5);
+	margin-top: var(--bs-gutter-y);
+}
+
+
+.col-md-2 {
+	flex: 0 0 auto;
+	width: %;
+}
