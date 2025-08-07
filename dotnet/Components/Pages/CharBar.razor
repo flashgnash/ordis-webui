@@ -1,0 +1,12 @@
+
+@for (int i = 0; i < @Repeat; i++) {
+    <span>@Icon</span>
+}
+
+@code {
+	[Parameter]
+	public int Repeat { get; set; }
+
+	[Parameter]
+	public string Icon {get; set; }
+}

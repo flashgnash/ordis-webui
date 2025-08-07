@@ -60,6 +60,20 @@ public class PlayerCharacterService : IDbService<PlayerCharacter, int>
         return ReadPlayerCharacter(reader);
     }
 
+    public IEnumerable<PlayerCharacter> GetByDiscordId(long discordId)
+    {
+        using var conn = new SqliteConnection(_connStr);
+        conn.Open();
+        using var cmd = new SqliteCommand("SELECT * FROM characters WHERE user_id=@id", conn);
+        cmd.Parameters.AddWithValue("@id", discordId.ToString());
+        using var reader = cmd.ExecuteReader();
+
+        var result = new List<PlayerCharacter>();
+        while (reader.Read())
+            result.Add(ReadPlayerCharacter(reader));
+        return result;
+    }
+
     private void AddParams(SqliteCommand cmd, PlayerCharacter c)
     {
         cmd.Parameters.AddWithValue("@user_id", (object?)c.UserId ?? DBNull.Value);

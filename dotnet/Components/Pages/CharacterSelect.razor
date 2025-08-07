@@ -1,0 +1,53 @@
+﻿@page "/characters"
+@inject PlayerCharacterService CharService
+
+<div class="container mt-4">
+
+<h2>Characters:</h2>
+
+<div class="d-flex flex-wrap">
+
+@foreach (var character in Characters)
+{
+    <div class="card" style="min-width: 33%; flex-grow: 1;">
+
+      <a class="d-block text-reset text-decoration-none" href="characters/@character.Id">
+        <div class="card-header">
+          <span> @character.Name </span>
+          <span class="float-right">Level @character.Level </span>
+        </div>
+
+
+          <div class="card-body d-flex">
+        <div class="flex-grow-1 d-flex row">
+          @if(@character.Stats != null) {
+              <StatBlock Stats="@character.Stats" />
+            }
+        </div>
+
+        @if(character.MaxHealth != null) {
+
+          <div class="float-right d-flex flex-wrap flex-shrink-1">
+            <Orb Colour="red" Value="@(character.CurrentHealth ?? character.MaxHealth ?? 0)" Max="@(character.MaxHealth ?? 0)"/>
+          </div> 
+        }
+
+          </div>
+      </a>
+    </div>
+}
+
+
+</div>
+</div>
+
+@code {
+  IEnumerable<PlayerCharacter> Characters;
+
+  [Parameter]
+  public int CharacterId { get; set; }
+
+  protected override void OnInitialized() {
+    Characters = CharService.GetByDiscordId(102125121908527104);
+  }
+}

@@ -22,29 +22,6 @@
   width: 100%;
 }
 
-.sidebar {
-  background: var(--bg-dark);
-  backdrop-filter: blur(4px);
-  height: 100vh;
-  max-width:40vw;
-  min-width: 200px;
-
-  display: flex;
-  flex-direction: column;
-  padding: 5px;
-}
-.sidebar a {
-  margin: 10px;
-  /* width: 100%; */
-  color: white;
-  text-size: 30px;
-  font-weight: bold;
-  padding: 10px;
-  background: var(--bg-light);
-  text-decoration: none;
-  text-align: center;
-}
-
 
 button {
   background-color: var(--bg-light);
@@ -139,20 +116,9 @@ button {
 }
 
 .card {
-  background-color: var(--bg-dark);
   margin: 10px;
-  border-radius: 10px 10px 10px 10px;
 }
 
-.card-header {
-  background-color: var(--bg-dark);
-  color: var(--text-colour);
-  margin: auto;
-  padding: 8px;
-  font-size: 20;
-  border-radius: 10px 10px 0px 0px;
-  text-align: center;
-}
 
 .orb progress {
   --size: 100px; /* Orb size */

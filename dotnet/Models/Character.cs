@@ -21,7 +21,8 @@ public class PlayerCharacter
                 foreach (var prop in stats.EnumerateObject())
                 {
                     if (prop.Value.ValueKind == JsonValueKind.Number && prop.Value.TryGetInt32(out var v))
-                        list.Add(new Stat { Name = prop.Name, Value = v });
+                        if (v != 0)
+                            list.Add(new Stat { Name = prop.Name, Value = v });
                 }
                 return list;
             }
@@ -38,16 +39,16 @@ public class PlayerCharacter
             var gauges = new List<Gauge>();
 
             if (CurrentHealth.HasValue && MaxHealth.HasValue)
-                gauges.Add(new Gauge { Name = "Health", Value = CurrentHealth.Value, Max = MaxHealth.Value, Colour = "danger" });
+                gauges.Add(new Gauge { Name = "Health", Value = CurrentHealth.Value, Max = MaxHealth.Value });
 
             if (Mana.HasValue && EnergyPool.HasValue)
-                gauges.Add(new Gauge { Name = "Energy", Value = Mana.Value, Max = EnergyPool.Value, Colour = "primary" });
+                gauges.Add(new Gauge { Name = "Energy", Value = Mana.Value, Max = EnergyPool.Value  });
 
             if (CurrentSoul.HasValue && MaxSoul.HasValue)
-                gauges.Add(new Gauge { Name = "Soul", Value = CurrentSoul.Value, Max = MaxSoul.Value, Colour = "info" });
+                gauges.Add(new Gauge { Name = "Soul", Value = CurrentSoul.Value, Max = MaxSoul.Value });
 
             if (CurrentArmour.HasValue && MaxArmour.HasValue)
-                gauges.Add(new Gauge { Name = "Armour", Value = CurrentArmour.Value, Max = MaxArmour.Value, Colour = "warning" });
+                gauges.Add(new Gauge { Name = "Armour", Value = CurrentArmour.Value, Max = MaxArmour.Value });
 
             return gauges;
         }
