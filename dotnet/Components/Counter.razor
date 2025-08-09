@@ -24,8 +24,10 @@
 @code {
   [Parameter]
   public string Title {get; set;}
+
   [Parameter]
   public string Id {get; set;}
+
   [Parameter]
   public int Value {get; set;} = 0;
 
@@ -34,9 +36,11 @@
 
   private void Increment() {
     Value++;
+    ValueChanged.InvokeAsync(Value);
   }
 
   private void Decrement() {
     Value--;
+    ValueChanged.InvokeAsync(Value);
   }
 }
