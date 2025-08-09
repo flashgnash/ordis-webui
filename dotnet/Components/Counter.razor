@@ -11,7 +11,7 @@
   <div class="flex-grow-1 text-center fs-5 bg-light text-black">
     @Title: 
     <br>
-    <input type="number" class="form-control text-center" @bind="@Value"/>
+    <input type="number" class="form-control text-center" @bind="@CounterValue"/>
   </div>
  
 
@@ -29,18 +29,19 @@
   public string Id {get; set;}
 
   [Parameter]
-  public int Value {get; set;} = 0;
+  public int CounterValue {get; set;} = 0;
 
   [Parameter]
-  public EventCallback<int> ValueChanged { get; set; }
+  public EventCallback<int> CounterValueChanged { get; set; }
 
   private void Increment() {
-    Value++;
-    ValueChanged.InvokeAsync(Value);
+    CounterValue++;
+    Console.WriteLine("Hello");
+    CounterValueChanged.InvokeAsync(CounterValue);
   }
 
   private void Decrement() {
-    Value--;
-    ValueChanged.InvokeAsync(Value);
+    CounterValue--;
+    CounterValueChanged.InvokeAsync(CounterValue);
   }
 }
