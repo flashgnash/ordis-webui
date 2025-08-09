@@ -1,0 +1,33 @@
+@page "/rolls"
+@inject PlayerCharacterService CharService
+@rendermode InteractiveServer
+
+<div class="w-100 p-2 d-flex justify-content-between align-items-center">
+    <span class="fs-2">Rolls</span>
+    <select class="fs-5 form-select w-auto" @bind="CharacterId" @bind:after="UpdateCharacter">
+        @foreach (var c in Characters)
+        {
+            <option value="@c.Id">@c.Name</option>
+        }
+    </select>
+</div>
+
+
+  
+<RollMenu Character="@Characters.FirstOrDefault(c => c.Id == CharacterId)"/>
+
+
+@code {
+  IEnumerable<PlayerCharacter> Characters;
+
+  public void UpdateCharacter(){
+    Console.WriteLine("Testing");
+  }
+
+  [Parameter]
+  public int CharacterId { get; set; }
+
+  protected override void OnInitialized() {
+    Characters = CharService.GetByDiscordId(102125121908527104);
+  }  
+}
