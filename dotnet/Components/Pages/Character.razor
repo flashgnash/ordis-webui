@@ -14,7 +14,7 @@
   </div>
 </dialog>
 
-<div class="container mt-4">
+<div class="disable-dbl-tap-zoom container mt-4">
   <div class="w-100 p-2">
     <span class="fs-2">@Char.Name — Level @Char.Level </span>
 
@@ -52,13 +52,18 @@
 
   <div class="d-flex">
 
-      <div class="card flex-fill">
+      <div class="card flex-fill disable-dbl-tap-zoom ">
         <div class="card-header">
           Inventory
         </div>
 
+
         <div class="card-body">
-          Testing
+        <ul class="list-unstyled">
+          @foreach (Item item in Char.Inventory ){
+            <li><Descriptable item="@item" /></li>
+          }
+        </ul>
         </div>
       </div>    
 

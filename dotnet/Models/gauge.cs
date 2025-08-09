@@ -10,6 +10,8 @@ public class Gauge {
 		{ "soul", "purple" }
 	};
 
+	public string? Icon {get; set;}
+
 	public string Name {get; set;}
 	public int Value {get; set;}
 	public int Max {get; set;}

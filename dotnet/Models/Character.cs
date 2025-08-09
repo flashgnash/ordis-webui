@@ -7,6 +7,25 @@ public class PlayerCharacter
     public string? UserId { get; set; }
     public string? Name { get; set; }
 
+    public IEnumerable<Item> Inventory {get; set; } = new List<Item>() {
+        new Item() {
+            Icon = "🍔",
+            Name = "Cheeseburger"
+        },
+        new Item() {
+            Icon = "⚔️",
+            Name = "Sword",
+            Rolls = new List<Roll>() {new Roll(){Name = "attack", RollString="1d12+1"} }
+        },
+        new Item() {
+            Name = "Cheeseburger"
+        },
+        new Item() {
+            Name = "Cheeseburger"
+        }
+        
+    };
+
     public int? Level => TryGetInt("level");
 
     public string? Race { get; set; }
@@ -39,7 +58,7 @@ public class PlayerCharacter
             var gauges = new List<Gauge>();
 
             if (CurrentHealth.HasValue && MaxHealth.HasValue)
-                gauges.Add(new Gauge { Name = "Health", Value = CurrentHealth.Value, Max = MaxHealth.Value });
+                gauges.Add(new Gauge {Icon = "", Name = "Health", Value = CurrentHealth.Value, Max = MaxHealth.Value });
 
             if (Mana.HasValue && EnergyPool.HasValue)
                 gauges.Add(new Gauge { Name = "Energy", Value = Mana.Value, Max = EnergyPool.Value  });
