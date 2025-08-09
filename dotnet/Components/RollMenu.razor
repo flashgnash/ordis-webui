@@ -1,17 +1,18 @@
 @rendermode InteractiveServer
 <!-- Middle -->
 
-<Counter Title="Advantage" Id="Advantage" ValueChanged="UpdateAdvantage"  />
+<Counter Title="Advantage" Id="Advantage" @bind-Value="Advantage" ValueChanged="UpdateAdvantage"  />
 
 
 <div class="flex-grow-1"></div>
 
 <div class="m-1 d-flex flex-wrap gap-2">
-  @foreach (var stat in Character.Stats) {
-    <button class="btn btn-primary flex-fill" @onclick="() => AddStat(stat.Name)">
-      + @Truncate(stat.Name)
-    </button>
-  }
+    @foreach (var stat in Character.Stats)
+    {
+        <button class="btn flex-fill @btnClasses[stat.Name]" @onclick="() => AddStat(stat.Name)">
+            + @Truncate(stat.Name)
+        </button>
+    }
 </div>
 
 <div class="m-1 d-flex gap-2 flex-grow-2 bg-light text-black">
@@ -38,8 +39,11 @@
 
     private string RollText;
 
+    Dictionary<string, string> btnClasses = new();
+
     protected override void OnInitialized() {
-        RollText = Character.DefaultRoll ?? "1d100";
+        ClearRoll();
+
     }
 
     private string Truncate(string input)
@@ -54,12 +58,25 @@
 
     private void AddStat(string statName)
     {
-        RollText += $"+{statName.ToLower()}";
+        var strToReplace = $"+{statName.ToLower()}";
+    
+        if(RollText.Contains(strToReplace)) {
+            RollText = RollText.Replace(strToReplace,"");
+            btnClasses[statName] = "btn-secondary";
+        }
+        else {
+            RollText += strToReplace;
+            btnClasses[statName] = "btn-primary";
+        }
     }
 
     private void ClearRoll()
     {
         RollText = Character.DefaultRoll ?? "1d100";
+        Advantage = 0;
+        
+        foreach (var stat in Character.Stats)
+            btnClasses[stat.Name] = "btn-secondary";
     }
 
     private void SetAdvantage(int adv)
