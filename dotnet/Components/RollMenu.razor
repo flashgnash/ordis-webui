@@ -1,0 +1,65 @@
+@rendermode InteractiveServer
+<!-- Middle -->
+
+
+<Counter Title="Advantage" Id="Advantage" @bind-Value="@Advantage" />
+
+
+<div class="flex-grow-1"></div>
+
+<div class="m-1 d-flex flex-wrap gap-2">
+  @foreach (var stat in Character.Stats) {
+    <button class="btn btn-primary flex-fill" @onclick="() => AddStat(stat.Name)">
+      + @Truncate(stat.Name)
+    </button>
+}
+
+</div>
+
+<div class="m-1 d-flex gap-2 flex-grow-2 bg-light text-black">
+
+  <input class="form-control fs-5" value="@RollText" />
+</div>
+
+<div class="m-1 d-flex gap-2 flex-grow-2">
+  <button
+    class="btn btn-secondary fs-3 flex-grow-1"
+    @onclick="ClearRoll"
+  >
+    Clear
+  </button>
+  <button class="btn btn-primary fs-3 flex-grow-1">Roll</button>
+</div>
+
+
+@code {
+  [Parameter]
+  public PlayerCharacter Character {get; set;}
+  
+  public int Advantage { get; set; } = 0;
+
+  public IEnumerable<Stat> Stats {get; set;}
+
+  [Parameter]
+  public bool? FlexFill {get; set;}
+
+
+  private string Truncate(string input) {
+    return input.Substring(0, Math.Min(3, input.Length));
+  } 
+
+  private string FlexFillClass => FlexFill ?? false ? "flex-fill" : "";
+
+  private string RollText = "1d100";
+
+  private void AddStat(string statName)
+  {
+    RollText += $"+{statName.ToLower()}";
+  }
+
+  private void ClearRoll() {
+     RollText = "1d100"; 
+  }
+
+  
+}

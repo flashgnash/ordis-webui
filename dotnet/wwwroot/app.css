@@ -18,6 +18,11 @@
   background: var(--bg-light);
 }
 
+
+.disable-dbl-tap-zoom {
+  touch-action: manipulation;
+}
+
 .App {
   width: 100%;
 }
@@ -181,12 +186,16 @@ button {
   margin: 10px;
 }
 
+
 .w-10 {
   width: 10%;
 }
 
 .w-80 {
   width: 80%;
+}
+.h-80 {
+  height: 80%;
 }
 
 .w-100 {

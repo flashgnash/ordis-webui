@@ -1,5 +1,5 @@
 @foreach (var stat in Stats) {
-  <div class="card m-2 @FlexFillClass" style="">
+  <div class="card m-2 @FlexFillClass" style="max-height: 80px">
     <div class="card-header text-center text-uppercase p-1" >@Truncate(stat.Name)</div>
     <div class="card-body p-0" style="width: 45px;">
       <p class="color-white">@stat.Value</p>
