@@ -74,7 +74,9 @@
         <div class="card-header">Hunger:</div>
 
         <div class="card-body fs-7">
-          <CharBar Repeat="@(Char.Hunger ?? 10)" Icon="🍖" />
+          <span class="d-none d-md-inline">
+            <CharBar Repeat="@(Char.Hunger ?? 10)" Icon="🍖" />
+          </span>
           <span>@Char.Hunger / 10</span>
         </div>
       </div>
