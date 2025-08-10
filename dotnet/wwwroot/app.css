@@ -18,7 +18,9 @@
   background: var(--bg-light);
 }
 
-
+* {
+  touch-action: manipulation;
+}
  dialog {
     width: 80%;
     height: 80%;
