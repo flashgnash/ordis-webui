@@ -35,6 +35,9 @@
 .striped-list li:nth-child(odd) {
   background-color: #eeeeee;
 }
+.striped-list li:nth-child(even) {
+  background-color: #efefef;
+}
 
 
 * {
