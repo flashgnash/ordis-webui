@@ -1,6 +1,10 @@
 
 @for (int i = 0; i < @Repeat; i++) {
-    <span>@Icon</span>
+    <span class="fs-3">@Icon</span>
+
+		@if(Vertical){
+			<br>
+		}
 }
 
 @code {
@@ -9,4 +13,7 @@
 
 	[Parameter]
 	public string Icon {get; set; }
+
+	[Parameter]
+	public bool Vertical { get; set; } = false;
 }
