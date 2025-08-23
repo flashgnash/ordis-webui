@@ -52,20 +52,10 @@
 
   <div class="d-flex">
 
-      <div class="card flex-fill disable-dbl-tap-zoom ">
-        <div class="card-header">
-          Inventory
-        </div>
 
+    <DescriptableList Name="🎒 Inventory" Descriptables="@(Char.Inventory.Cast<IDescriptable>())"/>
 
-        <div class="card-body">
-        <ul class="list-unstyled">
-          @foreach (Item item in Char.Inventory ){
-            <li><Descriptable item="@item" /></li>
-          }
-        </ul>
-        </div>
-      </div>    
+    <DescriptableList Name="📔 Spells" Descriptables="@(Char.Spells.Cast<IDescriptable>())"/>
 
     <div class="flex-fill">
   

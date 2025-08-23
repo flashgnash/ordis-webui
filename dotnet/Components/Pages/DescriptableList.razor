@@ -1,0 +1,28 @@
+	
+
+<div class="card flex-fill disable-dbl-tap-zoom ">
+	<div class="card-header">
+	  @Name
+	</div>
+
+
+	<div class="card-body">
+		<ul class="list-unstyled">
+		  @foreach (IDescriptable item in Descriptables){
+		    <li><Descriptable item="@item" /></li>
+		  }
+		</ul>
+	</div>
+</div>
+
+
+
+@code {
+  [Parameter]
+  public string? Name { get; set; }
+
+  [Parameter]
+  public IEnumerable<IDescriptable> Descriptables { get; set; }
+
+
+}

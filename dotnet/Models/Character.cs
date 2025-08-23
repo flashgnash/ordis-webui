@@ -26,6 +26,27 @@ public class PlayerCharacter
         
     };
 
+
+    public IEnumerable<Spell> Spells {get; set; } = new List<Spell>() {
+        new Spell() {
+            Icon = "🍔",
+            Name = "Cheeseburger bolt"
+        },
+        new Spell() {
+            Icon = "🔥",
+            Name = "Fireball",
+            Rolls = new List<Roll>() {new Roll(){Name = "attack", RollString="1d12+1"} }
+        },
+        new Spell() {
+            Name = "Cheeseburger"
+        },
+        new Spell() {
+            Name = "Cheeseburger"
+        }
+        
+    };
+
+
     public int? Level => TryGetInt("level");
 
     public string? Race { get; set; }
