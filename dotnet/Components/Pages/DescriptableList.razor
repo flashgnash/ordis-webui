@@ -6,10 +6,10 @@
 	</div>
 
 
-	<div class="card-body">
-		<ul class="list-unstyled">
+	<div class="card-body w-100 p-0">
+		<ul class="list-unstyled striped-list">
 		  @foreach (IDescriptable item in Descriptables){
-		    <li><Descriptable item="@item" /></li>
+		    <li class="w-100 border-0"><Descriptable item="@item" /></li>
 		  }
 		</ul>
 	</div>

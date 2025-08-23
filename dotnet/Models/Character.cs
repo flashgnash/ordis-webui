@@ -16,12 +16,6 @@ public class PlayerCharacter
             Icon = "⚔️",
             Name = "Sword",
             Rolls = new List<Roll>() {new Roll(){Name = "attack", RollString="1d12+1"} }
-        },
-        new Item() {
-            Name = "Cheeseburger"
-        },
-        new Item() {
-            Name = "Cheeseburger"
         }
         
     };
@@ -29,19 +23,15 @@ public class PlayerCharacter
 
     public IEnumerable<Spell> Spells {get; set; } = new List<Spell>() {
         new Spell() {
-            Icon = "🍔",
-            Name = "Cheeseburger bolt"
+            Icon = "🧊",
+            Name = "Ice Bolt",
+            Rolls = new List<Roll>() {new Roll(){Name = "attack", RollString="1d12+1"} }
+            
         },
         new Spell() {
             Icon = "🔥",
             Name = "Fireball",
             Rolls = new List<Roll>() {new Roll(){Name = "attack", RollString="1d12+1"} }
-        },
-        new Spell() {
-            Name = "Cheeseburger"
-        },
-        new Spell() {
-            Name = "Cheeseburger"
         }
         
     };

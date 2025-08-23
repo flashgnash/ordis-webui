@@ -29,7 +29,7 @@
   <br />
 
   <!-- Stats -->
-  <div class="d-flex" style="text-size: 10px">
+  <div class="d-flex flex-wrap" style="text-size: 10px">
     @if(Char?.Stats != null){
     <StatBlock Stats="@Char.Stats" FlexFill="true" />
     }
@@ -50,27 +50,22 @@
 
   }
 
-  <div class="d-flex">
-
-
-    <DescriptableList Name="🎒 Inventory" Descriptables="@(Char.Inventory.Cast<IDescriptable>())"/>
-
-    <DescriptableList Name="📔 Spells" Descriptables="@(Char.Spells.Cast<IDescriptable>())"/>
+  <div class="d-flex flex-wrap">
 
     <div class="flex-fill">
   
-    @if(Char?.Hunger != null) {
-      <div class="card flex-fill">
-        <div class="card-header">Hunger:</div>
+      @if(Char?.Hunger != null) {
+        <div class="card flex-fill">
+          <div class="card-header">Hunger:</div>
 
-        <div class="card-body fs-7">
-          <span class="d-none d-md-inline">
-            <CharBar Repeat="@(Char.Hunger ?? 10)" Icon="🍖" />
-          </span>
-          <span>@Char.Hunger / 10</span>
+          <div class="card-body fs-7">
+            <span class="d-none d-md-inline">
+              <CharBar Repeat="@(Char.Hunger ?? 10)" Icon="🍖" />
+            </span>
+            <span>@Char.Hunger / 10</span>
+          </div>
         </div>
-      </div>
-    }
+      }
 
       <div class="card">
         <div class="card-header">
@@ -93,11 +88,19 @@
       </div>
       
     </div>
+
+    <div class="flex-fill">
+      <div class="flex-fill">
+        <DescriptableList Name="🎒 Inventory" Descriptables="@(Char.Inventory.Cast<IDescriptable>())"/>
+      </div>
+
+      <div class="flex-fill">
+        <DescriptableList Name="📔 Spells" Descriptables="@(Char.Spells.Cast<IDescriptable>())"/>
+      </div>
+    </div>
+
   </div>
-
-
-  </div>
-
+</div>
 @code {
   PlayerCharacter Char;
   [Parameter] public int CharacterId { get; set; }
