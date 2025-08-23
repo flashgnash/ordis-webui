@@ -4,7 +4,7 @@ public struct Spell: IDescriptable, IRollable {
 
 	public string Name {get; set;}
 
-	public Dictionary<string,string>? Rolls {get; set;}	
+	public IEnumerable<Roll>? Rolls {get; set;}	
 
 }
 
