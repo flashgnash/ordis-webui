@@ -7,6 +7,9 @@ public class PlayerCharacter
     public string? UserId { get; set; }
     public string? Name { get; set; }
 
+
+    public string? RollServerId {get; set;}
+
     public IEnumerable<Item> Inventory {get; set; } = new List<Item>() {
         new Item() {
             Icon = "🍔",

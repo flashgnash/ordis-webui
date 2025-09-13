@@ -1,10 +1,11 @@
 @rendermode InteractiveServer
+@inject RollService RollService
 <!-- Middle -->
 
 <Counter Title="Advantage" Id="Advantage" @bind-CounterValue="Advantage" @bind-CounterValue:after="UpdateAdvantage" />
 
 
-<div class="flex-grow-1"></div>
+<div class="flex-grow-1 m-auto"><h2 class="text-center m-auto h-100">@LastResult</h2></div>
 
 @if(Character != null) {
   <div class="m-1 d-flex flex-wrap gap-2">
@@ -25,10 +26,20 @@
   <button class="btn btn-secondary fs-3 flex-grow-1" @onclick="ClearRoll">
     Clear
   </button>
-  <button class="btn btn-primary fs-3 flex-grow-1">Roll</button>
+  <button @onclick="Roll" class="btn btn-primary fs-3 flex-grow-1">Roll</button>
 </div>
 
 @code {
+
+    async Task Roll() {
+
+      var response = await RollService.RollFor(Character,RollText);    
+
+      LastResult = $"{RollText}: {response.Result}";
+    }
+
+    public string? LastResult {get; set;}
+
     [Parameter]
     public PlayerCharacter? Character { get; set; }
 

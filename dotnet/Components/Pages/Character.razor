@@ -18,6 +18,8 @@
   <div class="w-100 p-2">
     <span class="fs-2">@Char.Name — Level @Char.Level </span>
 
+    <span class-"fs-2">@Char.RollServerId</span>
+
     <button
       onClick="rollDialog.showModal()"
       class="btn btn-primary float-right fs-2"
@@ -111,4 +113,7 @@
   protected override void OnInitialized() {
     Char = CharService.GetById(CharacterId);
   }
+
+
+  
  }

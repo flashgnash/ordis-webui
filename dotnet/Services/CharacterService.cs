@@ -96,6 +96,7 @@ public class PlayerCharacterService : IDbService<PlayerCharacter, int>
         Id = r["id"] as long? is long l ? (int)l : null,
         UserId = r["user_id"] as string,
         Name = r["name"] as string,
+        RollServerId = r["roll_server_id"] as string,
         StatBlockHash = r["stat_block_hash"] as string,
         StatBlock = r["stat_block"] as string,
         StatBlockMessageId = r["stat_block_message_id"] as string,

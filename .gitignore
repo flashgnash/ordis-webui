@@ -7,3 +7,4 @@ node_modules
 */bin
 bin
 obj
+dotnet/.env

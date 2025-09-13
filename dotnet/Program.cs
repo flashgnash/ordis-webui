@@ -5,10 +5,17 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.Configure<RpgConfig>(
     builder.Configuration.GetSection("RpgConfig"));
 
+builder.Services.Configure<Dictionary<string,APIConfig>>(
+    builder.Configuration.GetSection("ApiConfig"));
+
 
 
 var connStr = builder.Configuration.GetConnectionString("CharacterDb");
+
+builder.Services.AddHttpClient();
+
 builder.Services.AddSingleton(new PlayerCharacterService(connStr));
+builder.Services.AddSingleton<RollService>();
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
