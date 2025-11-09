@@ -120,20 +120,20 @@ public class PlayerCharacter
     public string? ManaReadoutMessageId { get; set; }
 
 
+    public string SavedRollsString {get; set;}
 
-
-public Dictionary<string, string>? SavedRolls
-{
-    get
+    public Dictionary<string, string>? SavedRolls
     {
-        var saved_rolls = TryGetString("saved_rolls"); //this is kind of atrocious but I am limited by discord's UI (and my own laziness)
+        get
+        {
+            var saved_rolls = SavedRollsString; //this is kind of atrocious but I am limited by discord's UI (and my own laziness)
 
-        return saved_rolls
-            ?.Split('\n', StringSplitOptions.RemoveEmptyEntries)
-            ?.Select(line => line.Split(':', 2))
-            ?.ToDictionary(parts => parts[0].Trim(), parts => parts[1].Trim());
+            return saved_rolls
+                ?.Split('\n', StringSplitOptions.RemoveEmptyEntries)
+                ?.Select(line => line.Split(':', 2))
+                ?.ToDictionary(parts => parts[0].Trim(), parts => parts[1].Trim());
+        }
     }
-}
 
     JsonDocument? _statJson;
 

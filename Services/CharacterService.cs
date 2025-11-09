@@ -78,6 +78,7 @@ public class PlayerCharacterService : IDbService<PlayerCharacter, int>
     {
         cmd.Parameters.AddWithValue("@user_id", (object?)c.UserId ?? DBNull.Value);
         cmd.Parameters.AddWithValue("@name", (object?)c.Name ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@saved_rolls", (object?)c.Name ?? DBNull.Value);
         cmd.Parameters.AddWithValue("@stat_block_hash", (object?)c.StatBlockHash ?? DBNull.Value);
         cmd.Parameters.AddWithValue("@stat_block", (object?)c.StatBlock ?? DBNull.Value);
         cmd.Parameters.AddWithValue("@stat_block_message_id", (object?)c.StatBlockMessageId ?? DBNull.Value);
@@ -98,6 +99,7 @@ public class PlayerCharacterService : IDbService<PlayerCharacter, int>
         Name = r["name"] as string,
         RollServerId = r["roll_server_id"] as string,
         StatBlockHash = r["stat_block_hash"] as string,
+        SavedRollsString = r["saved_rolls"] as string,
         StatBlock = r["stat_block"] as string,
         StatBlockMessageId = r["stat_block_message_id"] as string,
         StatBlockChannelId = r["stat_block_channel_id"] as string,

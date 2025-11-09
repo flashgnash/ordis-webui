@@ -5,10 +5,61 @@
 <Counter Title="Advantage" Id="Advantage" @bind-CounterValue="Advantage" @bind-CounterValue:after="UpdateAdvantage" />
 
 
-<div class="flex-grow-1 m-auto">
+
+@if(Character != null) {
+
+
+  @if(Character.SpecialStats != null){
+    <div id="specialStatButtons" class="m-1 d-flex flex-wrap gap-2 p-2">
+        @foreach (var stat in Character?.SpecialStats)
+        {
+            <button class="btn flex-fill @btnClasses[stat.Name]" @onclick="() => AddStat(stat.Name)">
+                + @stat.Name
+            </button>
+        }
+    </div>
+  }
+
+  @if(Character.Stats != null) {
+    <div id="statButtons" class="m-1 d-flex flex-wrap gap-2 p-2">
+        @foreach (var stat in Character?.Stats)
+        {
+            <button class="btn flex-fill @btnClasses[stat.Name]" @onclick="() => AddStat(stat.Name)">
+                + @Truncate(stat.Name)
+            </button>
+        }
+    </div>
+  }
+
+  @if(Character.SavedRolls != null) {
+    <div id="savedRolls" class="m-auto flex-grow-1">
+      <h3 class="text-center">Saved Rolls</h3>
+      @foreach (var kv in Character.SavedRolls)
+      {
+          <button class="btn btn-secondary @btnClasses[kv.Key] m-1" @onclick="() => SetRollText(kv.Value)">@kv.Key </button>
+      }      
+    </div>
+  }
+  
+}
+
+
+
+<div class="m-1 d-flex gap-2 flex-grow-2 bg-light text-black">
+  <input class="form-control fs-5" @bind="@RollText" />
+</div>
+
+<div class="m-1 d-flex gap-2 flex-grow-2">
+  <button class="btn btn-secondary fs-3 flex-grow-1" @onclick="ClearRoll">
+    Clear
+  </button>
+  <button @onclick="Roll" class="btn btn-primary fs-3 flex-grow-1">Roll</button>
+</div>
+
+<div class="flex-shrink-1 m-auto">
   <div class="text-center m-auto h-100">
 
-    <h2 class="">@RollText: @LastResult?.Result   </h2>
+    <h2 class="">@LastResult?.Result</h2>
     <ul>
       @if(LastResult != null) {
         @foreach(IndividualRollResult roll in LastResult?.Rolls) {
@@ -21,36 +72,7 @@
   </div>
 </div>
 
-@if(Character != null) {
 
-  <div class="m-1 d-flex flex-wrap gap-2">
-      @foreach (var stat in Character?.SpecialStats)
-      {
-          <button class="btn flex-fill @btnClasses[stat.Name]" @onclick="() => AddStat(stat.Name)">
-              + @stat.Name
-          </button>
-      }
-  </div>
-  <div class="m-1 d-flex flex-wrap gap-2">
-      @foreach (var stat in Character?.Stats)
-      {
-          <button class="btn flex-fill @btnClasses[stat.Name]" @onclick="() => AddStat(stat.Name)">
-              + @Truncate(stat.Name)
-          </button>
-      }
-  </div>
-}
-
-<div class="m-1 d-flex gap-2 flex-grow-2 bg-light text-black">
-  <input class="form-control fs-5" @bind="@RollText" />
-</div>
-
-<div class="m-1 d-flex gap-2 flex-grow-2">
-  <button class="btn btn-secondary fs-3 flex-grow-1" @onclick="ClearRoll">
-    Clear
-  </button>
-  <button @onclick="Roll" class="btn btn-primary fs-3 flex-grow-1">Roll</button>
-</div>
 
 @code {
 
@@ -116,7 +138,18 @@
 
           foreach (var stat in Character?.SpecialStats)
             btnClasses[stat.Name] = "btn-secondary";
+
+          foreach (var savedRoll in Character?.SavedRolls)
+            btnClasses[savedRoll.Key] = "btn-secondary";
         }
+    }
+
+    private void SetRollText(string rollText) {
+        RollText = rollText;
+        foreach (var key in btnClasses.Keys.ToList()) {
+            btnClasses[key] = RollText.Contains($"+{key.ToLower()}") ? "btn-primary" : "btn-secondary";
+        }
+
     }
 
     private void SetAdvantage(int adv)
@@ -124,6 +157,7 @@
         var patternMax = new System.Text.RegularExpressions.Regex(@"max\(([^)]+)\)");
         var patternMin = new System.Text.RegularExpressions.Regex(@"min\(([^)]+)\)");
         var pattern1d = new System.Text.RegularExpressions.Regex(@"\b1d(\d+)\b");
+
 
         // Find first group: max, min, or 1dX
         if (patternMax.IsMatch(RollText))
