@@ -63,6 +63,26 @@ public class PlayerCharacter
         }
     }
 
+    
+    public List<Stat>? SpecialStats
+    {
+        get
+        {
+            if (StatJson?.RootElement.TryGetProperty("special_stats", out var stats) == true && stats.ValueKind == JsonValueKind.Object)
+            {
+                var list = new List<Stat>();
+                foreach (var prop in stats.EnumerateObject())
+                {
+                    if (prop.Value.ValueKind == JsonValueKind.Number && prop.Value.TryGetInt32(out var v))
+                        if (v != 0)
+                            list.Add(new Stat { Name = prop.Name, Value = v });
+                }
+                return list;
+            }
+            return null;
+        }
+    }
+
     public IEnumerable<Status>? Statuses { get; set; }
 
     public List<Gauge> Gauges
@@ -98,6 +118,22 @@ public class PlayerCharacter
     public int? Mana { get; set; }
     public string? ManaReadoutChannelId { get; set; }
     public string? ManaReadoutMessageId { get; set; }
+
+
+
+
+public Dictionary<string, string>? SavedRolls
+{
+    get
+    {
+        var saved_rolls = TryGetString("saved_rolls"); //this is kind of atrocious but I am limited by discord's UI (and my own laziness)
+
+        return saved_rolls
+            ?.Split('\n', StringSplitOptions.RemoveEmptyEntries)
+            ?.Select(line => line.Split(':', 2))
+            ?.ToDictionary(parts => parts[0].Trim(), parts => parts[1].Trim());
+    }
+}
 
     JsonDocument? _statJson;
 

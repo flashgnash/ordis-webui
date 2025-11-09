@@ -5,9 +5,32 @@
 <Counter Title="Advantage" Id="Advantage" @bind-CounterValue="Advantage" @bind-CounterValue:after="UpdateAdvantage" />
 
 
-<div class="flex-grow-1 m-auto"><h2 class="text-center m-auto h-100">@LastResult</h2></div>
+<div class="flex-grow-1 m-auto">
+  <div class="text-center m-auto h-100">
+
+    <h2 class="">@RollText: @LastResult?.Result   </h2>
+    <ul>
+      @if(LastResult != null) {
+        @foreach(IndividualRollResult roll in LastResult?.Rolls) {
+          <li>@(roll.Expression): @roll.Result</li>
+        
+        }
+      }
+
+    </ul>
+  </div>
+</div>
 
 @if(Character != null) {
+
+  <div class="m-1 d-flex flex-wrap gap-2">
+      @foreach (var stat in Character?.SpecialStats)
+      {
+          <button class="btn flex-fill @btnClasses[stat.Name]" @onclick="() => AddStat(stat.Name)">
+              + @stat.Name
+          </button>
+      }
+  </div>
   <div class="m-1 d-flex flex-wrap gap-2">
       @foreach (var stat in Character?.Stats)
       {
@@ -35,10 +58,10 @@
 
       var response = await RollService.RollFor(Character,RollText);    
 
-      LastResult = $"{RollText}: {response.Result}";
+      LastResult = response;
     }
 
-    public string? LastResult {get; set;}
+    public RollResult? LastResult {get; set;}
 
     [Parameter]
     public PlayerCharacter? Character { get; set; }
@@ -59,9 +82,9 @@
 
     }
 
-    private string Truncate(string input)
+    private string Truncate(string input, int length = 3)
     {
-        return input.Substring(0, Math.Min(3, input.Length));
+        return input.Substring(0, Math.Min(length, input.Length));
     }
 
     void UpdateAdvantage() {
@@ -85,10 +108,14 @@
     private void ClearRoll()
     {
         RollText = Character?.DefaultRoll ?? "1d100";
+        LastResult = null;
         Advantage = 0;
         if(Character != null ) {
           foreach (var stat in Character?.Stats)
               btnClasses[stat.Name] = "btn-secondary";
+
+          foreach (var stat in Character?.SpecialStats)
+            btnClasses[stat.Name] = "btn-secondary";
         }
     }
 
