@@ -1,5 +1,6 @@
 @rendermode InteractiveServer
 @inject RollService RollService
+@inject DiscordService DiscordService
 <!-- Middle -->
 
 <Counter Title="Advantage" Id="Advantage" @bind-CounterValue="Advantage" @bind-CounterValue:after="UpdateAdvantage" />
@@ -80,6 +81,7 @@
 
       var response = await RollService.RollFor(Character,RollText);    
 
+      await DiscordService.SendEmbedAsync($"Rolling for {Character.Name}...", response.Message);    
       LastResult = response;
     }
 
@@ -133,14 +135,19 @@
         LastResult = null;
         Advantage = 0;
         if(Character != null ) {
-          foreach (var stat in Character?.Stats)
-              btnClasses[stat.Name] = "btn-secondary";
+            if(Character?.Stats != null) {
+              foreach (var stat in Character?.Stats)
+                  btnClasses[stat.Name] = "btn-secondary";
+            }
+            if(Character?.SpecialStats != null ) {
+              foreach (var stat in Character?.SpecialStats)
+                btnClasses[stat.Name] = "btn-secondary";
 
-          foreach (var stat in Character?.SpecialStats)
-            btnClasses[stat.Name] = "btn-secondary";
-
-          foreach (var savedRoll in Character?.SavedRolls)
-            btnClasses[savedRoll.Key] = "btn-secondary";
+            }
+            if(Character?.SavedRolls != null) {
+              foreach (var savedRoll in Character?.SavedRolls)
+                btnClasses[savedRoll.Key] = "btn-secondary";
+            }
         }
     }
 

@@ -60,7 +60,7 @@ public class PlayerCharacterService : IDbService<PlayerCharacter, int>
         return ReadPlayerCharacter(reader);
     }
 
-    public IEnumerable<PlayerCharacter> GetByDiscordId(long discordId)
+    public IEnumerable<PlayerCharacter> GetByDiscordId(string discordId)
     {
         using var conn = new SqliteConnection(_connStr);
         conn.Open();
