@@ -1,4 +1,8 @@
+using System.Security.Claims;
+using System.Text.Json;
 using dotnet.Components;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,6 +25,11 @@ builder.Services.AddSingleton<DiscordService>();
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+       .AddCookie();
+builder.Services.AddAuthorization();
+
+   
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -39,5 +48,71 @@ app.UseAntiforgery();
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
+
+
+var discordConfig = builder.Configuration.GetSection("Discord");
+var clientId = discordConfig["ClientId"];
+var clientSecret = discordConfig["ClientSecret"];
+
+
+// Should move this somewhere else - currently unsure of how to implement API endpoints in a blazor pages setup
+// At the very least it should be made into a separate function in another file and called from here
+app.MapGet("/auth/callback", async (HttpContext http) =>
+{
+    var query = http.Request.Query;
+    if (!query.TryGetValue("code", out var code))
+        return Results.BadRequest("No code in query string");
+
+    var discordCode = code.ToString();
+
+    var values = new Dictionary<string,string>{
+        {"client_id",clientId},
+        {"client_secret",clientSecret},
+        {"grant_type","authorization_code"},
+        {"code", discordCode},
+        {"redirect_uri","http://localhost:5018/auth/callback"}
+    };
+
+    var client = new HttpClient();
+    var response = await client.PostAsync("https://discord.com/api/oauth2/token", new FormUrlEncodedContent(values));
+    var content = await response.Content.ReadAsStringAsync();
+
+    if (!response.IsSuccessStatusCode)
+        return Results.Problem($"Discord token endpoint returned {response.StatusCode}: {content}");
+
+    JsonElement token;
+    try
+    {
+        token = JsonSerializer.Deserialize<JsonElement>(content);
+    }
+    catch
+    {
+        return Results.Problem($"Failed to parse Discord token response: {content}");
+    }
+
+    if (!token.TryGetProperty("access_token", out var accessTokenProp))
+        return Results.Problem($"access_token not found in response: {content}");
+
+    var access = accessTokenProp.GetString();
+
+    // get user info
+    var request = new HttpRequestMessage(HttpMethod.Get,"https://discord.com/api/users/@me");
+    request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", access);
+    var userResponse = await client.SendAsync(request);
+    var userContent = await userResponse.Content.ReadAsStringAsync();
+
+    if (!userResponse.IsSuccessStatusCode)
+        return Results.Problem($"Discord /users/@me returned {userResponse.StatusCode}: {userContent}");
+
+    var userJson = JsonSerializer.Deserialize<JsonElement>(userContent);
+    var discordId = userJson.GetProperty("id").GetString();
+
+    // sign in
+    var claims = new List<Claim>{ new Claim("discord_id", discordId) };
+    var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+    await http.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identity));
+
+    return Results.Text($"Logged in as Discord ID: {discordId}");
+});
 
 app.Run();

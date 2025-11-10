@@ -11,31 +11,31 @@ public class PlayerCharacter
     public string? RollServerId {get; set;}
 
     public IEnumerable<Item> Inventory {get; set; } = new List<Item>() {
-        new Item() {
-            Icon = "🍔",
-            Name = "Cheeseburger"
-        },
-        new Item() {
-            Icon = "⚔️",
-            Name = "Sword",
-            Rolls = new List<Roll>() {new Roll(){Name = "attack", RollString="1d12+1"} }
-        }
+        // new Item() {
+        //     Icon = "🍔",
+        //     Name = "Cheeseburger"
+        // },
+        // new Item() {
+        //     Icon = "⚔️",
+        //     Name = "Sword",
+        //     Rolls = new List<Roll>() {new Roll(){Name = "attack", RollString="1d12+1"} }
+        // }
         
     };
 
 
     public IEnumerable<Spell> Spells {get; set; } = new List<Spell>() {
-        new Spell() {
-            Icon = "🧊",
-            Name = "Ice Bolt",
-            Rolls = new List<Roll>() {new Roll(){Name = "attack", RollString="1d12+1"} }
+        // new Spell() {
+        //     Icon = "🧊",
+        //     Name = "Ice Bolt",
+        //     Rolls = new List<Roll>() {new Roll(){Name = "attack", RollString="1d12+1"} }
             
-        },
-        new Spell() {
-            Icon = "🔥",
-            Name = "Fireball",
-            Rolls = new List<Roll>() {new Roll(){Name = "attack", RollString="1d12+1"} }
-        }
+        // },
+        // new Spell() {
+        //     Icon = "🔥",
+        //     Name = "Fireball",
+        //     Rolls = new List<Roll>() {new Roll(){Name = "attack", RollString="1d12+1"} }
+        // }
         
     };
 

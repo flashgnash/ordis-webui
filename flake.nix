@@ -29,6 +29,8 @@
             openssl
             dotnetPkg
 
+            (pkgs.writeShellScriptBin "run" (''dotnet watch run''))
+
             netcoredbg
             bruno
             omnisharp-roslyn

@@ -1,10 +1,12 @@
-﻿@page "/"
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@page "/"
 @page "/characters"
 @inject PlayerCharacterService CharService
+@inject AuthenticationStateProvider AuthStateProvider
 
 <div class="container mt-4">
 
-  <h2>Characters:</h2>
+  <h2>Characters for @DiscordId :</h2>
 
   <div class="d-flex flex-wrap">
 
@@ -46,7 +48,16 @@
   [Parameter]
   public int CharacterId { get; set; }
 
-  protected override void OnInitialized() {
-    Characters = CharService.GetByDiscordId(102125121908527104);
+  public string DiscordId {get; set;}
+
+  protected override async Task OnInitializedAsync() {
+
+    var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+    var user = authState.User;
+
+    // get claim
+    var DiscordId = user.FindFirst("discord_id")?.Value ?? "Not logged in";
+          
+    Characters = CharService.GetByDiscordId(DiscordId);
   }
 }
