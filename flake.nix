@@ -29,7 +29,7 @@
             openssl
             dotnetPkg
 
-            (pkgs.writeShellScriptBin "run" (''dotnet watch run''))
+            (pkgs.writeShellScriptBin "run" (''export $(grep -v '^#' .env | xargs) && dotnet watch run''))
 
             netcoredbg
             bruno
