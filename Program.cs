@@ -31,9 +31,17 @@ builder.Services.AddRazorComponents()
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
        .AddCookie();
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(
+    options => {
+        options.AddPolicy("HasDiscordId", policy =>
+            policy.RequireClaim("discord_id"));
+    }
+    
+);
 
-   
+builder.WebHost.ConfigureKestrel((context, options) => {
+    options.Configure(context.Configuration.GetSection("Kestrel"));
+});   
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -58,6 +66,9 @@ var discordConfig = builder.Configuration.GetSection("Discord");
 var clientId = discordConfig["ClientId"];
 var clientSecret = discordConfig["ClientSecret"];
 
+
+var baseUrl = Environment.GetEnvironmentVariable("ASPNETCORE_URLS");
+
 // Should move this somewhere else - currently unsure of how to implement API endpoints in a blazor pages setup
 // At the very least it should be made into a separate function in another file and called from here
 app.MapGet("/auth/callback", async (HttpContext http) =>
@@ -73,7 +84,7 @@ app.MapGet("/auth/callback", async (HttpContext http) =>
         {"client_secret",clientSecret},
         {"grant_type","authorization_code"},
         {"code", discordCode},
-        {"redirect_uri","http://localhost:5018/auth/callback"}
+        {"redirect_uri",$"{baseUrl}/auth/callback"}
     };
 
     var client = new HttpClient();
