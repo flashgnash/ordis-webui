@@ -1,5 +1,7 @@
 ﻿
-    <link rel="stylesheet" href="@Assets["lib/bootstrap/dist/css/bootstrap.min.css"]" />
+@inject IConfiguration Configuration
+
+<link rel="stylesheet" href="@Assets["lib/bootstrap/dist/css/bootstrap.min.css"]" />
 
 <div class="">
     <div class="container-fluid">
@@ -24,6 +26,14 @@
             </NavLink>
         </div>
 
+        <div class="nav-item px-3">
+
+            <NavLink class="nav-link" href="@discordLoginUrl">
+                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Log in
+            </NavLink>
+
+        </div>
+
 
         <!-- <div class="nav-item px-3"> -->
             <!-- <NavLink class="nav-link" href="rolls"> -->
@@ -41,3 +51,17 @@
 </div>
 
 
+@code {
+    string discordLoginUrl;
+
+    protected override void OnInitialized()
+    {
+        var discordConfig = Configuration.GetSection("Discord");
+        var clientId = discordConfig["ClientId"];
+        var redirect = "http://localhost:5018/auth/callback";
+        var state = Guid.NewGuid().ToString();
+
+        discordLoginUrl =
+            $"https://discord.com/api/oauth2/authorize?client_id={clientId}&redirect_uri={Uri.EscapeDataString(redirect)}&response_type=code&scope=identify&state={state}";
+    }
+}

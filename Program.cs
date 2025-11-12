@@ -3,8 +3,12 @@ using System.Text.Json;
 using dotnet.Components;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
-
+using DotNetEnv;
 var builder = WebApplication.CreateBuilder(args);
+
+
+builder.Configuration.AddEnvironmentVariables();
+
 
 builder.Services.Configure<RpgConfig>(
     builder.Configuration.GetSection("RpgConfig"));
@@ -12,7 +16,7 @@ builder.Services.Configure<RpgConfig>(
 builder.Services.Configure<Dictionary<string,APIConfig>>(
     builder.Configuration.GetSection("ApiConfig"));
 
-
+Env.Load();
 
 var connStr = builder.Configuration.GetConnectionString("CharacterDb");
 
@@ -53,7 +57,6 @@ app.MapRazorComponents<App>()
 var discordConfig = builder.Configuration.GetSection("Discord");
 var clientId = discordConfig["ClientId"];
 var clientSecret = discordConfig["ClientSecret"];
-
 
 // Should move this somewhere else - currently unsure of how to implement API endpoints in a blazor pages setup
 // At the very least it should be made into a separate function in another file and called from here
@@ -106,13 +109,15 @@ app.MapGet("/auth/callback", async (HttpContext http) =>
 
     var userJson = JsonSerializer.Deserialize<JsonElement>(userContent);
     var discordId = userJson.GetProperty("id").GetString();
+    var discordName = userJson.GetProperty("username").GetString();
 
     // sign in
-    var claims = new List<Claim>{ new Claim("discord_id", discordId) };
+    var claims = new List<Claim>{ new Claim("discord_id", discordId), new Claim("discord_name",discordName) };
     var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
     await http.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identity));
 
-    return Results.Text($"Logged in as Discord ID: {discordId}");
+    return Results.Redirect("/");
+
 });
 
 app.Run();
