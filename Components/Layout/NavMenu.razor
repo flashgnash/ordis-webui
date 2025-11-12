@@ -1,54 +1,67 @@
-﻿
-@inject IConfiguration Configuration
+﻿@inject IConfiguration Configuration
+@inject NavigationManager Navigation
+
+@using Microsoft.AspNetCore.Components.Authorization
+@inject AuthenticationStateProvider AuthStateProvider
 
 <link rel="stylesheet" href="@Assets["lib/bootstrap/dist/css/bootstrap.min.css"]" />
 
-<div class="">
+
+<div class="top-row navbar navbar-dark">
     <div class="container-fluid">
-        <a class="navbar-brand text-white text-center" href="">Ordis</a>
+        <span>
+            <img src="favicon.png" alt="favicon" style="border-radius:50%;" width="32" height="32">
+            <a class="navbar-brand" href="">0W3N</a>
+        </span>
     </div>
 </div>
 
 <input type="checkbox" title="Navigation menu" class="navbar-toggler" />
 
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-    <nav class="nav flex-column">
-        <!-- <div class="nav-item px-3"> -->
-            <!-- <NavLink class="nav-link" href="" Match="NavLinkMatch.All"> -->
-                <!-- <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home -->
-            <!-- </NavLink> -->
-        <!-- </div> -->
+    <div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
+        <nav class="nav flex-column">
+            <!-- <div class="nav-item px-3"> -->
+                <!-- <NavLink class="nav-link" href="" Match="NavLinkMatch.All"> -->
+                    <!-- <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home -->
+                <!-- </NavLink> -->
+            <!-- </div> -->
 
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="characters">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Characters
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-
-            <NavLink class="nav-link" href="@discordLoginUrl">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Log in
-            </NavLink>
-
-        </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="characters">
+                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Characters
+                </NavLink>
+            </div>
 
 
-        <!-- <div class="nav-item px-3"> -->
-            <!-- <NavLink class="nav-link" href="rolls"> -->
-                <!-- <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Rolls -->
-            <!-- </NavLink> -->
-        <!-- </div> -->
+ 
 
-        <!-- <div class="nav-item disabled px-3"> -->
-            <!-- <NavLink class="nav-link disabled" href="skills"> -->
-                <!-- <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Skill tree -->
-            <!-- </NavLink> -->
-        <!-- </div> -->
+            <!-- <div class="nav-item px-3"> -->
+                <!-- <NavLink class="nav-link" href="rolls"> -->
+                    <!-- <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Rolls -->
+                <!-- </NavLink> -->
+            <!-- </div> -->
+
+            <!-- <div class="nav-item disabled px-3"> -->
+                <!-- <NavLink class="nav-link disabled" href="skills"> -->
+                    <!-- <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Skill tree -->
+                <!-- </NavLink> -->
+            <!-- </div> -->
         
-    </nav>
-</div>
+            <div class="nav-item px-3 p-3 mt-auto">
+                <NavLink class="nav-link" href="@discordLoginUrl">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-person-fill" viewBox="0 0 16 16">
+                      <path d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6"/>
+                    </svg>
+                     Log in
+                </NavLink>
+            </div>
+        </nav>
+
+
+       </div>
+
+    
 
 
 @code {
@@ -58,10 +71,15 @@
     {
         var discordConfig = Configuration.GetSection("Discord");
         var clientId = discordConfig["ClientId"];
-        var redirect = "http://localhost:5018/auth/callback";
+
+        var uri = new Uri(Navigation.Uri);
+        var redirect = $"{uri.Scheme}://{uri.Host}{(uri.IsDefaultPort ? "" : $":{uri.Port}")}/auth/callback";
+       
         var state = Guid.NewGuid().ToString();
 
         discordLoginUrl =
             $"https://discord.com/api/oauth2/authorize?client_id={clientId}&redirect_uri={Uri.EscapeDataString(redirect)}&response_type=code&scope=identify&state={state}";
+
+            
     }
 }
