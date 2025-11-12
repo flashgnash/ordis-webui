@@ -39,12 +39,14 @@
   <!-- Globes -->
   <div class="d-flex">
     @foreach (var gauge in Char.Gauges) {
-    <Orb
-      Name="@gauge.Name"
-      Colour="@gauge.Colour"
-      Value="@gauge.Value"
-      Max="@gauge.Max"
-    />
+      @if(!(gauge?.Max == 0 && gauge?.Value == 0)) {
+      <Orb
+        Name="@gauge.Name"
+        Colour="@gauge.Colour"
+        Value="@gauge.Value"
+        Max="@gauge.Max"
+      />
+      }
     }
   </div>
 
