@@ -131,7 +131,7 @@
 
     private void ClearRoll()
     {
-        RollText = Character?.DefaultRoll ?? "1d100";
+        RollText = Character?.DefaultRoll.IsNullOrEmpty() ? "1d100" : Character?.DefaultRoll;
         LastResult = null;
         Advantage = 0;
         if(Character != null ) {
