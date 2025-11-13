@@ -18,6 +18,14 @@
   background: var(--bg-light);
 }
 
+html, body {
+  overscroll-behavior: none;
+  position: fixed;
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+}
+
 
 .striped-list {
   display: table;
