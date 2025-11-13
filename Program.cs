@@ -58,9 +58,11 @@ app.UseHttpsRedirection();
 app.UseAntiforgery();
 
 app.MapStaticAssets();
+
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
-
+     // .AddInteractiveServerRenderMode(o => o.ContentSecurityFrameAncestorsPolicy = "'self' *.mydomain.com");
+    
 
 var discordConfig = builder.Configuration.GetSection("Discord");
 var clientId = discordConfig["ClientId"];
