@@ -1,7 +1,5 @@
 ﻿@inject IConfiguration Configuration
 @inject NavigationManager Navigation
-
-@using Microsoft.AspNetCore.Components.Authorization
 @inject AuthenticationStateProvider AuthStateProvider
 
 <link rel="stylesheet" href="@Assets["lib/bootstrap/dist/css/bootstrap.min.css"]" />
@@ -47,7 +45,10 @@
                     <!-- <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Skill tree -->
                 <!-- </NavLink> -->
             <!-- </div> -->
-        
+
+
+            @if(loggedIn) {
+
             <div class="nav-item px-3 p-3 mt-auto">
                 <NavLink class="nav-link" href="@discordLoginUrl">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-person-fill" viewBox="0 0 16 16">
@@ -56,6 +57,8 @@
                      Log in
                 </NavLink>
             </div>
+                
+            }
         </nav>
 
 
@@ -66,8 +69,9 @@
 
 @code {
     string discordLoginUrl;
+    bool loggedIn; 
 
-    protected override void OnInitialized()
+    protected async override Task OnInitializedAsync()
     {
         var discordConfig = Configuration.GetSection("Discord");
         var clientId = discordConfig["ClientId"];
@@ -79,6 +83,13 @@
 
         discordLoginUrl =
             $"https://discord.com/api/oauth2/authorize?client_id={clientId}&redirect_uri={Uri.EscapeDataString(redirect)}&response_type=code&scope=identify&state={state}";
+
+
+    var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+    var user = authState.User;
+
+    loggedIn = user.FindFirst("discord_id")?.Value == null;
+
 
             
     }
