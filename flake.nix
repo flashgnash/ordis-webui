@@ -41,6 +41,8 @@
           shellHook = ''
             DOTNET_ROOT="${dotnetPkg}"
             DOTNET_SYSTEM_GLOBALIZATION_INVARIANT="1"
+
+            DOTNET_SYSTEM_CONSOLE_ALLOW_ANSI_COLOR_REDIRECTION=1
           '';
 
         };

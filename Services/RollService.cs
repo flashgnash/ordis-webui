@@ -20,9 +20,8 @@ public class RollService {
 
 		var response = await _http.PostAsync($"http://localhost:3000/roll/{character.Id}/{rollFormula}",null);
 
-		Console.WriteLine($"Response: \n\n{await response.Content.ReadAsStringAsync()}");
-
 		return await response.Content.ReadFromJsonAsync<RollResult>();
+
 	
 	}
 

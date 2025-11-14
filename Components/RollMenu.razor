@@ -1,6 +1,7 @@
 @rendermode InteractiveServer
 @inject RollService RollService
 @inject DiscordService DiscordService
+@inject ILogger<RollMenu> Logger
 <!-- Middle -->
 
 <Counter Title="Advantage" Id="Advantage" @bind-CounterValue="Advantage" @bind-CounterValue:after="UpdateAdvantage" />
@@ -60,6 +61,14 @@
 <div class="flex-shrink-1 m-auto">
   <div class="text-center m-auto h-100">
 
+    @if(LoadingRoll == true) {
+      <h2>Loading...</h2>
+    }
+
+    @if(ErrorMessage != null){
+      <h3 class="text-danger">@ErrorMessage</h3>
+    }
+
     <h2 class="">@LastResult?.Result</h2>
     <ul>
       @if(LastResult != null) {
@@ -77,12 +86,30 @@
 
 @code {
 
+    public String? ErrorMessage {get; set;}
+    public bool? LoadingRoll {get; set;}
+
     async Task Roll() {
 
-      var response = await RollService.RollFor(Character,RollText);    
+      try {
+          ErrorMessage = null;
+          LastResult = null;
+          LoadingRoll = true;        
+          var response = await RollService.RollFor(Character,RollText);    
 
-      await DiscordService.SendEmbedAsync($"Rolling for {Character.Name}...", response.Message);    
-      LastResult = response;
+          await DiscordService.SendEmbedAsync($"Rolling for {Character.Name}...", response.Message);    
+          LastResult = response;
+          LoadingRoll = false;
+        }
+        catch (HttpRequestException e){
+
+          Console.ForegroundColor = ConsoleColor.Red;
+          Console.WriteLine($"Caught error while rolling: {e.Message}");
+          Console.ResetColor();
+        
+          Logger.LogError(e.Message);
+          ErrorMessage = "Connection error. Ordis is probably down";
+        } 
     }
 
     public RollResult? LastResult {get; set;}
