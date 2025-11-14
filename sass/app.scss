@@ -190,10 +190,9 @@ button {
 
 .orb div{
   margin-top: auto;
-  background-image: url('https://wallpaperaccess.com/full/2994388.jpg');
+  background-image: url('https://scitechdaily.com/images/Superfluid-Concept.gif');
   background-size: contain;
-  background-color: red;
-  background-blend-mode: overlay;
+  background-blend-mode: color-dodge;
 }
 
 /* glassy overlay on top */
@@ -201,7 +200,7 @@ button {
   content: "";
   position: absolute;
   inset: 0;
-  backdrop-filter: blur(2px);
+  backdrop-filter: blur(1px);
   background: rgba(255,255,255,0.2);
   pointer-events: none;
 }
