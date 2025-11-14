@@ -10,3 +10,4 @@ obj
 dotnet/.env
 .env
 *.pfx
+wwwroot/app.css
