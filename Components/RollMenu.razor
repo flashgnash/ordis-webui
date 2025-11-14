@@ -62,7 +62,7 @@
   <div class="text-center h-100">
 
     @if(LoadingRoll == true) {
-      <h2>Loading...</h2>
+      <h3>Loading...</h3>
     }
 
     @if(ErrorMessage != null){
@@ -101,14 +101,20 @@
           LastResult = response;
           LoadingRoll = false;
         }
-        catch (HttpRequestException e){
-
+        catch (Exception e){
+          LoadingRoll = false;
           Console.ForegroundColor = ConsoleColor.Red;
-          Console.WriteLine($"Caught error while rolling: {e.Message}");
+          Console.WriteLine($"Caught exception: {e.Message}");
           Console.ResetColor();
-        
+
+          
           Logger.LogError(e.Message);
-          ErrorMessage = "Connection error. Ordis is probably down";
+
+          if(e is HttpRequestException)
+            ErrorMessage = "Connection error. Ordis is probably down";
+
+          if(e is InvalidRollException)
+            ErrorMessage = "Invalid roll";
         } 
     }
 
