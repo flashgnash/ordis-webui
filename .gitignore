@@ -11,3 +11,4 @@ dotnet/.env
 .env
 *.pfx
 wwwroot/app.css
+wwwroot/app.css.map
