@@ -34,6 +34,7 @@
             netcoredbg
             bruno
             omnisharp-roslyn
+            dart-sass
 
             sqlite
           ];

@@ -4,18 +4,15 @@
   --bg-dark: #192227;
   --bg-dark-transparent: #192227bb;
   --bg-light-transparent: #263238bb;
-
   --selected-list-item-color: #384951;
-
   --accent: #9dff00;
   --accent-dark: #8acc00;
   --text-colour: #ffffff;
-
   --button-color: #27383b;
-
   font-family: "Comic Mono";
   color: var(--text-colour);
   background: var(--bg-light);
+  --bs-primary: #9dff00 !important;
 }
 
 html, body {
@@ -25,7 +22,6 @@ html, body {
   width: 100%;
   height: 100%;
 }
-
 
 .striped-list {
   display: table;
@@ -43,29 +39,28 @@ html, body {
 .striped-list li:nth-child(odd) {
   background-color: #eeeeee;
 }
+
 .striped-list li:nth-child(even) {
   background-color: #efefef;
 }
 
-
 * {
   touch-action: manipulation;
 }
- dialog {
-    width: 80%;
-    height: 80%;
-  }
-  @media (max-width: 768px) {
-    dialog {
-      width: 100%;
-      height: 100%;
-    
-      margin: auto;
-      border-radius: 0;
-    }
-  }
 
+dialog {
+  width: 80%;
+  height: 80%;
+}
 
+@media (max-width: 768px) {
+  dialog {
+    width: 100%;
+    height: 100%;
+    margin: auto;
+    border-radius: 0;
+  }
+}
 button {
   background-color: var(--bg-light);
   color: var(--text-colour);
@@ -86,6 +81,7 @@ button {
   flex-direction: column;
   overflow: hidden;
 }
+
 .wrap {
   flex-wrap: wrap;
 }
@@ -109,9 +105,11 @@ button {
 .flex-grow-6 {
   flex-grow: 6;
 }
+
 .wrapped-label .body {
   /* flex-grow:2; */
 }
+
 .scrollable {
   overflow-y: auto;
 }
@@ -149,12 +147,11 @@ button {
   padding: 15px;
   text-align: left;
 }
+
 .roll-list td {
   padding: 15px;
-
   word-wrap: break-word; /* Breaks the text if needed but without breaking words */
   overflow-wrap: break-word; /* Ensure wrapping for long text */
-
   white-space: normal; /* Wrap at spaces and commas */
 }
 
@@ -162,24 +159,20 @@ button {
   margin: 10px;
 }
 
-
 .orb progress {
   --size: 100px; /* Orb size */
   /* --progress: calc((var(--value, 0) / var(--max, 100)) * 360deg); */
-
   /* appearance: none; */
   /* -webkit-appearance: none; */
   width: var(--size);
   height: var(--size);
   border-radius: 50%;
-
   /* background: radial-gradient(circle, #000 70%, #222 100%); */
   transform: rotate(-90deg); /* Start from the top */
 }
 
 .orb {
   --size: 100px; /* Orb size */
-
   width: var(--size);
   height: var(--size);
   border-radius: 50%;
@@ -201,6 +194,7 @@ button {
 .orb-blue::-moz-progress-bar {
   background: blue; /* For Firefox */
 }
+
 .orb-purple::-webkit-progress-value {
   background: purple; /* For WebKit browsers */
 }
@@ -216,6 +210,7 @@ button {
 .orb-yellow::-moz-progress-bar {
   background: orange; /* For Firefox */
 }
+
 .m-auto {
   margin: auto;
 }
@@ -224,7 +219,6 @@ button {
   margin: 10px;
 }
 
-
 .w-10 {
   width: 10%;
 }
@@ -232,6 +226,7 @@ button {
 .w-80 {
   width: 80%;
 }
+
 .h-80 {
   height: 80%;
 }
@@ -287,7 +282,7 @@ button {
 
 .form-group a,
 .form-group button,
-.form-group input[type="text"],
+.form-group input[type=text],
 .form-group select {
   background-color: var(--bg-lighter);
   padding: 5px;
@@ -306,12 +301,11 @@ button {
   padding: 15px;
   min-width: 150px;
   /* margin: 5px; */
-
   display: flex;
 }
 
-input[type="radio"],
-input[type="checkbox"] {
+input[type=radio],
+input[type=checkbox] {
   margin: auto;
   height: 30px;
   width: 30px;
@@ -335,11 +329,9 @@ input[type="checkbox"] {
     flex-wrap: wrap;
     align-items: center; /* Center align items (optional) */
   }
-
   .text-title {
     font-size: 30px;
   }
-
   .button-row {
     display: flex;
     flex-wrap: wrap;
@@ -348,7 +340,6 @@ input[type="checkbox"] {
     /* width: 20%; */
   }
 }
-
 .button-row button:last-child {
   border-radius: 0px 10px 10px 0px;
 }
@@ -356,6 +347,7 @@ input[type="checkbox"] {
 .button-row button:first-child {
   border-radius: 10px 0px 0px 10px;
 }
+
 .btn-primary {
   background-color: var(--accent);
   border-width: 0;
@@ -384,16 +376,17 @@ input[type="checkbox"] {
 }
 
 .row > * {
-	flex-shrink: 0;
-	width: unset !important;
-	max-width: 100%;
-	padding-right: calc(var(--bs-gutter-x) * .5);
-	padding-left: calc(var(--bs-gutter-x) * .5);
-	margin-top: var(--bs-gutter-y);
+  flex-shrink: 0;
+  width: unset !important;
+  max-width: 100%;
+  padding-right: calc(var(--bs-gutter-x) * 0.5);
+  padding-left: calc(var(--bs-gutter-x) * 0.5);
+  margin-top: var(--bs-gutter-y);
 }
-
 
 .col-md-2 {
-	flex: 0 0 auto;
-	width: %;
+  flex: 0 0 auto;
+  width: %;
 }
+
+/*# sourceMappingURL=app.css.map */
