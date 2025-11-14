@@ -2,8 +2,14 @@
 
 <div class="card flex-fill h-100 disable-dbl-tap-zoom ">
 	<div class="card-header">
-	  @Name
-	</div>
+		<span class="d-inline-flex align-items-center w-100 gap-1">
+			<svg width="1em" fill="currentColor" height="1em">
+			  @IconPath
+			</svg>
+
+			@Name
+		</span>
+</div>
 
 
 	<div class="card-body w-100 p-0">
@@ -24,5 +30,9 @@
   [Parameter]
   public IEnumerable<IDescriptable> Descriptables { get; set; }
 
+  protected async override Task OnInitializedAsync() {
+		IconPath = Constants.IconMap.GetValueOrDefault(Name.ToLower());
+	}
+	private MarkupString? IconPath;
 
 }
