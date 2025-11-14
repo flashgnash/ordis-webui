@@ -1,9 +1,10 @@
 name: build-publish
 
 on:
+  push:
+    branches: [ "master" ]
   pull_request:
-    types: [closed]
-    branches: [ main ]
+    branches: [ "master" ]
 
 jobs:
   build:
