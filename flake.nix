@@ -29,12 +29,20 @@
             openssl
             dotnetPkg
 
-            (pkgs.writeShellScriptBin "run" (''export $(grep -v '^#' .env | xargs) && dotnet watch run''))
+            (pkgs.writeShellScriptBin "compileSass" (''sass sass/app.scss wwwroot/app.css''))
+            (pkgs.writeShellScriptBin "watchSass" (''sass --watch sass/app.scss:wwwroot/app.css ''))
+
+            (pkgs.writeShellScriptBin "run" (''
+              export $(grep -v '^#' .env | xargs) && (watchSass &) && dotnet watch run
+
+            ''))
 
             netcoredbg
             bruno
             omnisharp-roslyn
             dart-sass
+
+            nodejs # Begrudgingly I need npm
 
             sqlite
           ];

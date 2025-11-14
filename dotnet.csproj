@@ -10,15 +10,15 @@
   <ItemGroup>
   </ItemGroup>
 
-  <Target Name="CompileSass" BeforeTargets="ComputeStaticWebAssetManifest">
-    <!-- Compile Sass to wwwroot -->
-    <Exec Command="sass sass/app.scss wwwroot/css/app.css" />
-  
-    <!-- Include generated CSS in Blazor static assets -->
-    <ItemGroup>
-      <Content Include="wwwroot/app.css" />
-    </ItemGroup>
+  <Target Name="NpmInstall" BeforeTargets="CompileSass" >
+    <!-- Install node modules (bootstrap) -->
+    <Exec Command="npm install" ContinueOnError="False" />
   </Target>
+
+  <Target Name="CompileSass" BeforeTargets="ComputeStaticWebAssetManifest;BeforeBuild">
+    <Exec Command="sass --load-path=node_modules sass/app.scss wwwroot/app.css" ContinueOnError="False" />
+  </Target>
+
 
   <ItemGroup>
     <PackageReference Include="DotNetEnv" Version="3.1.1" />
