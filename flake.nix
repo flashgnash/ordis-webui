@@ -32,21 +32,21 @@
             (pkgs.writeShellScriptBin "compileSass" (''sass sass/app.scss wwwroot/app.css''))
             (pkgs.writeShellScriptBin "watchSass" (''sass --watch sass/app.scss:wwwroot/app.css ''))
 
-            (pkgs.writeShellScriptBin "run" (''
+            (pkgs.writeShellScriptBin "run" ( #bash
+            ''
               export $(grep -v '^#' .env | xargs)
 
-
-              watchSass &
+              sass --watch sass/app.scss:wwwroot/app.css &
               p1=$!
 
-              ( dotnet watch run ) &
-              p2=$!
+              cleanup() {
+                  kid=$(pgrep -P "$p1")
+                  kill "$kid" "$p1" 2>/dev/null
+              }
+              trap cleanup EXIT
+              trap cleanup INT
 
-              wait -n "$p1" "$p2"
-              kill "$p1" "$p2" 2>/dev/null
-              wait
-
-  
+              dotnet watch run
             ''))
 
             netcoredbg
