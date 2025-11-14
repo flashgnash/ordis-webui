@@ -1,11 +1,11 @@
-$primary: #9DFF00;
-@import "bootstrap";
+/* $primary: #9DFF00; */
 
+@use "../node_modules/bootstrap/scss/bootstrap";
 
 :root {
   /* --bg-light: #263238; */
   /* --bg-lighter: #3c474c; */
-  --bg-dark: #192227;
+  --bg-dark: blue;
   --bg-dark-transparent: #192227bb;
   --bg-light-transparent: #263238bb;
 
