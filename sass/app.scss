@@ -1,6 +1,12 @@
-/* $primary: #9DFF00; */
 
-@use "../node_modules/bootstrap/scss/bootstrap";
+
+
+$primary: #075100;
+$danger: #ff4136;
+
+@import "../node_modules/bootstrap/scss/bootstrap";
+
+
 
 :root {
   /* --bg-light: #263238; */
@@ -363,13 +369,6 @@ input[type="checkbox"] {
 
 .button-row button:first-child {
   border-radius: 10px 0px 0px 10px;
-}
-.btn-primary {
-  background-color: var(--accent);
-  border-width: 0;
-  color: black;
-  padding: 5px;
-  border-radius: 10px;
 }
 
 .bg-dark {
