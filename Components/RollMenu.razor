@@ -58,8 +58,8 @@
   <button @onclick="Roll" class="btn btn-primary fs-3 flex-grow-1">Roll</button>
 </div>
 
-<div class="flex-shrink-1 m-auto">
-  <div class="text-center m-auto h-100">
+<div class="flex-shrink-1">
+  <div class="text-center h-100">
 
     @if(LoadingRoll == true) {
       <h2>Loading...</h2>
@@ -69,16 +69,16 @@
       <h3 class="text-danger">@ErrorMessage</h3>
     }
 
-    <h2 class="">@LastResult?.Result</h2>
-    <ul>
-      @if(LastResult != null) {
-        @foreach(IndividualRollResult roll in LastResult?.Rolls) {
-          <li>@(roll.Expression): @roll.Result</li>
-        
-        }
+    <h4><strong>@LastResult?.Result</strong></h4>
+      @if(LastResult?.Result != null) {
+        <span class="text-muted">
+        (@foreach (var g in LastResult?.Rolls.GroupBy(r => r.Expression)) {
+            <span>@g.Key: @string.Join(", ", g.Select(x => x.Result))</span>
+        })
+        </span>
+      
       }
 
-    </ul>
   </div>
 </div>
 
