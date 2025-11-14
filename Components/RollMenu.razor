@@ -1,0 +1,255 @@
+@rendermode InteractiveServer
+@inject RollService RollService
+@inject DiscordService DiscordService
+<!-- Middle -->
+
+<Counter Title="Advantage" Id="Advantage" @bind-CounterValue="Advantage" @bind-CounterValue:after="UpdateAdvantage" />
+
+
+
+@if(Character != null) {
+
+
+  @if(Character.SpecialStats != null){
+    <div id="specialStatButtons" class="m-1 d-flex flex-wrap gap-2 p-2">
+        @foreach (var stat in Character?.SpecialStats)
+        {
+            <button class="btn flex-fill @btnClasses[stat.Name]" @onclick="() => AddStat(stat.Name)">
+                + @stat.Name
+            </button>
+        }
+    </div>
+  }
+
+  @if(Character.Stats != null) {
+    <div id="statButtons" class="m-1 d-flex flex-wrap gap-2 p-2">
+        @foreach (var stat in Character?.Stats)
+        {
+            <button class="btn flex-fill @btnClasses[stat.Name]" @onclick="() => AddStat(stat.Name)">
+                + @Truncate(stat.Name)
+            </button>
+        }
+    </div>
+  }
+
+  @if(Character.SavedRolls != null) {
+    <div id="savedRolls" class="m-auto flex-grow-1">
+      <h3 class="text-center">Saved Rolls</h3>
+      @foreach (var kv in Character.SavedRolls)
+      {
+          <button class="btn btn-secondary @btnClasses[kv.Key] m-1" @onclick="() => SetRollText(kv.Value)">@kv.Key </button>
+      }      
+    </div>
+  }
+  
+}
+
+
+
+<div class="m-1 d-flex gap-2 flex-grow-2 bg-light text-black">
+  <input class="form-control fs-5" @bind="@RollText" />
+</div>
+
+<div class="m-1 d-flex gap-2 flex-grow-2">
+  <button class="btn btn-secondary fs-3 flex-grow-1" @onclick="ClearRoll">
+    Clear
+  </button>
+  <button @onclick="Roll" class="btn btn-primary fs-3 flex-grow-1">Roll</button>
+</div>
+
+<div class="flex-shrink-1 m-auto">
+  <div class="text-center m-auto h-100">
+
+    <h2 class="">@LastResult?.Result</h2>
+    <ul>
+      @if(LastResult != null) {
+        @foreach(IndividualRollResult roll in LastResult?.Rolls) {
+          <li>@(roll.Expression): @roll.Result</li>
+        
+        }
+      }
+
+    </ul>
+  </div>
+</div>
+
+
+
+@code {
+
+    async Task Roll() {
+
+      var response = await RollService.RollFor(Character,RollText);    
+
+      await DiscordService.SendEmbedAsync($"Rolling for {Character.Name}...", response.Message);    
+      LastResult = response;
+    }
+
+    public RollResult? LastResult {get; set;}
+
+    [Parameter]
+    public PlayerCharacter? Character { get; set; }
+
+    public int Advantage { get; set; }
+
+    public IEnumerable<Stat> Stats { get; set; }
+
+    [Parameter]
+    public bool? FlexFill { get; set; }
+
+    private string RollText;
+
+    Dictionary<string, string> btnClasses = new();
+
+    protected override void OnInitialized() {
+        ClearRoll();
+
+    }
+
+    private string Truncate(string input, int length = 3)
+    {
+        return input.Substring(0, Math.Min(length, input.Length));
+    }
+
+    void UpdateAdvantage() {
+        SetAdvantage(Advantage);
+    }
+
+    private void AddStat(string statName)
+    {
+        var strToReplace = $"+{statName.ToLower()}";
+    
+        if(RollText.Contains(strToReplace)) {
+            RollText = RollText.Replace(strToReplace,"");
+            btnClasses[statName] = "btn-secondary";
+        }
+        else {
+            RollText += strToReplace;
+            btnClasses[statName] = "btn-primary";
+        }
+    }
+
+    private void ClearRoll()
+    {
+        RollText = String.IsNullOrEmpty(Character?.DefaultRoll) ? "1d100" : Character?.DefaultRoll;
+        LastResult = null;
+        Advantage = 0;
+        if(Character != null ) {
+            if(Character?.Stats != null) {
+              foreach (var stat in Character?.Stats)
+                  btnClasses[stat.Name] = "btn-secondary";
+            }
+            if(Character?.SpecialStats != null ) {
+              foreach (var stat in Character?.SpecialStats)
+                btnClasses[stat.Name] = "btn-secondary";
+
+            }
+            if(Character?.SavedRolls != null) {
+              foreach (var savedRoll in Character?.SavedRolls)
+                btnClasses[savedRoll.Key] = "btn-secondary";
+            }
+        }
+    }
+
+    private void SetRollText(string rollText) {
+        RollText = rollText;
+        foreach (var key in btnClasses.Keys.ToList()) {
+            btnClasses[key] = RollText.Contains($"+{key.ToLower()}") ? "btn-primary" : "btn-secondary";
+        }
+
+    }
+
+    private void SetAdvantage(int adv)
+    {
+        var patternMax = new System.Text.RegularExpressions.Regex(@"max\(([^)]+)\)");
+        var patternMin = new System.Text.RegularExpressions.Regex(@"min\(([^)]+)\)");
+        var pattern1d = new System.Text.RegularExpressions.Regex(@"\b1d(\d+)\b");
+
+
+        // Find first group: max, min, or 1dX
+        if (patternMax.IsMatch(RollText))
+        {
+            RollText = patternMax.Replace(RollText, m =>
+            {
+                var inside = m.Groups[1].Value;
+                var parts = inside.Split(',');
+                if (parts.Length == 0) return m.Value;
+
+                var dice = parts[0].Trim();
+
+                if (adv > 0)
+                {
+                    var count = adv + 1;
+                    var newParts = new List<string>();
+                    for (int i = 0; i < count; i++)
+                        newParts.Add(dice);
+                    return $"max({string.Join(",", newParts)})";
+                }
+                else if (adv == 0)
+                {
+                    return dice;
+                }
+                else // adv < 0
+                {
+                    var count = Math.Abs(adv) + 1;
+                    if (count == 1) return dice;
+                    var newParts = new List<string>();
+                    for (int i = 0; i < count; i++)
+                        newParts.Add(dice);
+                    return $"min({string.Join(",", newParts)})";
+                }
+            }, 1);
+        }
+        else if (patternMin.IsMatch(RollText))
+        {
+            RollText = patternMin.Replace(RollText, m =>
+            {
+                var inside = m.Groups[1].Value;
+                var parts = inside.Split(',');
+                if (parts.Length == 0) return m.Value;
+
+                var dice = parts[0].Trim();
+
+                if (adv < 0)
+                {
+                    var count = Math.Abs(adv) + 1;
+                    var newParts = new List<string>();
+                    for (int i = 0; i < count; i++)
+                        newParts.Add(dice);
+                    return $"min({string.Join(",", newParts)})";
+                }
+                else if (adv == 0)
+                {
+                    return dice;
+                }
+                else // adv > 0
+                {
+                    var count = adv + 1;
+                    var newParts = new List<string>();
+                    for (int i = 0; i < count; i++)
+                        newParts.Add(dice);
+                    return $"max({string.Join(",", newParts)})";
+                }
+            }, 1);
+        }
+        else if (pattern1d.IsMatch(RollText))
+        {
+            RollText = pattern1d.Replace(RollText, m =>
+            {
+                var dice = m.Value;
+
+                if (adv == 0)
+                    return dice;
+
+                var count = Math.Abs(adv) + 1;
+                var fn = adv > 0 ? "max" : "min";
+
+                var newParts = new List<string>();
+                for (int i = 0; i < count; i++)
+                    newParts.Add(dice);
+
+                return $"{fn}({string.Join(",", newParts)})";
+            }, 1);
+        }
+    }
+}

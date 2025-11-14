@@ -1,0 +1,141 @@
+﻿@page "/characters/{characterId:int}"
+@inject PlayerCharacterService CharService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Navigation
+@attribute [Authorize(Policy = "HasDiscordId")]
+
+@if(Char != null){
+  <dialog id="rollDialog" class="rounded-4 shadow-sm border-0 disable-dbl-tap-zoom p-3">
+    <div class="d-flex flex-column h-100">
+      <!-- Header -->
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <span class="fs-3">🎲 Roll</span>
+        <button class="btn btn-danger" onclick="rollDialog.close()">X</button>
+      </div>
+
+      <RollMenu Character="@Char"/>
+
+    </div>
+  </dialog>
+
+  <div class="disable-dbl-tap-zoom container mt-4">
+    <div class="w-100 p-2">
+      <span class="fs-2">@Char.Name — Level @Char.Level </span>
+
+      <button
+        onClick="rollDialog.showModal()"
+        class="btn btn-primary float-right fs-2"
+      >
+        🎲
+      </button>
+    </div>
+
+    <br />
+
+    <!-- Stats -->
+    <div class="d-flex flex-wrap" style="text-size: 10px">
+      @if(Char?.Stats != null){
+      <StatBlock Stats="@Char.Stats" FlexFill="true" />
+      }
+    </div>
+
+    @if(Char?.Gauges != null){
+    <!-- Globes -->
+    <div class="d-flex">
+      @foreach (var gauge in Char.Gauges) {
+        @if(!(gauge?.Max == 0 && gauge?.Value == 0)) {
+        <Orb
+          Name="@gauge.Name"
+          Colour="@gauge.Colour"
+          Value="@gauge.Value"
+          Max="@gauge.Max"
+        />
+        }
+      }
+    </div>
+
+    }
+
+
+
+    <div class="">
+
+      <div class="flex-grow-2 flex-row flex-wrap">
+  
+        @if(Char?.Hunger != null && Char?.Hunger != 0) {
+          <div class="card flex-fill">
+            <div class="card-header">Hunger:</div>
+
+            <div class="card-body fs-7">
+
+              <span>@Char.Hunger / 10</span>
+              <br/>
+              <span class="d-none d-md-inline">
+                <CharBar  Repeat="@(Char.Hunger ?? 10)" Icon="🍖" />
+              </span>
+            </div>
+          </div>
+        }
+     
+
+        <!-- @if(Char?.Hunger != null) { -->
+          <!-- <div class="card flex-fill"> -->
+            <!-- <div class="card-header">Exhaustion:</div> -->
+
+            <!-- <div class="card-body fs-7"> -->
+
+              <!-- <span>3 / 3</span> -->
+              <!-- <br/> -->
+              <!-- <span class="d-none d-md-inline"> -->
+                <!-- <CharBar  Repeat="@(3)" Icon="😵‍💫" /> -->
+              <!-- </span> -->
+            <!-- </div> -->
+          <!-- </div> -->
+        <!-- } -->
+      </div>
+    </div>
+
+    <div class="d-flex flex-wrap">
+
+
+      <div class="flex-row flex-grow-1">
+        <div class="flex-fill">
+          <DescriptableList Name="🎒 Inventory" Descriptables="@(Char.Inventory.Cast<IDescriptable>())"/>
+        </div>
+
+        <div class="flex-fill">
+          <DescriptableList Name="📔 Spells" Descriptables="@(Char.Spells.Cast<IDescriptable>())"/>
+        </div>
+      </div>
+
+    </div>
+  </div>
+}
+else{
+  <h1>Either this character doesn't exist or you don't have access</h1>
+}
+@code {
+  PlayerCharacter? Char;
+  [Parameter] public int CharacterId { get; set; }
+
+  protected async override Task OnInitializedAsync() {
+    var character = CharService.GetById(CharacterId);
+
+    var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+    var user = authState.User;
+
+    var discordId = user.FindFirst("discord_id")?.Value ?? "Not logged in";
+
+    // Only present the user with data if they are the character's owner
+    // (this is only safe because I'm using serverside blazor)
+    if(character?.UserId == discordId) {
+      Char = character;
+    }
+    else {
+      Navigation.NavigateTo("/forbidden");
+    }
+  }
+
+
+  
+ }

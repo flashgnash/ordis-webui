@@ -1,0 +1,46 @@
+@rendermode InteractiveServer
+
+
+
+<div class="disable-dbl-tap-zoom m-1 d-flex gap-2 flex-grow-2 bg-light text-black">
+  <button class="btn btn-secondary fs-5"
+    @onclick="Decrement" >
+    -
+  </button>
+
+  <div class="flex-grow-1 text-center fs-5 bg-light text-black">
+    @Title: 
+    <br>
+    <input type="number" class="form-control text-center" @bind="@CounterValue"/>
+  </div>
+ 
+
+  <button class="btn btn-primary fs-5 "
+    @onclick="Increment">
+    +
+  </button>
+</div>
+
+@code {
+  [Parameter]
+  public string Title {get; set;}
+
+  [Parameter]
+  public string Id {get; set;}
+
+  [Parameter]
+  public int CounterValue {get; set;} = 0;
+
+  [Parameter]
+  public EventCallback<int> CounterValueChanged { get; set; }
+
+  private void Increment() {
+    CounterValue++;
+    CounterValueChanged.InvokeAsync(CounterValue);
+  }
+
+  private void Decrement() {
+    CounterValue--;
+    CounterValueChanged.InvokeAsync(CounterValue);
+  }
+}

@@ -1,2 +1,12 @@
 .direnv
 node_modules
+
+**/**/bin
+**/**/obj
+*/obj
+*/bin
+bin
+obj
+dotnet/.env
+.env
+*.pfx

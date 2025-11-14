@@ -1,0 +1,37 @@
+<div class="card border-0 flex-fill m-2">
+  @if(Name != null) {
+    <div class="card-header text-center">@Name</div>
+  }
+
+  <div class="card-body">
+    <div class="orb m-bottom-10">
+      <progress
+        class="orb-@(Colour)"
+        value="@Value"
+        max="@Max"
+      ></progress>
+    </div>
+
+    <div class="flex-row m-auto">
+      <div class="m-auto">@Value</div>
+      <div class="m-auto">|</div>
+
+      <div class="m-auto">@Max</div>
+    </div>
+  </div>
+</div>
+
+
+@code {
+  [Parameter]
+  public string? Name { get; set; }
+
+  [Parameter]
+  public string Colour { get; set; }
+
+  [Parameter]
+  public int Value { get; set; }
+
+  [Parameter]
+  public int Max { get; set; }
+}

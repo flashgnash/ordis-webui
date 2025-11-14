@@ -1,0 +1,399 @@
+:root {
+  /* --bg-light: #263238; */
+  /* --bg-lighter: #3c474c; */
+  --bg-dark: #192227;
+  --bg-dark-transparent: #192227bb;
+  --bg-light-transparent: #263238bb;
+
+  --selected-list-item-color: #384951;
+
+  --accent: #9dff00;
+  --accent-dark: #8acc00;
+  --text-colour: #ffffff;
+
+  --button-color: #27383b;
+
+  font-family: "Comic Mono";
+  color: var(--text-colour);
+  background: var(--bg-light);
+}
+
+html, body {
+  overscroll-behavior: none;
+  position: fixed;
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+}
+
+
+.striped-list {
+  display: table;
+  width: 100%;
+  border-collapse: collapse;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.striped-list li {
+  display: table-row;
+}
+
+.striped-list li:nth-child(odd) {
+  background-color: #eeeeee;
+}
+.striped-list li:nth-child(even) {
+  background-color: #efefef;
+}
+
+
+* {
+  touch-action: manipulation;
+}
+ dialog {
+    width: 80%;
+    height: 80%;
+  }
+  @media (max-width: 768px) {
+    dialog {
+      width: 100%;
+      height: 100%;
+    
+      margin: auto;
+      border-radius: 0;
+    }
+  }
+
+
+button {
+  background-color: var(--bg-light);
+  color: var(--text-colour);
+  border: 0;
+}
+
+.vertical-center {
+  margin-top: auto;
+  margin-bottom: auto;
+}
+
+.main-flex {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-wrap: 1;
+  margin: 0px;
+  flex-direction: column;
+  overflow: hidden;
+}
+.wrap {
+  flex-wrap: wrap;
+}
+
+.wrapped-label {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.wrapped-label .header {
+  font-size: 20px;
+  height: 100%;
+  margin: auto;
+  flex-grow: 1;
+}
+
+.flex-grow-5 {
+  flex-grow: 5;
+}
+
+.flex-grow-6 {
+  flex-grow: 6;
+}
+.wrapped-label .body {
+  /* flex-grow:2; */
+}
+.scrollable {
+  overflow-y: auto;
+}
+
+.roll-list {
+  margin: 5px;
+  padding: 0;
+  table-layout: fixed;
+  overflow: scroll;
+}
+
+.float-right {
+  float: right;
+}
+
+.roll-list tr:nth-child(even) {
+  background-color: var(--bg-dark);
+  color: var(--text-colour);
+}
+
+.roll-list tr:nth-child(odd) {
+  background-color: var(--bg-light);
+  color: var(--text-colour);
+}
+
+.p-10 {
+  padding: 10px;
+}
+
+.rounded {
+  border-radius: 15px;
+}
+
+.roll-list th {
+  padding: 15px;
+  text-align: left;
+}
+.roll-list td {
+  padding: 15px;
+
+  word-wrap: break-word; /* Breaks the text if needed but without breaking words */
+  overflow-wrap: break-word; /* Ensure wrapping for long text */
+
+  white-space: normal; /* Wrap at spaces and commas */
+}
+
+.card {
+  margin: 10px;
+}
+
+
+.orb progress {
+  --size: 100px; /* Orb size */
+  /* --progress: calc((var(--value, 0) / var(--max, 100)) * 360deg); */
+
+  /* appearance: none; */
+  /* -webkit-appearance: none; */
+  width: var(--size);
+  height: var(--size);
+  border-radius: 50%;
+
+  /* background: radial-gradient(circle, #000 70%, #222 100%); */
+  transform: rotate(-90deg); /* Start from the top */
+}
+
+.orb {
+  --size: 100px; /* Orb size */
+
+  width: var(--size);
+  height: var(--size);
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.orb-red::-webkit-progress-value {
+  background: red; /* For WebKit browsers */
+}
+
+.orb-red::-moz-progress-bar {
+  background: red; /* For Firefox */
+}
+
+.orb-blue::-webkit-progress-value {
+  background: blue; /* For WebKit browsers */
+}
+
+.orb-blue::-moz-progress-bar {
+  background: blue; /* For Firefox */
+}
+.orb-purple::-webkit-progress-value {
+  background: purple; /* For WebKit browsers */
+}
+
+.orb-purple::-moz-progress-bar {
+  background: purple; /* For Firefox */
+}
+
+.orb-yellow::-webkit-progress-value {
+  background: orange; /* For WebKit browsers */
+}
+
+.orb-yellow::-moz-progress-bar {
+  background: orange; /* For Firefox */
+}
+.m-auto {
+  margin: auto;
+}
+
+.m-10 {
+  margin: 10px;
+}
+
+
+.w-10 {
+  width: 10%;
+}
+
+.w-80 {
+  width: 80%;
+}
+.h-80 {
+  height: 80%;
+}
+
+.w-100 {
+  width: 100%;
+}
+
+.card-body {
+  margin: auto;
+  text-align: center;
+}
+
+.text-title {
+  font-size: 40px;
+  text-align: center;
+  margin: auto;
+}
+
+.flex-row {
+  display: flex;
+  flex-direction: row;
+  /* margin: 5px; */
+}
+
+.flex-wrap {
+  flex-wrap: wrap;
+}
+
+.button-row {
+  display: flex;
+  flex-wrap: nowrap;
+}
+
+.form-group {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  gap: 5px;
+  flex-grow: 5;
+  margin-left: 10px;
+  margin-right: 10px;
+  margin-bottom: 10px;
+}
+
+.form-group label {
+  padding: 5px;
+  color: var(--text-colour);
+  border-width: 0;
+  font-size: 18px;
+  margin: auto;
+}
+
+.form-group a,
+.form-group button,
+.form-group input[type="text"],
+.form-group select {
+  background-color: var(--bg-lighter);
+  padding: 5px;
+  color: white;
+  border-width: 0;
+  font-size: 18px;
+  width: 100%;
+  margin: auto;
+}
+
+.button-row .form-group {
+  background-color: var(--bg-light);
+  color: white;
+  border-width: 0;
+  font-size: 18px;
+  padding: 15px;
+  min-width: 150px;
+  /* margin: 5px; */
+
+  display: flex;
+}
+
+input[type="radio"],
+input[type="checkbox"] {
+  margin: auto;
+  height: 30px;
+  width: 30px;
+}
+
+.mw-40 {
+  min-width: 40%;
+}
+
+.mw-400px {
+  min-width: 400px;
+}
+
+.grow-4 {
+  flex-grow: 4;
+}
+
+@media (max-width: 900px) {
+  .wrap-on-mobile {
+    /* flex-direction: column; /* Stack panels vertically */
+    flex-wrap: wrap;
+    align-items: center; /* Center align items (optional) */
+  }
+
+  .text-title {
+    font-size: 30px;
+  }
+
+  .button-row {
+    display: flex;
+    flex-wrap: wrap;
+  }
+  .button-row .form-group {
+    /* width: 20%; */
+  }
+}
+
+.button-row button:last-child {
+  border-radius: 0px 10px 10px 0px;
+}
+
+.button-row button:first-child {
+  border-radius: 10px 0px 0px 10px;
+}
+.btn-primary {
+  background-color: var(--accent);
+  border-width: 0;
+  color: black;
+  padding: 5px;
+  border-radius: 10px;
+}
+
+.bg-dark {
+  background-color: var(--bg-dark);
+  color: white;
+}
+
+.bg-light {
+  background-color: var(--bg-light);
+  color: white;
+}
+
+.bg-accent {
+  background-color: var(--accent);
+  color: black;
+}
+
+.m-bottom-10 {
+  margin-bottom: 10px;
+}
+
+.row > * {
+	flex-shrink: 0;
+	width: unset !important;
+	max-width: 100%;
+	padding-right: calc(var(--bs-gutter-x) * .5);
+	padding-left: calc(var(--bs-gutter-x) * .5);
+	margin-top: var(--bs-gutter-y);
+}
+
+
+.col-md-2 {
+	flex: 0 0 auto;
+	width: %;
+}
