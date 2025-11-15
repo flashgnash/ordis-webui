@@ -1,6 +1,6 @@
 using System.Security.Claims;
 using System.Text.Json;
-using dotnet.Components;
+using Ordis.Components;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using DotNetEnv;
@@ -44,6 +44,9 @@ builder.WebHost.ConfigureKestrel((context, options) => {
 });   
 var app = builder.Build();
 
+
+
+
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
@@ -69,7 +72,7 @@ var clientId = discordConfig["ClientId"];
 var clientSecret = discordConfig["ClientSecret"];
 
 
-var baseUrl = Environment.GetEnvironmentVariable("ASPNETCORE_URLS");
+var baseUrl = Environment.GetEnvironmentVariable("ASPNETCORE_Kestrel__Endpoints__Https__Url");
 
 // Should move this somewhere else - currently unsure of how to implement API endpoints in a blazor pages setup
 // At the very least it should be made into a separate function in another file and called from here
