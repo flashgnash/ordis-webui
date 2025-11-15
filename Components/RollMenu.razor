@@ -10,37 +10,47 @@
 
 @if(Character != null) {
 
-
+  <div class="d-flex flex-row flex-nowrap">
   @if(Character.SpecialStats != null){
-    <div id="specialStatButtons" class="m-1 d-flex flex-wrap gap-2 p-2">
-        @foreach (var stat in Character?.SpecialStats)
-        {
-            <button class="btn flex-fill @btnClasses[stat.Name]" @onclick="() => AddStat(stat.Name)">
-                + @stat.Name
-            </button>
-        }
+    <div >
+      <h3 class="text-center">Special</h3>
+        <div id="specialStatButtons" class="m-1 d-flex flex-wrap gap-2 p-2">
+            @foreach (var stat in Character?.SpecialStats)
+            {
+                <button class="btn flex-fill p-2 @btnClasses[stat.Name]" @onclick="() => AddStat(stat.Name)">
+                    + @stat.Name
+                </button>
+            }
+        </div>
     </div>
   }
 
-  @if(Character.Stats != null) {
-    <div id="statButtons" class="m-1 d-flex flex-wrap gap-2 p-2">
-        @foreach (var stat in Character?.Stats)
-        {
-            <button class="btn flex-fill @btnClasses[stat.Name]" @onclick="() => AddStat(stat.Name)">
-                + @Truncate(stat.Name)
-            </button>
-        }
+  @if(Character.Stats != null){
+    <div >
+      <h3 class="text-center"> Stats</h3>
+        <div id="statButtons" class="m-1 d-flex flex-wrap gap-2 p-2">
+            @foreach (var stat in Character?.Stats)
+            {
+                <button class="btn p-2 flex-fill @btnClasses[stat.Name]" @onclick="() => AddStat(stat.Name)">
+                    + @stat.Name
+                </button>
+            }
+        </div>
     </div>
   }
+</div>
 
   @if(Character.SavedRolls != null) {
     <div id="savedRolls" class="m-auto flex-grow-1">
-      <h3 class="text-center">Saved Rolls</h3>
+      <h3 class="text-center">Custom Rolls</h3>
+    <div class="d-flex">
       @foreach (var kv in Character.SavedRolls)
       {
-          <button class="btn btn-secondary @btnClasses[kv.Key] m-1" @onclick="() => SetRollText(kv.Value)">@kv.Key </button>
-      }      
+          <button class="btn btn-secondary flex-fill @btnClasses[kv.Key] m-1" @onclick="() => SetRollText(kv.Value)">@kv.Key </button>
+      }
+    </div>      
     </div>
+    <br>
   }
   
 }
@@ -50,6 +60,7 @@
 <div class="m-1 d-flex gap-2 flex-grow-2 bg-light text-black">
   <input class="form-control fs-5" @bind="@RollText" />
 </div>
+<br>
 
 <div class="m-1 d-flex gap-2 flex-grow-2">
   <button class="btn btn-secondary fs-3 flex-grow-1" @onclick="ClearRoll">
