@@ -184,17 +184,31 @@ button {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  background: rgba(255, 255, 255, 0.1); /* subtle glass */
+  background: rgba(150, 150, 150, 0.3); /* subtle glass */
   border: 5px solid rgba(255,255,255,0.3);
 }
 
-.orb div{
+.orb div {
+  position: relative;
+  overflow: hidden;      /* keep tint inside */
   margin-top: auto;
   background-image: url('https://scitechdaily.com/images/Superfluid-Concept.gif');
   background-size: contain;
-  background-blend-mode: color-dodge;
+  background-blend-mode: luminosity;
+  background-color: var(--orb-colour);
 }
 
+/* Tint the orb because the colour mix is a little washed out */
+.orb div::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+
+  background: color-mix(in srgb, var(--orb-colour) 60%, transparent);
+  opacity: 0.6;          /* adjust strength */
+  mix-blend-mode: normal; /* or keep luminosity if want */
+  pointer-events: none;
+}
 /* glassy overlay on top */
 .orb::after {
   content: "";

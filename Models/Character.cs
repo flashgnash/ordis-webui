@@ -100,8 +100,8 @@ public class PlayerCharacter
             if (CurrentSoul.HasValue && MaxSoul.HasValue)
                 gauges.Add(new Gauge { Name = "Soul", Value = CurrentSoul.Value, Max = MaxSoul.Value });
 
-            if (CurrentArmour.HasValue && MaxArmour.HasValue)
-                gauges.Add(new Gauge { Name = "Armour", Value = CurrentArmour.Value, Max = MaxArmour.Value });
+            // if (CurrentArmour.HasValue && MaxArmour.HasValue)
+            //     gauges.Add(new Gauge { Name = "Armour", Value = CurrentArmour.Value, Max = MaxArmour.Value });
 
             return gauges;
         }
