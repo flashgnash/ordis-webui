@@ -2,20 +2,19 @@
 
 
 
-<div class="disable-dbl-tap-zoom m-1 d-flex gap-2 flex-grow-2 bg-light text-black">
-  <button class="btn btn-secondary fs-5"
+    @Title: 
+<div class="disable-dbl-tap-zoom m-1 d-flex gap-2 flex-grow-2  text-black">
+  <button class="btn btn-secondary fs-5 flex-grow-1"
     @onclick="Decrement" >
     -
   </button>
 
-  <div class="flex-grow-1 text-center fs-5 bg-light text-black">
-    @Title: 
-    <br>
+  <div class="flex-grow-1 text-center fs-5">
     <input type="number" class="form-control text-center" @bind="@CounterValue"/>
   </div>
  
 
-  <button class="btn btn-primary fs-5 "
+  <button class="btn btn-primary fs-5 flex-grow-1 "
     @onclick="Increment">
     +
   </button>

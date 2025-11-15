@@ -5,19 +5,23 @@
 @attribute [Authorize(Policy = "HasDiscordId")]
 @if (Char != null)
 {
-    <dialog id="rollDialog" class="rounded-4 shadow-sm border-0 disable-dbl-tap-zoom p-3">
-        <div class="d-flex flex-column h-100">
+    <dialog id="rollDialog" class="h-50 bg-light rounded-4 shadow-lg border-0 disable-dbl-tap-zoom p-0">
+        <div class="d-flex flex-column h-100 ">
             <!-- Header -->
-            <div class="d-flex justify-content-between align-items-center mb-2">
-                <span class="fs-3">
+            <div class="d-flex justify-content-between align-items-center bg-dark">
+                <span class="fs-3 m-3">
                     <i class="bi bi-dice-5"></i>
                     Roll
                 </span>
-                <button class="btn btn-danger" onclick="rollDialog.close()">
-                    X
+                <button class="btn btn-danger h-100" onclick="rollDialog.close()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-x" viewBox="0 0 16 16">
+                      <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708"/>
+                    </svg>                
                 </button>
             </div>
-            <RollMenu Character="@Char" />
+            <div class=p-3>
+                <RollMenu Character="@Char" />
+            </div>
         </div>
     </dialog>
     <div class="disable-dbl-tap-zoom container mt-4 vh-100" style="overflow: scroll">
@@ -46,27 +50,30 @@
             </div>
         </div>
         
-        <!-- Stats -->
-        <div class="d-flex flex-wrap" style="text-size: 10px">
+        <div class="d-flex flex-wrap gap-1" style="text-size: 10px">
             @if (Char?.Stats != null)
             {
-                <StatBlock Stats="@Char.Stats" FlexFill="true" />
+                <StatBlock Stats="@Char.Stats" />
             }
         </div>
+        <!-- Stats -->
         @if (Char?.Gauges != null)
         {
             <!-- Globes -->
-            <div class="d-flex">
+            <div class="d-flex gap-2">
                 @foreach (var gauge in Char.Gauges)
                 {
                     @if (!(gauge?.Max == 0 && gauge?.Value == 0))
                     {
-                        <Orb
-                            Name="@gauge.Name"
-                            Colour="@gauge.Colour"
-                            Value="@gauge.Value"
-                            Max="@gauge.Max" />
+
+                            <Orb
+                                Name="@gauge.Name"
+                                Colour="@gauge.Colour"
+                                Value="@gauge.Value"
+                                Max="@gauge.Max" />
+
                     }
+                            
                 }
             </div>
         }
@@ -115,6 +122,8 @@
                 <!-- } -->
             </div>
         </div>
+
+
         <div class="d-flex flex-wrap">
             <div class="flex-row flex-grow-1">
                 <div class="flex-fill">
@@ -125,6 +134,8 @@
                 </div>
             </div>
         </div>
+
+        
         <!-- Quick and dirty margin at the bottom if scrolling -->
         <br>
         <br>

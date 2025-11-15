@@ -1,21 +1,28 @@
-@foreach (var stat in Stats) {
-  <div class="card m-2 @FlexFillClass" style="max-height: 80px">
-    <div class="card-header text-center text-uppercase p-1" >@Truncate(stat.Name)</div>
-    <div class="card-body p-0" style="width: 45px;">
-      <p class="color-white">@stat.Value</p>
-    </div>
-  </div>
+@{
+    var list = Stats.ToList();
+    var rows = (int)Math.Ceiling(list.Count / 5.0);
+    var per = (int)Math.Ceiling(list.Count / (double)rows);
 }
+
+<div class="d-flex flex-column gap-2 w-100 m-2">
+@for (int r = 0; r < rows; r++)
+{
+    <div class="d-flex gap-2">
+    @foreach (var stat in list.Skip(r * per).Take(per))
+    {
+        <div class="bg-dark p-1 rounded-3 text-white flex-fill" style="max-height:80px;">
+            <div class="text-uppercase text-center">@Truncate(stat.Name)</div>
+            <div class="d-flex w-100">
+                <p class="color-white m-auto text-center w-100">@stat.Value</p>
+            </div>
+        </div>
+    }
+    </div>
+}
+</div>
+
 @code {
-  [Parameter]
-  public IEnumerable<Stat> Stats {get; set;}
+  [Parameter] public IEnumerable<Stat> Stats { get; set; }
 
-  [Parameter]
-  public bool? FlexFill {get; set;}
-
-  private string Truncate(string input) {
-    return input.Substring(0, Math.Min(3, input.Length));
-  } 
-
-  private string FlexFillClass => FlexFill ?? false ? "flex-fill" : "";
+  private string Truncate(string s) => s[..Math.Min(3, s.Length)];
 }

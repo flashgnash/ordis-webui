@@ -1,23 +1,14 @@
-<div class="card border-0 flex-fill m-2">
-  @if(Name != null) {
-    <div class="card-header text-center">@Name</div>
-  }
-
-  <div class="card-body">
-
-  <div class="orb">
-    <div style="height:@Percentage%; --orb-colour:@Colour"></div>
-  </div>
 
 
-    <div class="flex-row m-auto">
-      <div class="m-auto">@Value</div>
-      <div class="m-auto">|</div>
+<div class="orb m-auto" style="max-width: 40%">
 
-      <div class="m-auto">@Max</div>
-    </div>
+  <div class="orb-label">@Name @Value/@Max</div>
+
+
+  <div class="orb-liquid" style="height:@Percentage%; --orb-colour:@Colour">
   </div>
 </div>
+
 
 
 @code {
@@ -30,7 +21,7 @@
   [Parameter]
   public int Value { get; set; }
 
-  private float Percentage => ((float)Value / (float)Max)*50;
+  private float Percentage => ((float)Value / (float)Max)*100;
 
   [Parameter]
   public int Max { get; set; }

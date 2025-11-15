@@ -1,21 +1,34 @@
 
-
-
+$text-colour: #ffffff;
 $primary: #075100;
+$secondary: #192227;
+$light: #263238;
+$dark: #192227;
 $danger: #ff4136;
+$card-bg: $dark;
+$card-color: $text-colour;
+$card-cap-color: $text-colour;
+
 
 @import "../node_modules/bootstrap/scss/bootstrap";
 
-
+.text-muted {
+  color: #aaaaaa !important;
+}
 
 :root {
   /* --bg-light: #263238; */
   /* --bg-lighter: #3c474c; */
   --bg-dark: #192227;
+  --bg-light: #263238;
   --bg-dark-transparent: #192227bb;
   --bg-light-transparent: #263238bb;
 
+
+
   --selected-list-item-color: #384951;
+
+
 
   --accent: #9dff00;
   --accent-dark: #8acc00;
@@ -32,12 +45,15 @@ $danger: #ff4136;
   
 }
 
+
 html, body {
   overscroll-behavior: none;
   position: fixed;
   overflow: hidden;
   width: 100%;
   height: 100%;
+  background: var(--bg-light);
+  color: var(--text-colour);
 }
 
 
@@ -178,17 +194,17 @@ button {
 
 .orb {
   position: relative;
-  height: 200px;
-  width: 200px;
+  width: 100%;
+  aspect-ratio: 1 / 1; /* keep height same as width */
   border-radius: 50%;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  background: rgba(150, 150, 150, 0.3); /* subtle glass */
+  background: rgba(150, 150, 150, 0.3);
   border: 5px solid rgba(255,255,255,0.3);
 }
 
-.orb div {
+.orb .orb-liquid {
   position: relative;
   overflow: hidden;      /* keep tint inside */
   margin-top: auto;
@@ -218,6 +234,22 @@ button {
   background: rgba(255,255,255,0.2);
   pointer-events: none;
 }
+
+.orb-label {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-weight: bold;
+  z-index: 2;
+  pointer-events: none;
+  background: rgba(0,0,0,0.2);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+
 
 .m-auto {
   margin: auto;
