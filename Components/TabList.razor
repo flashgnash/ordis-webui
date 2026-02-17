@@ -1,0 +1,36 @@
+<CascadingValue Value="this">
+    <div class="tabs @Class" style="@Style" @attributes="AdditionalAttributes">
+        @foreach (var t in Tabs)
+        {
+            <button @onclick="() => Active = t"
+                    class="@(t == Active ? "active" : "")">
+                @t.Name
+            </button>
+        }
+    </div>
+
+    <div class="tab-body">
+        @Active?.ChildContent
+    </div>
+
+    @ChildContent
+</CascadingValue>
+
+@code {
+    internal List<Tab> Tabs = new();
+    internal Tab? Active;
+
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    [Parameter] public string? Class { get; set; }
+    [Parameter] public string? Style { get; set; }
+
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    internal void Register(Tab tab)
+    {
+        Tabs.Add(tab);
+        Active ??= tab;
+    }
+}
