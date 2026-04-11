@@ -23,23 +23,17 @@
           ...
         }:
         let
-          cfg = config.services.ordis;
+          cfg = config.services.ow3n;
         in
         {
-          options.services.ordis = {
-            enable = lib.mkEnableOption "Ordis Blazor server app";
+          options.services.ow3n = {
+            enable = lib.mkEnableOption "OW3N Blazor server app";
 
             package = lib.mkOption {
               type = lib.types.package;
               default = self.packages.${pkgs.system}.default;
               defaultText = lib.literalExpression "self.packages.\${pkgs.system}.default";
-              description = "The Ordis package to run.";
-            };
-
-            port = lib.mkOption {
-              type = lib.types.port;
-              default = 5000;
-              description = "HTTP port for Kestrel.";
+              description = "The OW3N package to run.";
             };
 
             httpsPort = lib.mkOption {
@@ -77,19 +71,19 @@
 
             user = lib.mkOption {
               type = lib.types.str;
-              default = "ordis";
-              description = "User account under which Ordis runs.";
+              default = "ow3n";
+              description = "User account under which OW3N runs.";
             };
 
             group = lib.mkOption {
               type = lib.types.str;
-              default = "ordis";
-              description = "Group under which Ordis runs.";
+              default = "ow3n";
+              description = "Group under which OW3N runs.";
             };
 
             dataDir = lib.mkOption {
               type = lib.types.path;
-              default = "/var/lib/ordis";
+              default = "/var/lib/ow3n";
               description = "Working directory / state directory for the service.";
             };
           };
@@ -104,8 +98,8 @@
 
             users.groups.${cfg.group} = { };
 
-            systemd.services.ordis = {
-              description = "Ordis Blazor Server";
+            systemd.services.ow3n = {
+              description = "OW3N Blazor Server";
               after = [
                 "network.target"
                 "postgresql.service"
@@ -116,10 +110,9 @@
                 let
                   urls =
                     let
-                      http = "http://0.0.0.0:${toString cfg.port}";
                       https = lib.optionalString (cfg.httpsPort != null) ";https://0.0.0.0:${toString cfg.httpsPort}";
                     in
-                    "${http}${https}";
+                    "${https}";
                 in
                 {
                   ASPNETCORE_URLS = urls;
@@ -132,7 +125,7 @@
                 // cfg.environment;
 
               serviceConfig = {
-                Type = "notify";
+                Type = "simple";
                 ExecStart = "${cfg.package}/bin/Ordis";
                 WorkingDirectory = cfg.dataDir;
                 User = cfg.user;
@@ -170,7 +163,7 @@
       {
 
         packages.default = pkgs.buildDotnetModule {
-          pname = "ordis";
+          pname = "ow3n";
           version = "0.1.0";
           src = ./.;
 
@@ -199,14 +192,14 @@
 
           postFixup = ''
             substituteInPlace $out/bin/Ordis \
-              --replace-fail 'exec' 'cd ${placeholder "out"}/lib/ordis && exec'
+              --replace-fail 'exec' 'cd ${placeholder "out"}/lib/ow3n && exec'
           '';
 
           # npmConfigHook handles node_modules, so no manual npm install needed.
           # sass + MSBuild targets just work since node_modules is in place.
 
           meta = {
-            description = "Ordis - Blazor Server application";
+            description = "OW3N - Blazor Server application";
             mainProgram = "Ordis";
           };
         };
