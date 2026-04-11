@@ -9,14 +9,6 @@ public partial class User
 
     public int? Count { get; set; }
 
-    public string? StatBlockHash { get; set; }
-
-    public string? StatBlock { get; set; }
-
-    public string? StatBlockMessageId { get; set; }
-
-    public string? StatBlockChannelId { get; set; }
-
     public string? SelectedCharacterId { get; set; }
 
     public int? SelectedCharacter { get; set; }

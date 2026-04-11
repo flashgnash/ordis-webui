@@ -11,6 +11,9 @@ public partial class OrdisContext : DbContext
 
     public virtual DbSet<Gauge> Gauges { get; set; }
 
+    public virtual DbSet<RollResult> RollResults { get; set; }
+    public virtual DbSet<IndividualRollResult> PastRolls {get; set;} 
+
     public virtual DbSet<Server> Servers { get; set; }
 
     public virtual DbSet<Campaign> Campaigns { get; set; }

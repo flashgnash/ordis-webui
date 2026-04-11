@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
-public class PlayerCharacterService(IDbContextFactory<OrdisContext> dbFactory)
+public class PlayerCharacterService(IDbContextFactory<OrdisContext> dbFactory, HttpClient httpClient)
 {
     public async Task UpdateGaugeAsync(Gauge gauge)
     {
@@ -20,6 +20,49 @@ public class PlayerCharacterService(IDbContextFactory<OrdisContext> dbFactory)
         }
 
         await db.SaveChangesAsync();
+    }
+
+    public async Task<RollResult> RollFor(PlayerCharacter character, String rollFormula)
+    {
+        var response = await httpClient.PostAsync(
+            $"http://localhost:3000/roll/{character.Id}/{rollFormula}",
+            null
+        );
+
+        switch (response.StatusCode)
+        {
+            case System.Net.HttpStatusCode.InternalServerError:
+            case System.Net.HttpStatusCode.BadRequest:
+                throw new InvalidRollException();
+        }
+        var rollResult = await response.Content.ReadFromJsonAsync<RollResult>();
+        
+        await SaveRollAsync(character.Id, rollResult);
+
+        return rollResult;
+    }
+
+    public async Task SaveRollAsync(int id, RollResult rollResult) {
+        
+        using var db = await dbFactory.CreateDbContextAsync();
+
+
+        var character = await db.Characters.FirstOrDefaultAsync(c => c.Id == id) ?? throw new Exception("Not found by that ID");
+        rollResult.Timestamp = rollResult.Timestamp ?? DateTime.UtcNow;
+
+        character.Rolls = character.Rolls ?? new List<RollResult>();
+        character.Rolls.Add(rollResult);
+
+        await db.SaveChangesAsync();
+    } 
+
+    public async Task<RollResult?> GetLatestRollAsync(PlayerCharacter character) {
+
+        using var db = await dbFactory.CreateDbContextAsync();
+
+        var characterWithRolls = await db.Characters.Include(c => c.Rolls).FirstOrDefaultAsync(c => c.Id == character.Id);
+    
+        return characterWithRolls?.Rolls?.OrderBy(r => r.Timestamp).FirstOrDefault();
     }
 
     public async Task UpdateAsync(PlayerCharacter c)
@@ -73,7 +116,11 @@ public class PlayerCharacterService(IDbContextFactory<OrdisContext> dbFactory)
     {
         await using var db = await dbFactory.CreateDbContextAsync();
 
-        return await db.Characters.Include(g => g.Gauges).SingleOrDefaultAsync(c => c.Id == id);
+        return await db.Characters
+            .Include(g => g.Gauges)
+            .Include(g => g.Campaign)
+            .Include(g => g.Rolls)
+            .SingleOrDefaultAsync(c => c.Id == id);
     }
 
     public async Task<IEnumerable<PlayerCharacter>> GetByDiscordIdAsync(string discordId)
@@ -81,8 +128,10 @@ public class PlayerCharacterService(IDbContextFactory<OrdisContext> dbFactory)
         await using var db = await dbFactory.CreateDbContextAsync();
 
         return await db
-            .Characters.Include(g => g.Gauges)
+            .Characters.Include(g => g.Gauges).Include(c => c.Rolls)
             .Where(c => c.UserId == discordId)
+            .OrderBy(c => c.Rolls.Any())
+            .ThenBy(c => c.Rolls.Max(r => r.Timestamp))
             .ToListAsync();
     }
 }

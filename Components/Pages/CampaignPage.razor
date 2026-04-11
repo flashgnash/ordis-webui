@@ -1,3 +1,4 @@
+@rendermode InteractiveServer
 @page "/campaigns/{campaignId:int}"
 @inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager Navigation
@@ -8,40 +9,169 @@
 
 @if(Campaign != null) {
 
+	<Modal Title="Edit Campaign" id="editCampaignDialog">
+	    <div class=p-3>
+			<CampaignCRUD Campaign="@Campaign"/>
+	    </div>
+	</Modal>
+
+    <Modal Title="Roll" id="rollDialog">
+        <div class=p-3>
+            <RollMenu />
+        </div>
+    </Modal>
 
     <div class="disable-dbl-tap-zoom container mt-4 vh-100" style="overflow: auto">
         <div class="w-100 p-2 d-flex">
-            <div class="d-flex flex-row w-100">
-                <div class="flex-grow-1">
-                    <span class="fs-2">
-                        @Campaign.Name
-                    </span>
-				</div>
-			</div>
-		</div>
-		<div class="p-2">
-			@if(Campaign.Players != null){
-				<h4>Players</h4>
-				<div class="d-flex flex-wrap">
-					@foreach(PlayerCharacter player in Campaign.Players) {
-						<div class="card">
-							<div class="card-header fs-5"> 
-								@player.Name
-							</div>
-							<div class="card-body">
-								@if(player.Gauges != null) {
-								
-									@foreach(Gauge gauge in player.Gauges) {
-				                        <GaugeDisplay GaugeInstance="@gauge" ChangedCallback="@GaugeChangedCallback"   />
-									}
-								}
-							</div>
-						</div>								
-					}
-				</div>
+            <div class="d-flex flex-row flex-nowrap w-100">
+            <span class="fs-2">
+                @Campaign.Name
 
-			}
+
+            <button class="fs-3 m-auto" onClick="editCampaignDialog.showModal()" style="color:var(--accent)">
+    			 <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" class="bi bi-pencil-fill" viewBox="0 0 16 16">
+    				  <path d="M12.854.146a.5.5 0 0 0-.707 0L10.5 1.793 14.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708zm.646 6.061L9.793 2.5 3.293 9H3.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.207zm-7.468 7.468A.5.5 0 0 1 6 13.5V13h-.5a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.5-.5V10h-.5a.5.5 0 0 1-.175-.032l-.179.178a.5.5 0 0 0-.11.168l-2 5a.5.5 0 0 0 .65.65l5-2a.5.5 0 0 0 .168-.11z"/>
+    				</svg>
+            </button>
+            </span>
+
+
+            <div class="flex-grow-1"></div>
+
+		    <a onClick="rollDialog.showModal()" class="float-right btn btn-primary p-2 rounded-3 d-flex justify-content-center m-1">
+		        <svg
+		            width="50"
+		            height="45"
+		            xmlns="http://www.w3.org/2000/svg"
+		            fill="currentColor"
+		            class="bi bi-dice-5-fill m-auto"
+		            viewBox="0 0 16 16">
+		            <path d="M3 0a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V3a3 3 0 0 0-3-3zm2.5 4a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0m8 0a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0M12 13.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3M5.5 12a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0M8 9.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3" />
+		        </svg>
+		    </a>
+
+					</div>
 		</div>
+
+
+		<div class="d-flex flex-wrap">
+        <div class="card flex-fill">
+          <div class="card-header w-100 text-center"><h5>Default Roll</h5></div>
+
+          <div class="card-body fs-6">
+          @Campaign.DefaultRollDie
+          </div>
+        </div>
+
+        <div class="card flex-fill">
+          <div class="card-header w-100 text-center"><h5>Default mod formula</h5></div>
+
+          <div class="card-body fs-6">
+          @(Campaign.StatModifierFormula ?? "5e")
+
+          </div>
+        </div>
+
+    </div>
+    
+		<div class="d-flex flex-row">
+      <div class="card flex-fill">
+  			@if(Campaign.Players != null){
+        <div>
+          <div class="card-header d-flex flex-row">
+
+  				<h4>Players</h4>
+          <div class="flex-grow-1"></div>
+          </div>
+  				<div class="d-flex flex-wrap align-items-center justify-content-center">
+  					@foreach(PlayerCharacter player in Campaign.Players.OrderByDescending(c => c.Rolls.Any()).ThenByDescending(c => c.Rolls.Max(r => r.Timestamp))) {
+        			<Modal Title="Edit Player" id="@(GetIdentifier(player,"edit"))">
+        			    <div class=p-3>
+        					<CharacterCRUD Character="@player"/>
+        			    </div>
+        			</Modal>
+
+
+					<Modal Title="Delete Player" id="@(GetIdentifier(player,"delete"))">
+	
+						<h2>Do you really want to delete the character "@player.Name"?</h2>
+
+						<br>
+			
+						<div class="form-group">
+							<h5 class="text-muted">Please type the name of your campaign to confirm:</h5>
+
+							<input class="form-input fs-5 m-2" placeholder=@player.Name @bind="@NameDeletionConfirmationBoxes[player.Id]">
+						</div>
+
+	
+						<button class="btn btn-danger w-100"
+						        disabled="@(NameDeletionConfirmationBoxes[player.Id] != player.Name)"
+								@onclick="async () => await DeletePlayerAsync(player)"
+						>
+						
+						    Delete
+						</button>	
+					</Modal>
+					
+      
+  						<div class="card flex-fill" style="">
+  							<div class="fs-6 card-header bg-light"> 
+  								<div class="text-white fs-5 d-flex">
+				                    <div class="m-auto">
+									@if(player.UserId == DiscordId) {
+				                      <a style="color:var(--accent)" href="@($"/characters/{player.Id}")">@(player.Name ?? "Unknown") (you)</a>
+									}
+									else {
+										
+				                      <span>@(player.Name ?? "Unknown")</span>
+									}
+				                    </div>
+				                    <div class="flex-grow-1"></div>
+
+	            					<button class="m-2 text-danger" onClick="@(GetIdentifier(player,"delete")).showModal()">
+	                                    <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" class="bi bi-trash-fill" viewBox="0 0 16 16">
+	                                      <path d="M2.5 1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1H3v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V4h.5a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1zm3 4a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5M8 5a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7A.5.5 0 0 1 8 5m3 .5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 1 0"/>
+	                                    </svg>
+	            					</button>
+
+	            					<button class="m-2" style="color:var(--accent)" onClick="@(GetIdentifier(player,"edit")).showModal()">
+	            						 <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" class="bi bi-pencil-fill" viewBox="0 0 16 16">
+	            						  <path d="M12.854.146a.5.5 0 0 0-.707 0L10.5 1.793 14.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708zm.646 6.061L9.793 2.5 3.293 9H3.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.207zm-7.468 7.468A.5.5 0 0 1 6 13.5V13h-.5a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.5-.5V10h-.5a.5.5 0 0 1-.175-.032l-.179.178a.5.5 0 0 0-.11.168l-2 5a.5.5 0 0 0 .65.65l5-2a.5.5 0 0 0 .168-.11z"/>
+	            						</svg>
+	            					</button>
+				                  </div>                    
+  							</div>
+  							<div class="card-body bg-light w-100 align-items-center">
+  								@if(player.Gauges != null) {
+
+								    <div class="d-flex flex-row align-items-center justify-content-center flex-wrap gap-2">
+    									@foreach(Gauge gauge in player.Gauges) {
+					                        <div class="" style="height: 200px; width: 200px;">
+					                          <GaugeDisplay GaugeInstance="@gauge" ChangedCallback="@GaugeChangedCallback"   />
+					                        </div>
+    									}
+				                    </div>
+
+									<br>
+
+									<div class="fs-4 card-footer">
+									<span class="m-auto">
+										Last Roll: @player?.Rolls?.OrderBy(r => r.Timestamp).FirstOrDefault()?.Result
+									</span>
+									</div>
+					
+  								}
+  							</div>
+
+  						</div>								
+  					}
+  				</div>
+        </div>
+
+  			}
+  		</div>
+    </div>
 	</div>
 
 
@@ -50,6 +180,14 @@
 @code {
 	Campaign? Campaign;
     [Parameter] public int CampaignId { get; set; }
+
+	Dictionary<int,string>? NameDeletionConfirmationBoxes {get; set;}
+
+	private string DiscordId {get; set;}
+
+	public async Task DeletePlayerAsync(PlayerCharacter character) {
+		await CampaignService.RemovePlayerAsync(Campaign,character);
+	}
 
     public async Task GaugeChangedCallback(Gauge gauge)
     {
@@ -66,11 +204,25 @@
         
     }
 
+
+	private string GetIdentifier(Campaign campaign, string modalType) {
+	    var clean = new string(campaign.Name.Where(char.IsLetter).ToArray());
+	    return clean + modalType;
+	}
+	private string GetIdentifier(PlayerCharacter character, string modalType) {
+	    var clean = new string(character.Name?.Where(char.IsLetter).ToArray());
+	    return clean + modalType;
+	}
+    
+
 	protected async override Task OnInitializedAsync()
     {
 
+			NameDeletionConfirmationBoxes = new();
+
         var campaign = await CampaignService.GetByIdAsync(CampaignId);
 
+        campaign.Players = campaign.Players ?? new List<PlayerCharacter>();
 
 
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
@@ -78,9 +230,15 @@
 
         var discordId = user.FindFirst("discord_id")?.Value ?? "Not logged in";
 
+		DiscordId = discordId;
+
         if (true )
         {
             Campaign = campaign;
+
+			foreach(PlayerCharacter player in Campaign?.Players) {
+				NameDeletionConfirmationBoxes[player.Id] = "";
+			}
             
         }
         else
@@ -88,4 +246,21 @@
             Navigation.NavigateTo("/forbidden");
         }
     }
+
+
+    void AddCharacter()
+    {
+        Campaign.Players.Add(new PlayerCharacter(){Campaign = Campaign});
+
+        Console.WriteLine($"Added character, total now: {Campaign.Players.Count}");
+    }
+
+    async Task SaveAsync()
+    {
+        await CampaignService.UpdateAsync(Campaign);
+        Console.WriteLine($"Saved campaign {Campaign.Id}: {Campaign.Name}, owned by {Campaign.DungeonMasterId}");
+    }
+
+
+    
 }

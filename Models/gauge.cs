@@ -39,10 +39,13 @@ public class Gauge
 
     public string? Icon { get; set; }
 
+    [Required]
     public string Name { get; set; }
     public int Value { get; set; }
+    [Required]
     public int Max { get; set; }
 
-    public string Colour =>
-        _colourLookup.TryGetValue(Name?.ToLower(), out var colour) ? colour : null;
+    
+    
+    public string? Colour {get; set;}
 }

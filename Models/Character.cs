@@ -2,66 +2,56 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json;
 
-public class PlayerCharacter
+public class PlayerCharacter : IValidatableObject
 {
+
+
+public IEnumerable<ValidationResult> Validate(ValidationContext ctx)
+{
+    foreach (var g in Gauges)
+    {
+        if (string.IsNullOrWhiteSpace(g.Name))
+        {
+            yield return new ValidationResult(
+                "Gauge name missing",
+                new[] { nameof(Gauges) }
+            );
+        }
+    }
+    if(StatBlock?.Stats != null) {
+        foreach (var s in StatBlock.Stats)
+        {
+            if (string.IsNullOrWhiteSpace(s.Name))
+            {
+                yield return new ValidationResult(
+                    "Stat name missing",
+                    new[] { nameof(StatBlock.Stats) }
+                );
+            }
+        }
+        
+    }
+}
 
     [Key]
     public int Id { get; set; }
     public string? UserId { get; set; }
+
     public string? Name { get; set; }
 
     public Campaign? Campaign { get; set; }
 
     public string? RollServerId { get; set; }
 
-    [NotMapped]
-    public IEnumerable<Item> Inventory { get; set; } =
-        new List<Item>()
-        {
-            // new Item() {
-            //     Icon = "🍔",
-            //     Name = "Cheeseburger"
-            // },
-            // new Item() {
-            //     Icon = "⚔️",
-            //     Name = "Sword",
-            //     Rolls = new List<Roll>() {new Roll(){Name = "attack", RollString="1d12+1"} }
-            // }
-        };
+    public ICollection<RollResult>? Rolls {get; set;}
 
-    [NotMapped]
-    public IEnumerable<Spell> Spells { get; set; } =
-        new List<Spell>()
-        {
-            // new Spell() {
-            //     Icon = "🧊",
-            //     Name = "Ice Bolt",
-            //     Rolls = new List<Roll>() {new Roll(){Name = "attack", RollString="1d12+1"} }
 
-            // },
-            // new Spell() {
-            //     Icon = "🔥",
-            //     Name = "Fireball",
-            //     Rolls = new List<Roll>() {new Roll(){Name = "attack", RollString="1d12+1"} }
-            // }
-        };
+    public IEnumerable<Item> Inventory { get; set; }
+
+    public IEnumerable<Spell> Spells { get; set; }
 
     [NotMapped]
     public string? Race { get; set; }
-
-    [NotMapped]
-    public List<Stat>? Stats =>
-        StatBlock?.Stats?
-            .Where(x => x.Value != 0)
-            .Select(x => new Stat { Name = x.Key, Value = x.Value })
-            .ToList();
-
-    [NotMapped]
-    public List<Stat>? SpecialStats =>
-        StatBlock?.SpecialStats?
-            .Where(x => x.Value != 0)
-            .Select(x => new Stat { Name = x.Key, Value = x.Value })
-            .ToList();
 
     [NotMapped]
     public IEnumerable<Status>? Statuses { get; set; }

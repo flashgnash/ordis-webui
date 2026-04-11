@@ -3,169 +3,144 @@ using System.Text.Json;
 using DotNetEnv;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.OAuth;
 using Microsoft.EntityFrameworkCore;
 using Ordis.Components;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Configuration.AddEnvironmentVariables();
+Env.Load();
 
 builder.Services.Configure<RpgConfig>(builder.Configuration.GetSection("RpgConfig"));
-
 builder.Services.Configure<Dictionary<string, APIConfig>>(
     builder.Configuration.GetSection("ApiConfig")
 );
 
-// builder.Services.AddSingleton<CharacterInterceptor>();
-
-Env.Load();
-
 builder.Services.AddHttpClient();
 
-builder.Services.AddSingleton<RollService>();
 builder.Services.AddSingleton<DiscordService>();
 
-// builder.Services.AddDbContext<OrdisContext>(opts =>
-//     opts.UseNpgsql(builder.Configuration.GetConnectionString("CharacterDb")));
-//
-
-builder.Services.AddDbContextFactory<OrdisContext>(
-    (sp, opts) =>
-    {
-        opts.UseNpgsql(builder.Configuration.GetConnectionString("CharacterDb"));
-        // .UseLazyLoadingProxies(); //Can't have lazy loading cause postgres doesn't like it :(
-        // opts.AddInterceptors(sp.GetRequiredService<CharacterInterceptor>());
-    }
-);
+builder.Services.AddDbContextFactory<OrdisContext>((sp, opts) =>
+{
+    opts.UseNpgsql(builder.Configuration.GetConnectionString("CharacterDb"));
+});
 
 builder.Services.AddScoped<PlayerCharacterService>();
 builder.Services.AddScoped<CampaignService>();
-
 builder.Services.AddScoped<UserState>();
 
-builder.Services.AddRazorComponents().AddInteractiveServerComponents();
+builder.Services.AddRazorComponents()
+    .AddInteractiveServerComponents();
 
-builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme).AddCookie();
-builder.Services.AddAuthorization(options =>
+/* ---------------- AUTH ---------------- */
+
+var discordConfig = builder.Configuration.GetSection("Discord");
+var clientId = discordConfig["ClientId"]!;
+var clientSecret = discordConfig["ClientSecret"]!;
+
+builder.Services.AddAuthentication(options =>
 {
-    options.AddPolicy("HasDiscordId", policy => policy.RequireClaim("discord_id"));
+    options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = "Discord";
+})
+
+.AddCookie(o =>
+{
+    o.LoginPath = "/login";
+    o.Cookie.SameSite = SameSiteMode.None;
+    o.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+})
+.AddOAuth("Discord", options =>
+{
+    options.ClientId = clientId;
+    options.ClientSecret = clientSecret;
+
+    options.CorrelationCookie.SameSite = SameSiteMode.None;
+    options.CorrelationCookie.SecurePolicy = CookieSecurePolicy.Always;
+
+    options.AuthorizationEndpoint = "https://discord.com/oauth2/authorize";
+    options.TokenEndpoint = "https://discord.com/api/oauth2/token";
+    options.UserInformationEndpoint = "https://discord.com/api/users/@me";
+
+    options.CallbackPath = "/signin-discord";
+    options.Scope.Add("identify");
+    options.SaveTokens = true;
+
+    options.Events = new OAuthEvents
+    {
+        OnCreatingTicket = async ctx =>
+        {
+            var req = new HttpRequestMessage(HttpMethod.Get, ctx.Options.UserInformationEndpoint);
+            req.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", ctx.AccessToken);
+            var res = await ctx.Backchannel.SendAsync(req);
+            var json = JsonDocument.Parse(await res.Content.ReadAsStringAsync());
+
+            var discordId = json.RootElement.GetProperty("id").GetString()!;
+            var discordName = json.RootElement.GetProperty("username").GetString()!;
+
+            ctx.Identity!.AddClaim(new Claim("discord_id", discordId));
+            ctx.Identity.AddClaim(new Claim("discord_name", discordName));
+
+            // Add to DB if not exist
+            using var scope = ctx.HttpContext.RequestServices.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<OrdisContext>();
+
+            var user = await db.Users.FindAsync(discordId);
+            if (user == null)
+            {
+                user = new User
+                {
+                    Id = discordId,
+                    Username = discordName
+                };
+                db.Users.Add(user);
+                await db.SaveChangesAsync();
+            }
+        }
+    };
 });
 
-builder.WebHost.ConfigureKestrel(
-    (context, options) =>
-    {
-        options.Configure(context.Configuration.GetSection("Kestrel"));
-    }
-);
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("HasDiscordId", p => p.RequireClaim("discord_id"));
+});
+
+/* ---------------- APP ---------------- */
+
+builder.WebHost.ConfigureKestrel((context, options) =>
+{
+    options.Configure(context.Configuration.GetSection("Kestrel"));
+});
+
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
+app.UseAuthorization();
+
 app.UseAntiforgery();
 
 app.MapStaticAssets();
 
-app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
-
-// .AddInteractiveServerRenderMode(o => o.ContentSecurityFrameAncestorsPolicy = "'self' *.mydomain.com");
-
-var discordConfig = builder.Configuration.GetSection("Discord");
-var clientId = discordConfig["ClientId"];
-var clientSecret = discordConfig["ClientSecret"];
-
-var baseUrl = Environment.GetEnvironmentVariable("ASPNETCORE_Kestrel__Endpoints__Https__Url");
-
-// Should move this somewhere else - currently unsure of how to implement API endpoints in a blazor pages setup
-// At the very least it should be made into a separate function in another file and called from here
-app.MapGet(
-    "/auth/callback",
-    async (HttpContext http) =>
+/* login endpoint — preserves ReturnUrl */
+app.MapGet("/login", async (HttpContext ctx) =>
+{
+    var returnUrl = ctx.Request.Query["ReturnUrl"].ToString();
+    await ctx.ChallengeAsync("Discord", new AuthenticationProperties
     {
-        var query = http.Request.Query;
-        if (!query.TryGetValue("code", out var code))
-            return Results.BadRequest("No code in query string");
+        RedirectUri = string.IsNullOrEmpty(returnUrl) ? "/" : returnUrl
+    });
+});
 
-        var discordCode = code.ToString();
-
-        var values = new Dictionary<string, string>
-        {
-            { "client_id", clientId },
-            { "client_secret", clientSecret },
-            { "grant_type", "authorization_code" },
-            { "code", discordCode },
-            { "redirect_uri", $"{baseUrl}/auth/callback" },
-        };
-
-        var client = new HttpClient();
-        var response = await client.PostAsync(
-            "https://discord.com/api/oauth2/token",
-            new FormUrlEncodedContent(values)
-        );
-        var content = await response.Content.ReadAsStringAsync();
-
-        if (!response.IsSuccessStatusCode)
-            return Results.Problem(
-                $"Discord token endpoint returned {response.StatusCode}: {content}"
-            );
-
-        JsonElement token;
-        try
-        {
-            token = JsonSerializer.Deserialize<JsonElement>(content);
-        }
-        catch
-        {
-            return Results.Problem($"Failed to parse Discord token response: {content}");
-        }
-
-        if (!token.TryGetProperty("access_token", out var accessTokenProp))
-            return Results.Problem($"access_token not found in response: {content}");
-
-        var access = accessTokenProp.GetString();
-
-        // get user info
-        var request = new HttpRequestMessage(HttpMethod.Get, "https://discord.com/api/users/@me");
-        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(
-            "Bearer",
-            access
-        );
-        var userResponse = await client.SendAsync(request);
-        var userContent = await userResponse.Content.ReadAsStringAsync();
-
-        if (!userResponse.IsSuccessStatusCode)
-            return Results.Problem(
-                $"Discord /users/@me returned {userResponse.StatusCode}: {userContent}"
-            );
-
-        var userJson = JsonSerializer.Deserialize<JsonElement>(userContent);
-        var discordId = userJson.GetProperty("id").GetString();
-        var discordName = userJson.GetProperty("username").GetString();
-
-        // sign in
-        var claims = new List<Claim>
-        {
-            new Claim("discord_id", discordId),
-            new Claim("discord_name", discordName),
-        };
-        var identity = new ClaimsIdentity(
-            claims,
-            CookieAuthenticationDefaults.AuthenticationScheme
-        );
-        await http.SignInAsync(
-            CookieAuthenticationDefaults.AuthenticationScheme,
-            new ClaimsPrincipal(identity)
-        );
-
-        return Results.Redirect("/");
-    }
-);
+app.MapRazorComponents<App>()
+    .AddInteractiveServerRenderMode();
 
 app.Run();

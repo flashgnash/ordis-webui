@@ -1,5 +1,5 @@
 @rendermode InteractiveServer
-@inject RollService RollService
+@inject PlayerCharacterService CharacterService
 @inject DiscordService DiscordService
 @inject ILogger<RollMenu> Logger
 <!-- Middle -->
@@ -11,12 +11,12 @@
 @if(Character != null) {
 
   <div class="d-flex flex-row flex-nowrap w-100">
-  @if(Character.SpecialStats != null){
+  @if(Character.StatBlock?.SpecialStats != null && Character.StatBlock?.SpecialStats.Count() != 0){
     <div class="w-100" >
       <h3 class="text-center">Special</h3>
         <div id="specialStatButtons" class="m-1 d-flex flex-wrap gap-2 p-2">
-            @foreach (var stat in Character?.SpecialStats
-              .Where(s => !Character.Stats.Any(x => x.Name == s.Name))
+            @foreach (var stat in Character?.StatBlock?.SpecialStats
+              .Where(s => !Character.StatBlock?.Stats.Any(x => x.Name == s.Name) == true)
               .ToList()
             )
             {
@@ -28,11 +28,11 @@
     </div>
   }
 
-  @if(Character.Stats != null){
+  @if(Character.StatBlock?.Stats != null){
     <div class="w-100">
       <h3 class="text-center"> Stats</h3>
         <div id="statButtons" class="m-1 d-flex flex-wrap gap-2 p-2">
-            @foreach (var stat in Character?.Stats)
+            @foreach (var stat in Character?.StatBlock?.Stats)
             {
                 <button class="btn p-2 flex-fill @btnClasses[stat.Name]" @onclick="() => AddStat(stat.Name)">
                     + @stat.Name
@@ -46,7 +46,7 @@
   @if(Character.SavedRollsDict != null) {
     <div id="savedRolls" class="m-auto flex-grow-1">
       <h3 class="text-center">Custom Rolls</h3>
-    <div class="d-flex">
+    <div class="d-flex flex-wrap">
       @foreach (var kv in Character.SavedRollsDict)
       {
           <button class="btn btn-secondary flex-fill @btnClasses[kv.Key] m-1" @onclick="() => SetRollText(kv.Value)">@kv.Key </button>
@@ -109,7 +109,7 @@
           ErrorMessage = null;
           LastResult = null;
           LoadingRoll = true;        
-          var response = await RollService.RollFor(Character,RollText);    
+          var response = await CharacterService.RollFor(Character,RollText);    
 
           await DiscordService.SendEmbedAsync($"Rolling for {Character.Name}...", response.Message);    
           LastResult = response;
@@ -178,16 +178,18 @@
 
     private void ClearRoll()
     {
-        RollText = String.IsNullOrEmpty(Character?.StatBlock?.DefaultRoll) ? "1d100" : Character?.StatBlock?.DefaultRoll;
+        var rollText = String.IsNullOrEmpty(Character?.StatBlock?.DefaultRoll) ? null : Character?.StatBlock?.DefaultRoll;
+		RollText = rollText ?? Character?.Campaign?.DefaultRollDie ?? "1d20";
+
         LastResult = null;
         Advantage = 0;
         if(Character != null ) {
-            if(Character?.Stats != null) {
-              foreach (var stat in Character?.Stats)
+            if(Character?.StatBlock?.Stats != null) {
+              foreach (var stat in Character?.StatBlock?.Stats)
                   btnClasses[stat.Name] = "btn-secondary";
             }
-            if(Character?.SpecialStats != null ) {
-              foreach (var stat in Character?.SpecialStats)
+            if(Character?.StatBlock?.SpecialStats != null ) {
+              foreach (var stat in Character?.StatBlock?.SpecialStats)
                 btnClasses[stat.Name] = "btn-secondary";
 
             }

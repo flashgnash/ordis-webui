@@ -28,15 +28,16 @@
 
             <div class="nav-item px-3">
                 <NavLink class="nav-link" href="/campaigns">
-                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> My Campaigns                </NavLink>
+                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> My Campaigns
+                </NavLink>
                 
-                    @if(Characters != null){
+                @if(Campaigns != null){
 
-                        @foreach(var campaign in Campaigns){
-                          <NavLink class="nav-link" style="width: 95%" href="@($"/campaigns/{campaign.Id}")">@campaign.Name</NavLink>
-                        }
-
+                    @foreach(var campaign in Campaigns){
+                      <NavLink class="nav-link" style="width: 95%" href="@($"/campaigns/{campaign.Id}")">@campaign.Name</NavLink>
                     }
+
+                }
             </div>
             <br>
 
@@ -59,7 +60,7 @@
 else {
 
             <div class="nav-item px-3 p-3 mt-auto">
-                <NavLink class="nav-link" href="@discordLoginUrl">
+                <NavLink class="nav-link" href="/login">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-person-fill" viewBox="0 0 16 16">
                       <path d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6"/>
                     </svg>
@@ -76,7 +77,6 @@ else {
 
 
 @code {
-    string discordLoginUrl;
     bool loggedIn; 
 
 
@@ -85,16 +85,8 @@ else {
 
     protected async override Task OnInitializedAsync()
     {
-        var discordConfig = Configuration.GetSection("Discord");
-        var clientId = discordConfig["ClientId"];
-
         var uri = new Uri(Navigation.Uri);
-        var redirect = $"{uri.Scheme}://{uri.Host}{(uri.IsDefaultPort ? "" : $":{uri.Port}")}/auth/callback";
-       
-        var state = Guid.NewGuid().ToString();
-
-        discordLoginUrl =
-            $"https://discord.com/api/oauth2/authorize?client_id={clientId}&redirect_uri={Uri.EscapeDataString(redirect)}&response_type=code&scope=identify&state={state}";
+        var redirect = $"{uri.Scheme}://{uri.Host}{(uri.IsDefaultPort ? "" : $":{uri.Port}")}/signin-discord";
 
 
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();

@@ -9,7 +9,11 @@ $card-bg: $dark;
 $card-color: $text-colour;
 $card-cap-color: $text-colour;
 
-
+$table-bg: $dark;
+$table-color: $text-colour;
+$table-striped-bg: $light;
+$table-accent-bg: $light;
+$table-border-color: $dark;
 @import "../node_modules/bootstrap/scss/bootstrap";
 
 .text-muted {
@@ -87,7 +91,7 @@ html, body {
 
 
     width: 80%;
-    height: 80%;
+    height: 100%;
 
     padding: 0;
     border: 0;
@@ -208,6 +212,13 @@ button {
 .orb {
   position: relative;
   width: 100%;
+  height: 100%;
+  flex: 0 0 auto;
+  margin: auto;
+
+  align-self: center;
+  flex-grow: 0;
+  flex-shrink: 0;
   aspect-ratio: 1 / 1; /* keep height same as width */
   border-radius: 50%;
   overflow: hidden;

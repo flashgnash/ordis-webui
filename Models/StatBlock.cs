@@ -1,4 +1,23 @@
 using System.Text.Json.Serialization;
+using System.Text.Json;
+
+public class StatListConverter : JsonConverter<List<Stat>>
+{
+    public override List<Stat> Read(ref Utf8JsonReader r, Type t, JsonSerializerOptions o)
+    {
+        var dict = JsonSerializer.Deserialize<Dictionary<string,int?>>(ref r, o);
+        return dict?
+            .Select(k => new Stat { Name = k.Key, Value = k.Value ?? 0 })
+            .ToList() ?? new();
+    }
+
+    public override void Write(Utf8JsonWriter w, List<Stat> v, JsonSerializerOptions o)
+    {
+        var dict = v.ToDictionary(s => s.Name, s => s.Value);
+        JsonSerializer.Serialize(w, dict, o);
+    }
+}
+
 
 public class StatBlock
 {
@@ -48,8 +67,10 @@ public class StatBlock
     public int? EnergyPool { get; set; }
 
     [JsonPropertyName("stats")]
-    public Dictionary<string, int?>? Stats { get; set; }
+    [JsonConverter(typeof(StatListConverter))]
+    public List<Stat>? Stats { get; set; }
 
+    [JsonConverter(typeof(StatListConverter))]
     [JsonPropertyName("special_stats")]
-    public Dictionary<string, int?>? SpecialStats { get; set; }
+    public List<Stat>? SpecialStats { get; set; }
 }

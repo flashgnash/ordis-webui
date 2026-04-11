@@ -6,17 +6,18 @@
 			<svg width="1em" fill="currentColor" height="1em">
 			  @IconPath
 			</svg>
-
 			@Name
 		</span>
-</div>
+	</div>
 
 
 	<div class="card-body w-100 p-0">
 		<ul class="list-unstyled striped-list">
-		  @foreach (IDescriptable item in Descriptables){
-		    <li class="w-100 border-0"><Descriptable item="@item" /></li>
-		  }
+			@if(Descriptables != null) {
+			  @foreach (IDescriptable item in Descriptables){
+			    <li class="w-100 border-0"><Descriptable item="@item"/></li>
+			  }
+			}
 		</ul>
 	</div>
 </div>

@@ -3,13 +3,15 @@
 @using Microsoft.AspNetCore.Components
 
 @if(AllowDialog) {
-    <Modal Title="@("Edit " + GaugeInstance.Name)" id="@GaugeInstance.Name">
+    <Modal Title="@("Edit " + GaugeInstance.Name)" id="@GaugeInstance.Id.ToString()">
         <div class=p-3>
           <div class="d-flex flex-row flex-wrap gap-3">
 
             @switch (@GaugeInstance.GaugeType) {
               case GaugeType.Orb:
-                <Orb GaugeInstance="@GaugeInstance"/>
+                <div class="d-flex m-auto " style="width: 500px">
+                  <Orb GaugeInstance="@GaugeInstance"/>
+                </div>
                 break;
               case GaugeType.IconBar:
                 <IconBar GaugeInstance="@GaugeInstance"/>
@@ -121,7 +123,7 @@
 
 }
 
-<a href="javascript:void(0)" style="text-decoration: none; color: inherit" onclick="@(GaugeInstance.Name).showModal()" class="w-100 h-100 d-flex">
+<a href="javascript:void(0)" style="text-decoration: none; color: inherit" onclick="document.getElementById('@(GaugeInstance.Id)').showModal()" class="w-100 h-100 d-flex">
   @switch (@GaugeInstance.GaugeType) {
     case GaugeType.Orb:
       <Orb GaugeInstance="@GaugeInstance"/>

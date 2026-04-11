@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -10,9 +11,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Ordis.Migrations
 {
     [DbContext(typeof(OrdisContext))]
-    partial class OrdisContextModelSnapshot : ModelSnapshot
+    [Migration("20260108133208_SaveRollHistory")]
+    partial class SaveRollHistory
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -113,32 +116,6 @@ namespace Ordis.Migrations
                     b.HasAnnotation("Relational:JsonPropertyName", "rolls");
                 });
 
-            modelBuilder.Entity("Item", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Icon")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int?>("PlayerCharacterId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("PlayerCharacterId");
-
-                    b.ToTable("Item");
-                });
-
             modelBuilder.Entity("PlayerCharacter", b =>
                 {
                     b.Property<int>("Id")
@@ -223,35 +200,6 @@ namespace Ordis.Migrations
                     b.ToTable("characters", (string)null);
                 });
 
-            modelBuilder.Entity("Roll", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid?>("ItemId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("RollString")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<Guid?>("SpellId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ItemId");
-
-                    b.HasIndex("SpellId");
-
-                    b.ToTable("Roll");
-                });
-
             modelBuilder.Entity("RollResult", b =>
                 {
                     b.Property<int>("Id")
@@ -302,32 +250,6 @@ namespace Ordis.Migrations
                     b.ToTable("servers", (string)null);
                 });
 
-            modelBuilder.Entity("Spell", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Icon")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int?>("PlayerCharacterId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("PlayerCharacterId");
-
-                    b.ToTable("Spell");
-                });
-
             modelBuilder.Entity("User", b =>
                 {
                     b.Property<string>("Id")
@@ -347,6 +269,18 @@ namespace Ordis.Migrations
                     b.Property<string>("SelectedCharacterId")
                         .HasColumnType("text")
                         .HasColumnName("selected_character_id");
+
+                    b.Property<string>("StatBlock")
+                        .HasColumnType("text");
+
+                    b.Property<string>("StatBlockChannelId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("StatBlockHash")
+                        .HasColumnType("text");
+
+                    b.Property<string>("StatBlockMessageId")
+                        .HasColumnType("text");
 
                     b.Property<string>("Username")
                         .HasColumnType("text")
@@ -383,13 +317,6 @@ namespace Ordis.Migrations
                         .HasForeignKey("RollResultId");
                 });
 
-            modelBuilder.Entity("Item", b =>
-                {
-                    b.HasOne("PlayerCharacter", null)
-                        .WithMany("Inventory")
-                        .HasForeignKey("PlayerCharacterId");
-                });
-
             modelBuilder.Entity("PlayerCharacter", b =>
                 {
                     b.HasOne("Campaign", "Campaign")
@@ -400,28 +327,10 @@ namespace Ordis.Migrations
                     b.Navigation("Campaign");
                 });
 
-            modelBuilder.Entity("Roll", b =>
-                {
-                    b.HasOne("Item", null)
-                        .WithMany("Rolls")
-                        .HasForeignKey("ItemId");
-
-                    b.HasOne("Spell", null)
-                        .WithMany("Rolls")
-                        .HasForeignKey("SpellId");
-                });
-
             modelBuilder.Entity("RollResult", b =>
                 {
                     b.HasOne("PlayerCharacter", null)
                         .WithMany("Rolls")
-                        .HasForeignKey("PlayerCharacterId");
-                });
-
-            modelBuilder.Entity("Spell", b =>
-                {
-                    b.HasOne("PlayerCharacter", null)
-                        .WithMany("Spells")
                         .HasForeignKey("PlayerCharacterId");
                 });
 
@@ -430,28 +339,14 @@ namespace Ordis.Migrations
                     b.Navigation("Players");
                 });
 
-            modelBuilder.Entity("Item", b =>
-                {
-                    b.Navigation("Rolls");
-                });
-
             modelBuilder.Entity("PlayerCharacter", b =>
                 {
                     b.Navigation("Gauges");
 
-                    b.Navigation("Inventory");
-
                     b.Navigation("Rolls");
-
-                    b.Navigation("Spells");
                 });
 
             modelBuilder.Entity("RollResult", b =>
-                {
-                    b.Navigation("Rolls");
-                });
-
-            modelBuilder.Entity("Spell", b =>
                 {
                     b.Navigation("Rolls");
                 });
