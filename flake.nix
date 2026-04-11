@@ -26,14 +26,12 @@
           buildInputs = with pkgs; [
             zlib
 
-            jetbrains.datagrip
-
             zlib.dev
             openssl
             dotnetPkg
 
-            (pkgs.writeShellScriptBin "compileSass" (''sass sass/app.scss wwwroot/app.css''))
-            (pkgs.writeShellScriptBin "watchSass" (''sass --watch sass/app.scss:wwwroot/app.css ''))
+            (pkgs.writeShellScriptBin "compileSass" ("sass sass/app.scss wwwroot/app.css"))
+            (pkgs.writeShellScriptBin "watchSass" ("sass --watch sass/app.scss:wwwroot/app.css "))
 
             (pkgs.writeShellScriptBin "publishAndRun" (
               # bash
