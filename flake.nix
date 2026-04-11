@@ -23,6 +23,10 @@
       in
       {
         devShell = pkgs.mkShell {
+
+          ASPNETCORE_Kestrel__Endpoints__Https__Certificate__Path = "/etc/ssl/tailscale-certs/cert.pfx";
+          ASPNETCORE_Kestrel__Endpoints__Https__Certificate__Password = "";
+
           buildInputs = with pkgs; [
             zlib
 
