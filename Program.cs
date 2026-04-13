@@ -143,4 +143,8 @@ app.MapGet("/login", async (HttpContext ctx) =>
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
-app.Run();
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<OrdisContext>();
+    db.Database.Migrate();
+}app.Run();
