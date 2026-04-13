@@ -14,7 +14,6 @@
       ...
     }:
     let
-      # NixOS module is system-independent
       nixosModule =
         {
           config,
@@ -36,30 +35,14 @@
               description = "The OW3N package to run.";
             };
 
-            httpsPort = lib.mkOption {
-              type = lib.types.nullOr lib.types.port;
-              default = null;
-              description = "HTTPS port for Kestrel. If null, HTTPS is disabled.";
-            };
-
-            httpsCertPath = lib.mkOption {
-              type = lib.types.str;
-              default = "/etc/ssl/tailscale-certs/cert.pfx";
-              description = "Path to the PFX certificate for HTTPS.";
-            };
-
-            httpsCertPassword = lib.mkOption {
-              type = lib.types.str;
-              default = "";
-              description = "Password for the PFX certificate.";
-            };
-
             environmentFile = lib.mkOption {
-              type = lib.types.nullOr lib.types.path;
-              default = null;
+              type = lib.types.path;
+              default = "${cfg.dataDir}/.env";
+              defaultText = lib.literalExpression ''"''${cfg.dataDir}/.env"'';
               description = ''
                 Path to an EnvironmentFile loaded by systemd (for secrets like
-                connection strings). Format: KEY=VALUE per line, no `export`.
+                Discord credentials). Format: KEY=VALUE per line, no `export`.
+                The file is created as empty if it does not exist.
               '';
             };
 
@@ -81,70 +64,101 @@
               description = "Group under which OW3N runs.";
             };
 
+            extraGroups = lib.mkOption {
+              type = lib.types.listOf lib.types.str;
+              default = [ ];
+              description = "Extra groups for the OW3N service user.";
+            };
+
             dataDir = lib.mkOption {
               type = lib.types.path;
               default = "/var/lib/ow3n";
               description = "Working directory / state directory for the service.";
             };
-          };
 
-          config = lib.mkIf cfg.enable {
-            users.users.${cfg.user} = {
-              isSystemUser = true;
-              group = cfg.group;
-              home = cfg.dataDir;
-              createHome = true;
-            };
+            database = {
+              enable = lib.mkEnableOption "PostgreSQL database provisioning for OW3N";
 
-            users.groups.${cfg.group} = { };
-
-            systemd.services.ow3n = {
-              description = "OW3N Blazor Server";
-              after = [
-                "network.target"
-                "postgresql.service"
-              ];
-              wantedBy = [ "multi-user.target" ];
-
-              environment =
-                let
-                  urls =
-                    let
-                      https = lib.optionalString (cfg.httpsPort != null) ";https://0.0.0.0:${toString cfg.httpsPort}";
-                    in
-                    "${https}";
-                in
-                {
-                  ASPNETCORE_URLS = urls;
-                  DOTNET_SYSTEM_GLOBALIZATION_INVARIANT = "1";
-                }
-                // lib.optionalAttrs (cfg.httpsPort != null) {
-                  ASPNETCORE_Kestrel__Endpoints__Https__Certificate__Path = cfg.httpsCertPath;
-                  ASPNETCORE_Kestrel__Endpoints__Https__Certificate__Password = cfg.httpsCertPassword;
-                }
-                // cfg.environment;
-
-              serviceConfig = {
-                Type = "simple";
-                ExecStart = "${cfg.package}/bin/Ordis";
-                WorkingDirectory = cfg.dataDir;
-                User = cfg.user;
-                Group = cfg.group;
-                Restart = "on-failure";
-                RestartSec = 5;
-
-                # Hardening
-                ProtectSystem = "strict";
-                ProtectHome = true;
-                PrivateTmp = true;
-                NoNewPrivileges = true;
-                ReadWritePaths = [ cfg.dataDir ];
-              }
-              // lib.optionalAttrs (cfg.environmentFile != null) {
-                EnvironmentFile = cfg.environmentFile;
+              name = lib.mkOption {
+                type = lib.types.str;
+                default = "ow3n";
+                description = "PostgreSQL database name.";
               };
             };
           };
+
+          config = lib.mkIf cfg.enable (
+            lib.mkMerge [
+              {
+                users.users.${cfg.user} = {
+                  isSystemUser = true;
+                  group = cfg.group;
+                  home = cfg.dataDir;
+                  createHome = true;
+                  extraGroups = cfg.extraGroups;
+                };
+
+                users.groups.${cfg.group} = { };
+
+                systemd.tmpfiles.rules = [
+                  "f ${cfg.environmentFile} 0600 ${cfg.user} ${cfg.group} -"
+                ];
+
+                systemd.services.ow3n = {
+                  description = "OW3N Blazor Server";
+                  after = [ "network.target" ];
+                  wantedBy = [ "multi-user.target" ];
+
+                  environment = {
+                    ASPNETCORE_ENVIRONMENT = "Production";
+                    DOTNET_SYSTEM_GLOBALIZATION_INVARIANT = "1";
+                  }
+                  // cfg.environment;
+
+                  serviceConfig = {
+                    Type = "simple";
+                    ExecStart = "${cfg.package}/bin/Ordis";
+                    WorkingDirectory = cfg.dataDir;
+                    User = cfg.user;
+                    Group = cfg.group;
+                    Restart = "on-failure";
+                    RestartSec = 5;
+                    EnvironmentFile = cfg.environmentFile;
+
+                    ProtectSystem = "strict";
+                    ProtectHome = true;
+                    PrivateTmp = true;
+                    NoNewPrivileges = true;
+                    ReadWritePaths = [ cfg.dataDir ];
+                  };
+                };
+              }
+
+              (lib.mkIf cfg.database.enable {
+                services.postgresql = {
+                  enable = true;
+                  ensureDatabases = [ cfg.database.name ];
+                  ensureUsers = [
+                    {
+                      name = cfg.user;
+                      ensureDBOwnership = true;
+                    }
+                  ];
+                  authentication = lib.mkAfter ''
+                    local ${cfg.database.name} ${cfg.user} peer
+                  '';
+                };
+
+                systemd.services.ow3n = {
+                  after = [ "postgresql.service" ];
+                  requires = [ "postgresql.service" ];
+                  environment = {
+                    connectionstrings__CharacterDb = "host=/run/postgresql;username=${cfg.user};database=${cfg.database.name}";
+                  };
+                };
+              })
+            ]
+          );
         };
     in
     {
@@ -161,7 +175,6 @@
         dotnetRuntime = pkgs.dotnetCorePackages.aspnetcore_9_0;
       in
       {
-
         packages.default = pkgs.buildDotnetModule {
           pname = "ow3n";
           version = "0.1.0";
@@ -176,7 +189,7 @@
           nativeBuildInputs = with pkgs; [
             nodejs
             dart-sass
-            npmHooks.npmConfigHook # wires up the vendored node_modules
+            npmHooks.npmConfigHook
           ];
 
           npmDeps = pkgs.fetchNpmDeps {
@@ -194,9 +207,6 @@
             substituteInPlace $out/bin/Ordis \
               --replace-fail 'exec' 'cd ${placeholder "out"}/lib/ow3n && exec'
           '';
-
-          # npmConfigHook handles node_modules, so no manual npm install needed.
-          # sass + MSBuild targets just work since node_modules is in place.
 
           meta = {
             description = "OW3N - Blazor Server application";
