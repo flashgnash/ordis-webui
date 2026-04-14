@@ -84,6 +84,12 @@
                 default = "ow3n";
                 description = "PostgreSQL database name.";
               };
+
+              extraUsers = lib.mkOption {
+                type = lib.types.listOf lib.types.str;
+                default = [ ];
+                description = "Additional system users to grant access to the OW3N database.";
+              };
             };
           };
 
@@ -143,14 +149,44 @@
                       name = cfg.user;
                       ensureDBOwnership = true;
                     }
-                  ];
-                  authentication = lib.mkAfter ''
-                    local ${cfg.database.name} ${cfg.user} peer
-                  '';
+                  ]
+                  ++ map (u: { name = u; }) cfg.database.extraUsers;
+                  authentication = lib.mkAfter (
+                    lib.concatStringsSep "\n" (
+                      [ "local ${cfg.database.name} ${cfg.user} peer" ]
+                      ++ map (u: "local ${cfg.database.name} ${u} peer") cfg.database.extraUsers
+                    )
+                  );
+                };
+
+                systemd.services.ow3n-db-grants = lib.mkIf (cfg.database.extraUsers != [ ]) {
+                  description = "Grant extra users access to ${cfg.database.name}";
+                  after = [ "postgresql.service" ];
+                  requires = [ "postgresql.service" ];
+                  wantedBy = [ "multi-user.target" ];
+
+                  serviceConfig = {
+                    Type = "oneshot";
+                    RemainAfterExit = true;
+                    User = "postgres";
+                  };
+
+                  script = lib.concatMapStringsSep "\n" (u: ''
+                    ${config.services.postgresql.package}/bin/psql -d ${cfg.database.name} <<SQL
+                      GRANT CONNECT ON DATABASE ${cfg.database.name} TO ${u};
+                      GRANT USAGE ON SCHEMA public TO ${u};
+                      GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO ${u};
+                      ALTER DEFAULT PRIVILEGES FOR ROLE ${cfg.user} IN SCHEMA public
+                        GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO ${u};
+                    SQL
+                  '') cfg.database.extraUsers;
                 };
 
                 systemd.services.ow3n = {
-                  after = [ "postgresql.service" ];
+                  after = [
+                    "postgresql.service"
+                  ]
+                  ++ lib.optional (cfg.database.extraUsers != [ ]) "ow3n-db-grants.service";
                   requires = [ "postgresql.service" ];
                   environment = {
                     connectionstrings__CharacterDb = "host=/run/postgresql;username=${cfg.user};database=${cfg.database.name}";
