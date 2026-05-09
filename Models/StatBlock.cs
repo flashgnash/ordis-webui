@@ -73,4 +73,7 @@ public class StatBlock
     [JsonConverter(typeof(StatListConverter))]
     [JsonPropertyName("special_stats")]
     public List<Stat>? SpecialStats { get; set; }
+
+    [JsonPropertyName("buffs")]
+    public List<Buff> Buffs { get; set; } = new();
 }

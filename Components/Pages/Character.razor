@@ -58,8 +58,14 @@
         <div class="d-flex flex-wrap gap-1" style="text-size: 10px">
             @if (Char?.StatBlock?.Stats != null)
             {
-                <StatBlock Stats="@Char.StatBlock?.Stats" />
+                <StatBlock Stats="@Char.StatBlock.Stats"
+                           Buffs="@Char.StatBlock.Buffs"
+                           BuffContext="@BuildBuffContext()" />
             }
+        </div>
+
+        <div class="m-2">
+            <BuffList Character="@Char" OnChanged="@OnBuffsChanged" />
         </div>
 
         <!-- Stats -->
@@ -71,7 +77,7 @@
                 {
                     @if (!(gauge?.Max == 0 && gauge?.Value == 0))
                     {
-                        <GaugeDisplay GaugeInstance="@gauge" ChangedCallback="@GaugeChangedCallback"/>
+                        <GaugeDisplay GaugeInstance="@gauge" MaxBonus="@GetGaugeBonus(gauge!.Name)" ChangedCallback="@GaugeChangedCallback"/>
                     }
                             
                 }
@@ -192,7 +198,32 @@ else
         <!-- await CharService.UpdateGaugeAsync(gauge); -->
         await CharService.UpdateGaugeAsync(gauge);
         <!-- Console.WriteLine($"Gauges: {Char.Gauges.Count()}"); -->
-        
+
+    }
+
+    private Dictionary<string, double> BuildBuffContext() =>
+        BuffFormula.BuildContext(Char?.StatBlock, Char?.Gauges);
+
+    private int GetGaugeBonus(string gaugeName)
+    {
+        var buffs = Char?.StatBlock?.Buffs ?? Enumerable.Empty<Buff>();
+        var gauge = Char?.Gauges?.FirstOrDefault(g =>
+            g.Name.Equals(gaugeName, StringComparison.OrdinalIgnoreCase));
+        if (gauge == null) return 0;
+        var ctx = BuildBuffContext();
+        // Formulae can target the gauge by name OR name+".max"
+        var effective = BuffFormula.ComputeEffective(
+            buffs,
+            [gaugeName, gaugeName + ".max"],
+            (double)gauge.Max,
+            ctx);
+        return (int)Math.Round(effective - gauge.Max);
+    }
+
+    private async Task OnBuffsChanged()
+    {
+        await CharService.UpdateAsync(Char!);
+        StateHasChanged();
     }
 
 

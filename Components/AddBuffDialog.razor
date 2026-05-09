@@ -1,0 +1,181 @@
+@rendermode InteractiveServer
+@inject IJSRuntime JS
+
+<div class="p-3 d-flex flex-column gap-3" style="min-width: 290px">
+
+    <div>
+        <label class="form-label">Buff name</label>
+        <input class="form-control" @bind="newName" />
+    </div>
+
+    <div>
+        <!-- Header row with mode toggle -->
+        <div class="d-flex align-items-center gap-2 mb-2">
+            <label class="form-label mb-0">Modifiers</label>
+            <div class="flex-grow-1"></div>
+            <button type="button" class="btn btn-secondary btn-sm" @onclick="ToggleMode">
+                @(advancedMode ? "Simple mode" : "Advanced mode")
+            </button>
+        </div>
+
+        <!-- Existing draft formulae -->
+        @foreach (var f in draftFormulae.ToList())
+        {
+            var captured = f;
+            <div class="d-flex align-items-center gap-1 mb-1">
+                <code class="flex-grow-1 p-1 rounded"
+                      style="background: var(--bg-dark); font-size: 0.9em; word-break: break-all">
+                    @captured
+                </code>
+                <button type="button" class="btn btn-danger btn-sm"
+                        style="padding: 2px 7px; flex-shrink: 0"
+                        @onclick="() => RemoveDraftFormula(captured)">
+                    x
+                </button>
+            </div>
+        }
+
+        <!-- Simple mode: structured row -->
+        @if (!advancedMode)
+        {
+            <div class="d-flex gap-1 align-items-center">
+                <select class="form-select bg-dark text-white flex-fill" style="min-width: 0" @bind="simpleTarget">
+                    @if (Character?.StatBlock?.Stats?.Any() == true)
+                    {
+                        <optgroup label="Stats">
+                            @foreach (var s in Character.StatBlock.Stats)
+                            {
+                                <option value="@s.Name.ToLower()">@s.Name</option>
+                            }
+                        </optgroup>
+                    }
+                    @if (Character?.StatBlock?.SpecialStats?.Any() == true)
+                    {
+                        <optgroup label="Special Stats">
+                            @foreach (var s in Character.StatBlock.SpecialStats)
+                            {
+                                <option value="@s.Name.ToLower()">@s.Name</option>
+                            }
+                        </optgroup>
+                    }
+                    @if (Character?.Gauges?.Any() == true)
+                    {
+                        <optgroup label="Gauge Max">
+                            @foreach (var g in Character.Gauges)
+                            {
+                                <option value="@g.Name.ToLower()">@g.Name (Max)</option>
+                            }
+                        </optgroup>
+                    }
+                </select>
+                <select class="form-select bg-dark text-white" style="width: 5em; flex-shrink: 0" @bind="simpleOp">
+                    <option value="+=">Add</option>
+                    <option value="-=">Subtract</option>
+                    <option value="*=">Multiply by</option>
+                    <option value="/=">Divide by</option>
+                </select>
+                <input class="form-control"
+                       style="width: 5em; flex-shrink: 0"
+                       @bind="simpleValue"
+                       placeholder="1" />
+                <button type="button" class="btn btn-primary flex-shrink-0" @onclick="AddFormulaSimple">+</button>
+            </div>
+        }
+        else
+        {
+            <!-- Advanced mode: free-form formula input -->
+            <div class="d-flex gap-1 align-items-center">
+                <input class="form-control"
+                       @bind="advancedRaw"
+                       placeholder="e.g. str+=dex/2" />
+                <button type="button" class="btn btn-primary flex-shrink-0" @onclick="AddFormulaAdvanced">+</button>
+            </div>
+            @if (advancedError != null)
+            {
+                <small class="text-danger">@advancedError</small>
+            }
+        }
+    </div>
+
+    <div class="d-flex gap-2">
+        <button type="button" class="btn btn-secondary flex-fill"
+                onclick="document.getElementById('addBuffDialog').close()">
+            Cancel
+        </button>
+        <button type="button" class="btn btn-primary flex-fill" @onclick="CommitBuff">
+            Add
+        </button>
+    </div>
+</div>
+
+@code {
+    [Parameter] public PlayerCharacter? Character { get; set; }
+    [Parameter] public EventCallback OnChanged { get; set; }
+
+    private string newName = "";
+    private List<string> draftFormulae = new();
+    private bool advancedMode = false;
+
+    private string simpleTarget = "";
+    private string simpleOp = "+=";
+    private string simpleValue = "1";
+
+    private string advancedRaw = "";
+    private string? advancedError;
+
+    protected override void OnParametersSet()
+    {
+        if (string.IsNullOrEmpty(simpleTarget))
+            simpleTarget = Character?.StatBlock?.Stats?.FirstOrDefault()?.Name?.ToLower()
+                ?? Character?.StatBlock?.SpecialStats?.FirstOrDefault()?.Name?.ToLower()
+                ?? Character?.Gauges?.FirstOrDefault()?.Name?.ToLower()
+                ?? "";
+    }
+
+    private void ToggleMode() => advancedMode = !advancedMode;
+
+    private void RemoveDraftFormula(string f) => draftFormulae.Remove(f);
+
+    private void AddFormulaSimple()
+    {
+        if (string.IsNullOrWhiteSpace(simpleTarget) || string.IsNullOrWhiteSpace(simpleValue))
+            return;
+        draftFormulae.Add($"{simpleTarget}{simpleOp}{simpleValue.Trim()}");
+        simpleValue = "1";
+    }
+
+    private void AddFormulaAdvanced()
+    {
+        advancedError = null;
+        var raw = advancedRaw.Trim().Replace(" ", "");
+        if (BuffFormula.Parse(raw) == null)
+        {
+            advancedError = "Invalid formula — expected: stat+=value (e.g. str+=dex/2)";
+            return;
+        }
+        draftFormulae.Add(raw);
+        advancedRaw = "";
+    }
+
+    private async Task CommitBuff()
+    {
+        if (string.IsNullOrWhiteSpace(newName) || draftFormulae.Count == 0) return;
+        if (Character?.StatBlock == null) return;
+
+        Character.StatBlock.Buffs ??= new();
+        Character.StatBlock.Buffs.Add(new Buff
+        {
+            Name = newName,
+            Formulae = new(draftFormulae)
+        });
+
+        newName = "";
+        draftFormulae.Clear();
+        simpleValue = "1";
+        advancedRaw = "";
+        advancedError = null;
+
+        await JS.InvokeVoidAsync("closeBuffAddDialog");
+        await OnChanged.InvokeAsync();
+    }
+}

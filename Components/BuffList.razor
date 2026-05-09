@@ -1,0 +1,304 @@
+@rendermode InteractiveServer
+@inject IJSRuntime JS
+
+<!-- Active buffs inline panel -->
+<div class="card m-0 border-0">
+    <div class="card-header d-flex flex-nowrap align-items-center gap-2 border-0">
+        <span>Modifiers (@(Character?.StatBlock?.Buffs?.Count ?? 0))</span>
+        <div class="flex-grow-1"></div>
+        <button class="btn btn-primary btn-sm" @onclick="OpenAddDialog">
+            +
+        </button>
+    </div>
+    <div class="card-body m-0 p-2">
+        @if (Character?.StatBlock?.Buffs?.Any() == true)
+        {
+            @foreach (var buff in Character.StatBlock.Buffs.ToList())
+            {
+                <div class="d-flex flex-nowrap align-items-center gap-2 py-1">
+                    <!-- One badge per formula, coloured by operator -->
+                    <div class="d-flex flex-wrap gap-1 flex-shrink-0">
+                        @foreach (var formula in buff.Formulae)
+                        {
+                            var p = BuffFormula.Parse(formula);
+                            var positive = p?.op is "+=" or "*=";
+                            var lbl = p != null
+                                ? p.Value.target[..Math.Min(3, p.Value.target.Length)].ToUpper()
+                                : "?";
+                            <span class="badge @(positive ? "bg-success" : "bg-danger")"
+                                  style="min-width: 2.4em; font-size: 0.7em; text-align: center">
+                                @lbl
+                            </span>
+                        }
+                    </div>
+                    <span class="flex-grow-1">@buff.Name</span>
+                    <span class="text-muted" style="font-size: 0.78em; white-space: nowrap">
+                        @string.Join(", ", buff.Formulae.Select(f => BuffFormula.FormatDisplay(f)))
+                    </span>
+                    <button class="btn btn-sm" style="color:var(--accent); padding: 2px 7px; line-height: 1"
+                            @onclick="() => OpenEditDialog(buff)">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" class="bi bi-pencil-fill" viewBox="0 0 16 16">
+                            <path d="M12.854.146a.5.5 0 0 0-.707 0L10.5 1.793 14.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708zm.646 6.061L9.793 2.5 3.293 9H3.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.207zm-7.468 7.468A.5.5 0 0 1 6 13.5V13h-.5a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.5-.5V10h-.5a.5.5 0 0 1-.175-.032l-.179.178a.5.5 0 0 0-.11.168l-2 5a.5.5 0 0 0 .65.65l5-2a.5.5 0 0 0 .168-.11z"/>
+                        </svg>
+                    </button>
+                    <button class="btn btn-danger btn-sm"
+                            style="padding: 2px 7px; line-height: 1"
+                            @onclick="() => RemoveBuff(buff)">
+                        x
+                    </button>
+                </div>
+            }
+        }
+        else
+        {
+            <span class="text-muted">No active buffs</span>
+        }
+    </div>
+</div>
+
+<!-- Add/Edit buff dialog -->
+<Modal Title="@(editingBuff != null ? "Edit buff" : "Add buff")" id="addBuffDialog">
+    <div class="p-3 d-flex h-100 flex-column gap-3" style="min-width: 360px">
+
+        <div>
+            <label class="form-label">Buff name</label>
+            <input class="form-control" @bind="newName" />
+        </div>
+
+        <div class="d-flex flex-column gap-1">
+            <div class="d-flex align-items-center mb-1">
+                <label class="form-label mb-0">Modifiers</label>
+                <button type="button" class="btn btn-primary btn-sm ms-auto" @onclick="AddEmptyFormula">+</button>
+            </div>
+
+            <!-- Column headers (simple mode only) -->
+            @if (draftFormulae.Any(f => !f.AdvancedMode))
+            {
+                <div class="d-flex gap-1 mb-0">
+                    <small class="flex-fill text-muted text-center" style="min-width: 0">Target</small>
+                    <small class="flex-fill text-muted text-center" style="min-width: 0">Op</small>
+                    <small class="flex-fill text-muted text-center" style="min-width: 0">Value</small>
+                </div>
+            }
+
+            @for (int i = 0; i < draftFormulae.Count; i++)
+            {
+                var d = draftFormulae[i];
+                var idx = i;
+                <div class="w-100 d-flex flex-nowrap gap-1 align-items-center mb-1">
+                    @if (!d.AdvancedMode)
+                    {
+                        <select class="form-select bg-dark text-white flex-fill" style="min-width: 0" @bind="d.Target">
+                            @if (Character?.StatBlock?.Stats?.Any() == true)
+                            {
+                                <optgroup label="Stats">
+                                    @foreach (var s in Character.StatBlock.Stats)
+                                    {
+                                        <option value="@s.Name.ToLower()">@s.Name</option>
+                                    }
+                                </optgroup>
+                            }
+                            @if (Character?.StatBlock?.SpecialStats?.Any() == true)
+                            {
+                                <optgroup label="Special Stats">
+                                    @foreach (var s in Character.StatBlock.SpecialStats)
+                                    {
+                                        <option value="@s.Name.ToLower()">@s.Name</option>
+                                    }
+                                </optgroup>
+                            }
+                            @if (Character?.Gauges?.Any() == true)
+                            {
+                                <optgroup label="Gauge Max">
+                                    @foreach (var g in Character.Gauges)
+                                    {
+                                        <option value="@g.Name.ToLower()">@g.Name</option>
+                                    }
+                                </optgroup>
+                            }
+                        </select>
+                        <select class="form-select bg-dark text-white flex-fill" style="min-width: 0" @bind="d.Op">
+                            <option value="+=">Add</option>
+                            <option value="-=">Subtract</option>
+                            <option value="*=">Multiply by</option>
+                            <option value="/=">Divide by</option>
+                        </select>
+                        <input class="form-control flex-fill" style="min-width: 0" @bind="d.Value" />
+                    }
+                    else
+                    {
+                        <input class="form-control flex-fill" style="min-width: 0"
+                               @bind="d.Raw" placeholder="e.g. str+=dex/2" />
+                    }
+
+                    <label class="form-check-label text-muted flex-shrink-0 ms-1" style="font-size: 0.8em; white-space: nowrap">Advanced</label>
+                    <input type="checkbox" class="form-check-input flex-shrink-0 mt-0"
+                           checked="@d.AdvancedMode"
+                           @onchange="() => ToggleFormulaMode(d)" />
+
+                    <button type="button" class="btn btn-danger flex-shrink-0" style="width: 2.5em"
+                            @onclick="() => draftFormulae.RemoveAt(idx)">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash-fill" viewBox="0 0 16 16">
+                            <path d="M2.5 1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1H3v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V4h.5a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1zm3 4a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5M8 5a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7A.5.5 0 0 1 8 5m3 .5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 1 0"/>
+                        </svg>
+                    </button>
+                </div>
+            }
+        </div>
+
+        <div class="flex-grow-1"></div>
+
+        <div class="d-flex gap-2">
+            <button type="button" class="btn btn-secondary flex-fill" onclick="addBuffDialog.close()">
+                Cancel
+            </button>
+            <button type="button" class="btn btn-primary flex-fill" @onclick="CommitBuff">
+                Save
+            </button>
+        </div>
+    </div>
+</Modal>
+
+@code {
+    [Parameter] public PlayerCharacter? Character { get; set; }
+    [Parameter] public EventCallback OnChanged { get; set; }
+
+    private class DraftFormula
+    {
+        public bool AdvancedMode { get; set; }
+        public string Target { get; set; } = "";
+        public string Op { get; set; } = "+=";
+        public string Value { get; set; } = "";
+        public string Raw { get; set; } = "";
+
+        public string? ToFormula()
+        {
+            if (AdvancedMode)
+            {
+                var raw = Raw.Trim().Replace(" ", "");
+                return BuffFormula.Parse(raw) != null ? raw : null;
+            }
+            if (string.IsNullOrWhiteSpace(Target) || string.IsNullOrWhiteSpace(Value))
+                return null;
+            return $"{Target}{Op}{Value.Trim()}";
+        }
+
+        public static DraftFormula FromFormula(string formula)
+        {
+            var parsed = BuffFormula.Parse(formula);
+            if (parsed != null && double.TryParse(parsed.Value.expr,
+                System.Globalization.NumberStyles.Any,
+                System.Globalization.CultureInfo.InvariantCulture, out _))
+            {
+                return new DraftFormula
+                {
+                    Target = parsed.Value.target,
+                    Op = parsed.Value.op,
+                    Value = parsed.Value.expr
+                };
+            }
+            return new DraftFormula { AdvancedMode = true, Raw = formula };
+        }
+    }
+
+    private Buff? editingBuff;
+    private string newName = "";
+    private List<DraftFormula> draftFormulae = new();
+
+    private string DefaultTarget() =>
+        Character?.StatBlock?.Stats?.FirstOrDefault()?.Name?.ToLower()
+        ?? Character?.StatBlock?.SpecialStats?.FirstOrDefault()?.Name?.ToLower()
+        ?? Character?.Gauges?.FirstOrDefault()?.Name?.ToLower()
+        ?? "";
+
+    private async Task OpenAddDialog()
+    {
+        editingBuff = null;
+        newName = "";
+        draftFormulae = new();
+        AddEmptyFormula();
+        await OpenDialog();
+    }
+
+    private async Task OpenEditDialog(Buff buff)
+    {
+        editingBuff = buff;
+        newName = buff.Name;
+        draftFormulae = buff.Formulae.Select(DraftFormula.FromFormula).ToList();
+        await OpenDialog();
+    }
+
+    private async Task OpenDialog()
+    {
+        await using var dialog = await JS.InvokeAsync<IJSObjectReference>("document.getElementById", "addBuffDialog");
+        await dialog.InvokeVoidAsync("showModal");
+    }
+
+    private void AddEmptyFormula() =>
+        draftFormulae.Add(new DraftFormula { Target = DefaultTarget() });
+
+    private void ToggleFormulaMode(DraftFormula d)
+    {
+        if (!d.AdvancedMode)
+        {
+            // Simple → Advanced: format current inputs as formula string
+            if (!string.IsNullOrWhiteSpace(d.Target) && !string.IsNullOrWhiteSpace(d.Value))
+                d.Raw = $"{d.Target}{d.Op}{d.Value.Trim()}";
+        }
+        else
+        {
+            // Advanced → Simple: parse back if expression is a plain number
+            var raw = d.Raw.Trim().Replace(" ", "");
+            var parsed = BuffFormula.Parse(raw);
+            if (parsed != null && double.TryParse(parsed.Value.expr,
+                System.Globalization.NumberStyles.Any,
+                System.Globalization.CultureInfo.InvariantCulture, out _))
+            {
+                d.Target = parsed.Value.target;
+                d.Op = parsed.Value.op;
+                d.Value = parsed.Value.expr;
+            }
+        }
+        d.AdvancedMode = !d.AdvancedMode;
+    }
+
+    private async Task CommitBuff()
+    {
+        if (string.IsNullOrWhiteSpace(newName)) return;
+        if (Character?.StatBlock == null) return;
+
+        var formulae = draftFormulae
+            .Select(d => d.ToFormula())
+            .Where(f => f != null)
+            .Cast<string>()
+            .ToList();
+
+        if (formulae.Count == 0) return;
+
+        if (editingBuff != null)
+        {
+            editingBuff.Name = newName;
+            editingBuff.Formulae = formulae;
+            editingBuff = null;
+        }
+        else
+        {
+            Character.StatBlock.Buffs ??= new();
+            Character.StatBlock.Buffs.Add(new Buff { Name = newName, Formulae = formulae });
+        }
+
+        newName = "";
+        draftFormulae.Clear();
+
+        await using var dialog = await JS.InvokeAsync<IJSObjectReference>("document.getElementById", "addBuffDialog");
+        await dialog.InvokeVoidAsync("close");
+        await OnChanged.InvokeAsync();
+    }
+
+    private async Task RemoveBuff(Buff buff)
+    {
+        Character?.StatBlock?.Buffs?.Remove(buff);
+        await OnChanged.InvokeAsync();
+    }
+}
+

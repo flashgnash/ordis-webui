@@ -10,11 +10,11 @@
             @switch (@GaugeInstance.GaugeType) {
               case GaugeType.Orb:
                 <div class="d-flex m-auto " style="width: 500px">
-                  <Orb GaugeInstance="@GaugeInstance"/>
+                  <Orb GaugeInstance="@DisplayGauge"/>
                 </div>
                 break;
               case GaugeType.IconBar:
-                <IconBar GaugeInstance="@GaugeInstance"/>
+                <IconBar GaugeInstance="@DisplayGauge"/>
                 break;
       
             }
@@ -28,12 +28,12 @@
                   </button>
 
               <input type="number" class="w-100 form-control" @bind="@GaugeInstance.Value">
-                  <button @onclick="() => Set(GaugeInstance.Max)" class="btn btn-primary w-100">
+                  <button @onclick="() => Set(EffectiveMax)" class="btn btn-primary w-100">
                   Max
                   </button>
               </div>
 
-              <Slider @bind-Value="@GaugeInstance.Value" Min="0" Max="@GaugeInstance.Max" class="w-100" />
+              <Slider @bind-Value="@GaugeInstance.Value" Min="0" Max="@EffectiveMax" class="w-100" />
               <!-- <input type="range" class="w-100" @bind="@GaugeInstance.Value" max="@GaugeInstance.Max" style=" "/> -->
               <br>
               <br>
@@ -72,7 +72,7 @@
 
               </div>
 
-                <Slider @bind-Value="@IncrementValue" Min="@(-GaugeInstance.Max)" Max="@GaugeInstance.Max" class="flex-grow-1 w-100" />
+                <Slider @bind-Value="@IncrementValue" Min="@(-EffectiveMax)" Max="@EffectiveMax" class="flex-grow-1 w-100" />
               
             </div>
 
@@ -126,12 +126,12 @@
 <a href="javascript:void(0)" style="text-decoration: none; color: inherit" onclick="document.getElementById('@(GaugeInstance.Id)').showModal()" class="w-100 h-100 d-flex">
   @switch (@GaugeInstance.GaugeType) {
     case GaugeType.Orb:
-      <Orb GaugeInstance="@GaugeInstance"/>
+      <Orb GaugeInstance="@DisplayGauge"/>
       break;
     case GaugeType.IconBar:
-      <IconBar GaugeInstance="@GaugeInstance"/>
+      <IconBar GaugeInstance="@DisplayGauge"/>
       break;
-      
+
   }
   
 </a>
@@ -182,11 +182,27 @@
   [Parameter]
   public Gauge GaugeInstance { get; set; }
 
+  [Parameter]
+  public int MaxBonus { get; set; } = 0;
 
   [Parameter]
   public EventCallback<Gauge> ChangedCallback { get; set; }
 
-  private float Percentage => ((float)GaugeInstance.Value / (float)GaugeInstance.Max)*100;
+  private int EffectiveMax => GaugeInstance.Max + MaxBonus;
+
+  private Gauge DisplayGauge => MaxBonus == 0 ? GaugeInstance : new Gauge
+  {
+      Id = GaugeInstance.Id,
+      Name = GaugeInstance.Name,
+      Value = GaugeInstance.Value,
+      Max = EffectiveMax,
+      Icon = GaugeInstance.Icon,
+      Colour = GaugeInstance.Colour,
+      GaugeType = GaugeInstance.GaugeType,
+      PlayerCharacterId = GaugeInstance.PlayerCharacterId
+  };
+
+  private float Percentage => ((float)GaugeInstance.Value / (float)EffectiveMax) * 100;
 
 
 
