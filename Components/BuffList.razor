@@ -33,73 +33,71 @@
             {
                 @foreach (var cb in tabBuffs)
                 {
-                    <div class="d-flex flex-nowrap align-items-center gap-2 py-1">
-                        <span class="flex-shrink-0 text-muted" style="width: 1.5em; text-align: center">
-                            <BuffIcon Name="@cb.Template.Icon" />
-                        </span>
-                        <span>@cb.Template.Name</span>
-                        @if (cb.Template.Effects.Any(e => e.IsCumulative))
-                        {
-                            var gaugeValueOnly = cb.Template.Effects
-                                .Where(e => e.IsCumulative)
-                                .All(e => BuffFormula.Parse(e.Formula)?.target.EndsWith(".value", StringComparison.OrdinalIgnoreCase) == true);
+                    <div class="py-1">
+                        <div class="d-flex flex-nowrap align-items-center gap-2">
+                            <span class="flex-shrink-0 text-muted" style="width: 1.5em; text-align: center">
+                                <BuffIcon Name="@cb.Template.Icon" />
+                            </span>
+                            <span>@cb.Template.Name</span>
+                            @if (cb.Template.Effects.Any(e => e.IsCumulative))
+                            {
+                                var gaugeValueOnly = cb.Template.Effects
+                                    .Where(e => e.IsCumulative)
+                                    .All(e => BuffFormula.Parse(e.Formula)?.target.EndsWith(".value", StringComparison.OrdinalIgnoreCase) == true);
 
-                            if (gaugeValueOnly)
-                            {
-                                <button class="btn btn-success btn-sm d-flex align-items-center justify-content-center"
-                                        style="width: 1.6em; height: 1.6em; padding: 0"
-                                        @onclick="() => ApplyStack(cb)">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16">
-                                        <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
-                                    </svg>
-                                </button>
-                            }
-                            else
-                            {
-                                <span class="text-muted" style="font-size: 0.8em">(@cb.Stacks)</span>
-                                <button class="btn btn-danger btn-sm d-flex align-items-center justify-content-center"
-                                        style="width: 1.6em; height: 1.6em; padding: 0"
-                                        @onclick="() => ChangeStacks(cb, -1)">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16">
-                                        <path d="M4 8a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7A.5.5 0 0 1 4 8"/>
-                                    </svg>
-                                </button>
-                                <button class="btn btn-success btn-sm d-flex align-items-center justify-content-center"
-                                        style="width: 1.6em; height: 1.6em; padding: 0"
-                                        @onclick="() => ApplyStack(cb)">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16">
-                                        <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
-                                    </svg>
-                                </button>
-                            }
-                        }
-                        <div class="flex-grow-1"></div>
-                        <div class="d-flex flex-wrap gap-1 flex-shrink-0">
-                            @foreach (var effect in cb.Template.Effects)
-                            {
-                                var p = BuffFormula.Parse(effect.Formula);
-                                var positive = p?.op is "+=" or "*=";
-                                var lbl = p != null
-                                    ? p.Value.target[..Math.Min(3, p.Value.target.Length)].ToUpper()
-                                    : "?";
-                                <span class="badge @(positive ? "bg-success" : "bg-danger")"
-                                      style="min-width: 2.4em; font-size: 0.7em; text-align: center">
-                                    @lbl
-                                </span>
+                                <div class="flex-grow-1"></div>
+
+                                if (gaugeValueOnly)
+                                {
+                                    <button class="btn btn-success d-flex align-items-center justify-content-center"
+                                            style="width: 1.8em; height: 1.8em; padding: 0"
+                                            @onclick="() => ApplyStack(cb)">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                            <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
+                                        </svg>
+                                    </button>
+                                }
+                                else
+                                {
+                                    <button class="btn btn-danger d-flex align-items-center justify-content-center"
+                                            style="width: 1.8em; height: 1.8em; padding: 0"
+                                            @onclick="() => ChangeStacks(cb, -1)">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                            <path d="M4 8a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7A.5.5 0 0 1 4 8"/>
+                                        </svg>
+                                    </button>
+                                    <span style="font-size: 0.95em; min-width: 1.5em; text-align: center">@cb.Stacks</span>
+                                    <button class="btn btn-success d-flex align-items-center justify-content-center"
+                                            style="width: 1.8em; height: 1.8em; padding: 0"
+                                            @onclick="() => ApplyStack(cb)">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                            <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
+                                        </svg>
+                                    </button>
+                                }
                             }
                         </div>
-
-                        <button class="btn btn-sm" style="color:var(--accent); padding: 2px 7px; line-height: 1"
-                                @onclick="() => OpenEditDialog(cb)">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" class="bi bi-pencil-fill" viewBox="0 0 16 16">
-                                <path d="M12.854.146a.5.5 0 0 0-.707 0L10.5 1.793 14.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708zm.646 6.061L9.793 2.5 3.293 9H3.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.207zm-7.468 7.468A.5.5 0 0 1 6 13.5V13h-.5a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.5-.5V10h-.5a.5.5 0 0 1-.175-.032l-.179.178a.5.5 0 0 0-.11.168l-2 5a.5.5 0 0 0 .65.65l5-2a.5.5 0 0 0 .168-.11z"/>
-                            </svg>
-                        </button>
-                        <button class="btn btn-danger btn-sm"
-                                style="padding: 2px 7px; line-height: 1"
-                                @onclick="() => RemoveBuff(cb)">
-                            x
-                        </button>
+                        <div class="d-flex flex-wrap gap-1 align-items-center ms-4 mt-1">
+                            @foreach (var effect in cb.Template.Effects)
+                            {
+                                <span class="badge @(BuffFormula.Parse(effect.Formula)?.op is "+=" or "*=" ? "bg-success" : "bg-danger")"
+                                      style="font-size: 0.7em">
+                                    @BuffFormula.FormatDisplay(effect.Formula)
+                                </span>
+                            }
+                            <div class="flex-grow-1"></div>
+                            <button class="btn btn-sm" style="color:var(--accent); padding: 2px 7px; line-height: 1"
+                                    @onclick="() => OpenEditDialog(cb)">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" class="bi bi-pencil-fill" viewBox="0 0 16 16">
+                                    <path d="M12.854.146a.5.5 0 0 0-.707 0L10.5 1.793 14.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708zm.646 6.061L9.793 2.5 3.293 9H3.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.207zm-7.468 7.468A.5.5 0 0 1 6 13.5V13h-.5a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.5-.5V10h-.5a.5.5 0 0 1-.175-.032l-.179.178a.5.5 0 0 0-.11.168l-2 5a.5.5 0 0 0 .65.65l5-2a.5.5 0 0 0 .168-.11z"/>
+                                </svg>
+                            </button>
+                            <button class="btn btn-danger btn-sm"
+                                    style="padding: 2px 7px; line-height: 1"
+                                    @onclick="() => RemoveBuff(cb)">
+                                x
+                            </button>
+                        </div>
                     </div>
                 }
             }
@@ -300,7 +298,7 @@
     private BuffType activeTab = BuffType.Equipment;
 
     private IEnumerable<CharacterBuff> GetBuffsForTab(BuffType type) =>
-        CharacterBuffs.Where(cb => cb.Template.Type == type);
+        CharacterBuffs.Where(cb => cb.Template.Type == type).OrderBy(cb => cb.Template.Name);
 
     private static string TabLabel(BuffType type) => type switch
     {
