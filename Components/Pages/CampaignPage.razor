@@ -112,12 +112,10 @@
                                         }
                                         @if (lastRoll != null)
                                         {
-                                            <div class="flex-shrink-0 d-flex align-items-center justify-content-center position-relative"
-                                                 style="width: 4em; height: 4em">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" fill="currentColor" viewBox="0 0 16 16" style="position: absolute; opacity: 0.3">
-                                                    <path d="M3 0a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V3a3 3 0 0 0-3-3z"/>
-                                                </svg>
-                                                <span class="position-relative fw-bold" style="font-size: 1.3em; z-index: 1">@lastRoll.Result</span>
+                                            <div class="flex-shrink-0">
+                                                <DieShape Expression="@(lastRoll.Rolls?.FirstOrDefault()?.Expression ?? lastRoll.Message)">
+                                                    @lastRoll.Result
+                                                </DieShape>
                                             </div>
                                         }
                                     </div>

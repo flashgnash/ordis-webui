@@ -54,6 +54,7 @@ public class CampaignService(IDbContextFactory<OrdisContext> dbFactory)
 
             .Include(g => g.Players)
                 .ThenInclude(p => p.Rolls)
+                    .ThenInclude(r => r.Rolls)
 
             .SingleOrDefaultAsync(c => c.Id == id);
     }
