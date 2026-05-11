@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
-public class CampaignService(IDbContextFactory<OrdisContext> dbFactory)
+public class CampaignService(IDbContextFactory<OrdisContext> dbFactory, LiveUpdateService liveUpdates)
 {
 
     public async Task RemovePlayerAsync(Campaign campaign, PlayerCharacter player) {
@@ -18,8 +18,9 @@ public class CampaignService(IDbContextFactory<OrdisContext> dbFactory)
         db.Campaigns.Update(fetchedCampaign);
 
         await db.SaveChangesAsync();
+        liveUpdates.NotifyCampaignChanged(campaign.Id);
         Console.WriteLine("Done");
-        
+
     }
 
     public async Task UpdateAsync(Campaign c)
@@ -31,6 +32,7 @@ public class CampaignService(IDbContextFactory<OrdisContext> dbFactory)
         Console.WriteLine($"Updating campaign {c.Name}");
 
         await db.SaveChangesAsync();
+        liveUpdates.NotifyCampaignChanged(c.Id);
 
         Console.WriteLine("Done");
 

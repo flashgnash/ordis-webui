@@ -5,6 +5,8 @@
 @attribute [Authorize(Policy = "HasDiscordId")]
 @inject UserState UserState
 @inject BuffService BuffService
+@inject LiveUpdateService LiveUpdates
+@implements IDisposable
 @rendermode InteractiveServer
 
 
@@ -265,8 +267,6 @@ else
     {
         var character = await CharService.GetByIdAsync(CharacterId);
 
-
-
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
 
@@ -280,7 +280,6 @@ else
             Char = character;
             characterBuffs = await BuffService.GetCharacterBuffsAsync(character.Id);
 
-
             if (character.Gauges?.Count == 0 && character.StatBlock?.MaxHealth != null)
             {
                 var newGauge = new Gauge {
@@ -290,17 +289,36 @@ else
                     Max = character.StatBlock?.MaxHealth ?? 0,
                     Value = character.StatBlock?.CurrentHealth ?? character.StatBlock?.MaxHealth ?? 0,
                 };
-        
-                character.Gauges.Add(newGauge);
 
-                <!-- Console.WriteLine($"New gauge {newGauge.Id} {newGauge.Name}"); -->
+                character.Gauges.Add(newGauge);
             }
 
-            
+            LiveUpdates.OnCharacterChanged += OnCharacterUpdated;
         }
         else
         {
             Navigation.NavigateTo("/forbidden");
         }
+    }
+
+    private async void OnCharacterUpdated(int characterId)
+    {
+        if (characterId != CharacterId) return;
+
+        await InvokeAsync(async () =>
+        {
+            var updated = await CharService.GetByIdAsync(CharacterId);
+            if (updated != null)
+            {
+                Char = updated;
+                characterBuffs = await BuffService.GetCharacterBuffsAsync(CharacterId);
+                StateHasChanged();
+            }
+        });
+    }
+
+    public void Dispose()
+    {
+        LiveUpdates.OnCharacterChanged -= OnCharacterUpdated;
     }
 }

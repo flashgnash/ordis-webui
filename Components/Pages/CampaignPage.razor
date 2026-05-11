@@ -6,6 +6,8 @@
 @inject PlayerCharacterService CharService
 @inject BuffService BuffService
 @inject IJSRuntime JS
+@inject LiveUpdateService LiveUpdates
+@implements IDisposable
 @attribute [Authorize(Policy = "HasDiscordId")]
 
 
@@ -348,13 +350,11 @@
 
 	protected async override Task OnInitializedAsync()
     {
-
-			NameDeletionConfirmationBoxes = new();
+		NameDeletionConfirmationBoxes = new();
 
         var campaign = await CampaignService.GetByIdAsync(CampaignId);
 
         campaign.Players = campaign.Players ?? new List<PlayerCharacter>();
-
 
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
@@ -371,7 +371,9 @@
 			foreach(PlayerCharacter player in Campaign?.Players) {
 				NameDeletionConfirmationBoxes[player.Id] = "";
 			}
-            
+
+            LiveUpdates.OnCampaignChanged += OnCampaignUpdated;
+            LiveUpdates.OnCharacterChanged += OnCharacterUpdated;
         }
         else
         {
@@ -379,11 +381,42 @@
         }
     }
 
+    private async void OnCampaignUpdated(int campaignId)
+    {
+        if (campaignId != CampaignId) return;
+        await RefreshCampaignData();
+    }
+
+    private async void OnCharacterUpdated(int characterId)
+    {
+        if (Campaign?.Players == null) return;
+        if (!Campaign.Players.Any(p => p.Id == characterId)) return;
+        await RefreshCampaignData();
+    }
+
+    private async Task RefreshCampaignData()
+    {
+        await InvokeAsync(async () =>
+        {
+            var campaign = await CampaignService.GetByIdAsync(CampaignId);
+            if (campaign != null)
+            {
+                campaign.Players = campaign.Players ?? new List<PlayerCharacter>();
+                Campaign = campaign;
+                campaignBuffs = await BuffService.GetCampaignLibraryAsync(CampaignId);
+
+                foreach (PlayerCharacter player in Campaign.Players)
+                {
+                    NameDeletionConfirmationBoxes.TryAdd(player.Id, "");
+                }
+                StateHasChanged();
+            }
+        });
+    }
 
     void AddCharacter()
     {
         Campaign.Players.Add(new PlayerCharacter(){Campaign = Campaign});
-
         Console.WriteLine($"Added character, total now: {Campaign.Players.Count}");
     }
 
@@ -393,6 +426,9 @@
         Console.WriteLine($"Saved campaign {Campaign.Id}: {Campaign.Name}, owned by {Campaign.DungeonMasterId}");
     }
 
-
-    
+    public void Dispose()
+    {
+        LiveUpdates.OnCampaignChanged -= OnCampaignUpdated;
+        LiveUpdates.OnCharacterChanged -= OnCharacterUpdated;
+    }
 }
