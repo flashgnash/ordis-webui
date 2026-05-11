@@ -4,6 +4,7 @@
 @inject NavigationManager Navigation
 @attribute [Authorize(Policy = "HasDiscordId")]
 @inject UserState UserState
+@inject BuffService BuffService
 @rendermode InteractiveServer
 
 
@@ -55,14 +56,15 @@
             </div>
         </div>
         
-        <div class="d-flex flex-wrap gap-1" style="text-size: 10px">
-            @if (Char?.StatBlock?.Stats != null)
-            {
-                <StatBlock Stats="@Char.StatBlock?.Stats" />
-            }
-        </div>
+        @if (Char?.StatBlock?.Stats != null)
+        {
+            <div class="p-2">
+                <StatBlock Stats="@Char.StatBlock.Stats"
+                           Buffs="@ActiveBuffTemplates()"
+                           BuffContext="@BuildBuffContext()" />
+            </div>
+        }
 
-        <!-- Stats -->
         @if (Char?.Gauges != null)
         {
             <!-- Globes -->
@@ -71,12 +73,19 @@
                 {
                     @if (!(gauge?.Max == 0 && gauge?.Value == 0))
                     {
-                        <GaugeDisplay GaugeInstance="@gauge" ChangedCallback="@GaugeChangedCallback"/>
+                        <GaugeDisplay GaugeInstance="@gauge" MaxBonus="@GetGaugeBonus(gauge!.Name)" ChangedCallback="@GaugeChangedCallback"/>
                     }
-                            
+
                 }
             </div>
         }
+
+        <div class="m-2">
+            <BuffList Character="@Char" OwnerId="@DiscordId"
+                      CharacterBuffs="@characterBuffs"
+                      OnChanged="@OnBuffsChanged"
+                      OnStackApplied="@OnCumulativeStackApplied" />
+        </div>
         <div class="">
             <div class="flex-grow-2 flex-row flex-wrap">
                 @if (Char?.StatBlock?.Hunger != null && Char?.StatBlock?.Hunger != 0)
@@ -97,17 +106,6 @@
             </div>
         </div>
 
-
-        <div class="d-flex flex-wrap">
-            <div class="flex-row flex-grow-1">
-                <div class="flex-fill">
-                    <DescriptableList Name="Inventory" Descriptables="@(Char?.Inventory?.Cast<IDescriptable>())" />
-                </div>
-                <div class="flex-fill">
-                    <DescriptableList Name="Spells" Descriptables="@(Char?.Spells?.Cast<IDescriptable>())" />
-                </div>
-            </div>
-        </div>
 
         <br>
         @if(Char.Rolls != null) {
@@ -177,8 +175,24 @@ else
 @code
 {
     PlayerCharacter? Char;
+    List<CharacterBuff> characterBuffs = new();
+    string? DiscordId;
 
     [Parameter] public int CharacterId { get; set; }
+
+    private List<Buff> ActiveBuffTemplates() =>
+        characterBuffs.Select(cb => new Buff
+        {
+            Name = cb.Template.Name,
+            Icon = cb.Template.Icon,
+            Type = cb.Template.Type,
+            Effects = cb.Template.Effects.Select(e => new Effect
+            {
+                Formula = e.Formula,
+                IsCumulative = e.IsCumulative,
+                Stacks = e.IsCumulative ? cb.Stacks : 1
+            }).ToList()
+        }).ToList();
 
     public async Task GaugeChangedCallback(Gauge gauge)
     {
@@ -192,7 +206,58 @@ else
         <!-- await CharService.UpdateGaugeAsync(gauge); -->
         await CharService.UpdateGaugeAsync(gauge);
         <!-- Console.WriteLine($"Gauges: {Char.Gauges.Count()}"); -->
-        
+
+    }
+
+    private Dictionary<string, double> BuildBuffContext() =>
+        BuffFormula.BuildContext(Char?.StatBlock, Char?.Gauges);
+
+    private int GetGaugeBonus(string gaugeName)
+    {
+        var buffs = ActiveBuffTemplates();
+        var gauge = Char?.Gauges?.FirstOrDefault(g =>
+            g.Name.Equals(gaugeName, StringComparison.OrdinalIgnoreCase));
+        if (gauge == null) return 0;
+        var ctx = BuildBuffContext();
+        // Effects can target the gauge by name OR name+".max"
+        var effective = BuffFormula.ComputeEffective(
+            buffs,
+            [gaugeName, gaugeName + ".max"],
+            (double)gauge.Max,
+            ctx);
+        return (int)Math.Round(effective - gauge.Max);
+    }
+
+    private async Task OnCumulativeStackApplied(CharacterBuff cb)
+    {
+        if (Char?.Gauges == null) return;
+        // Build a Buff with the current stacks for delta calculation
+        var buff = new Buff
+        {
+            Name = cb.Template.Name,
+            Effects = cb.Template.Effects.Select(e => new Effect
+            {
+                Formula = e.Formula,
+                IsCumulative = e.IsCumulative,
+                Stacks = e.IsCumulative ? cb.Stacks : 1
+            }).ToList()
+        };
+        var ctx = BuildBuffContext();
+        foreach (var gauge in Char.Gauges)
+        {
+            var delta = BuffFormula.ComputeGaugeValueDelta(buff, gauge.Name, ctx);
+            if (delta != 0)
+            {
+                gauge.Value = Math.Max(0, Math.Min(gauge.Value + delta, gauge.Max + GetGaugeBonus(gauge.Name)));
+                await CharService.UpdateGaugeAsync(gauge);
+            }
+        }
+    }
+
+    private async Task OnBuffsChanged()
+    {
+        characterBuffs = await BuffService.GetCharacterBuffsAsync(Char!.Id);
+        StateHasChanged();
     }
 
 
@@ -205,14 +270,15 @@ else
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
 
-        var discordId = user.FindFirst("discord_id")?.Value ?? "Not logged in";
+        DiscordId = user.FindFirst("discord_id")?.Value ?? "Not logged in";
 
         // Only present the user with data if they are the character's owner
         // (this is only safe because I'm using serverside blazor)
-        if (character?.UserId == discordId)
+        if (character?.UserId == DiscordId)
         {
             UserState.SelectedCharacter = character;
             Char = character;
+            characterBuffs = await BuffService.GetCharacterBuffsAsync(character.Id);
 
 
             if (character.Gauges?.Count == 0 && character.StatBlock?.MaxHealth != null)

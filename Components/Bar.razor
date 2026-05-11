@@ -1,0 +1,21 @@
+
+<div class="w-100">
+    <div class="d-flex justify-content-between" style="font-size: 0.8em">
+        <span>@GaugeInstance.Name</span>
+        <span>@GaugeInstance.Value / @GaugeInstance.Max</span>
+    </div>
+    <div class="progress" style="height: 0.6em; background: rgba(255,255,255,0.1)">
+        <div class="progress-bar" role="progressbar"
+             style="width: @Percentage%; background: @(GaugeInstance.Colour ?? "var(--accent)")"
+             aria-valuenow="@GaugeInstance.Value" aria-valuemin="0" aria-valuemax="@GaugeInstance.Max">
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public Gauge GaugeInstance { get; set; } = null!;
+
+    private float Percentage => GaugeInstance.Max > 0
+        ? Math.Min(100, (float)GaugeInstance.Value / GaugeInstance.Max * 100)
+        : 0;
+}

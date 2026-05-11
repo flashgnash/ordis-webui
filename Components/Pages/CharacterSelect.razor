@@ -1,5 +1,4 @@
-﻿@page "/"
-@page "/characters"
+﻿@page "/characters"
 @inject PlayerCharacterService CharService
 @inject AuthenticationStateProvider AuthStateProvider
 
@@ -29,20 +28,10 @@
               </div>
 
 
-                <div class="card-body d-flex">
-              <div class="flex-grow-1 d-flex row">
-                @if(@character.StatBlock?.Stats != null) {
+                <div class="card-body p-2">
+                @if(character.StatBlock?.Stats != null) {
                     <StatBlock Stats="@character.StatBlock.Stats" />
-                  }
-              </div>
-
-              @if(character.StatBlock?.MaxHealth != null) {
-
-                <!-- <div class="float-right d-flex flex-wrap flex-shrink-1"> -->
-                  <!-- <Orb Colour="red" Value="@(character.CurrentHealth ?? character.MaxHealth ?? 0)" Max="@(character.MaxHealth ?? 0)"/> -->
-                <!-- </div> --> 
-              }
-
+                }
                 </div>
             </a>
           </div>

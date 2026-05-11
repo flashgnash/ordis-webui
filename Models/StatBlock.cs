@@ -73,4 +73,8 @@ public class StatBlock
     [JsonConverter(typeof(StatListConverter))]
     [JsonPropertyName("special_stats")]
     public List<Stat>? SpecialStats { get; set; }
+
+    // Legacy: kept for JSON deserialization of old data, but no longer written to.
+    [JsonPropertyName("buffs")]
+    public List<Buff>? LegacyBuffs { get; set; }
 }

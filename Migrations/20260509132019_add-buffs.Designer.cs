@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -10,9 +11,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Ordis.Migrations
 {
     [DbContext(typeof(OrdisContext))]
-    partial class OrdisContextModelSnapshot : ModelSnapshot
+    [Migration("20260509132019_add-buffs")]
+    partial class addbuffs
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -20,48 +23,6 @@ namespace Ordis.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
-
-            modelBuilder.Entity("BuffTemplate", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<int?>("CampaignId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("EffectsJson")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("effects");
-
-                    b.Property<string>("Icon")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("OwnerId")
-                        .HasColumnType("text");
-
-                    b.Property<Guid?>("SourceTemplateId")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("Type")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CampaignId");
-
-                    b.HasIndex("OwnerId");
-
-                    b.HasIndex("SourceTemplateId");
-
-                    b.ToTable("buff_templates", (string)null);
-                });
 
             modelBuilder.Entity("Campaign", b =>
                 {
@@ -89,30 +50,6 @@ namespace Ordis.Migrations
                     b.HasIndex("DungeonMasterId");
 
                     b.ToTable("Campaigns");
-                });
-
-            modelBuilder.Entity("CharacterBuff", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("PlayerCharacterId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Stacks")
-                        .HasColumnType("integer");
-
-                    b.Property<Guid>("TemplateId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("PlayerCharacterId");
-
-                    b.HasIndex("TemplateId");
-
-                    b.ToTable("character_buffs", (string)null);
                 });
 
             modelBuilder.Entity("Gauge", b =>
@@ -424,30 +361,6 @@ namespace Ordis.Migrations
                     b.ToTable("users", (string)null);
                 });
 
-            modelBuilder.Entity("BuffTemplate", b =>
-                {
-                    b.HasOne("Campaign", "Campaign")
-                        .WithMany()
-                        .HasForeignKey("CampaignId")
-                        .OnDelete(DeleteBehavior.Cascade);
-
-                    b.HasOne("User", "Owner")
-                        .WithMany()
-                        .HasForeignKey("OwnerId")
-                        .OnDelete(DeleteBehavior.Cascade);
-
-                    b.HasOne("BuffTemplate", "SourceTemplate")
-                        .WithMany()
-                        .HasForeignKey("SourceTemplateId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.Navigation("Campaign");
-
-                    b.Navigation("Owner");
-
-                    b.Navigation("SourceTemplate");
-                });
-
             modelBuilder.Entity("Campaign", b =>
                 {
                     b.HasOne("User", "DungeonMaster")
@@ -455,25 +368,6 @@ namespace Ordis.Migrations
                         .HasForeignKey("DungeonMasterId");
 
                     b.Navigation("DungeonMaster");
-                });
-
-            modelBuilder.Entity("CharacterBuff", b =>
-                {
-                    b.HasOne("PlayerCharacter", "PlayerCharacter")
-                        .WithMany("Buffs")
-                        .HasForeignKey("PlayerCharacterId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("BuffTemplate", "Template")
-                        .WithMany()
-                        .HasForeignKey("TemplateId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("PlayerCharacter");
-
-                    b.Navigation("Template");
                 });
 
             modelBuilder.Entity("Gauge", b =>
@@ -546,8 +440,6 @@ namespace Ordis.Migrations
 
             modelBuilder.Entity("PlayerCharacter", b =>
                 {
-                    b.Navigation("Buffs");
-
                     b.Navigation("Gauges");
 
                     b.Navigation("Inventory");

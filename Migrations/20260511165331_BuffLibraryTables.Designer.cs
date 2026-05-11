@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -10,9 +11,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Ordis.Migrations
 {
     [DbContext(typeof(OrdisContext))]
-    partial class OrdisContextModelSnapshot : ModelSnapshot
+    [Migration("20260511165331_BuffLibraryTables")]
+    partial class BuffLibraryTables
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -46,9 +49,6 @@ namespace Ordis.Migrations
                     b.Property<string>("OwnerId")
                         .HasColumnType("text");
 
-                    b.Property<Guid?>("SourceTemplateId")
-                        .HasColumnType("uuid");
-
                     b.Property<int>("Type")
                         .HasColumnType("integer");
 
@@ -57,8 +57,6 @@ namespace Ordis.Migrations
                     b.HasIndex("CampaignId");
 
                     b.HasIndex("OwnerId");
-
-                    b.HasIndex("SourceTemplateId");
 
                     b.ToTable("buff_templates", (string)null);
                 });
@@ -436,16 +434,9 @@ namespace Ordis.Migrations
                         .HasForeignKey("OwnerId")
                         .OnDelete(DeleteBehavior.Cascade);
 
-                    b.HasOne("BuffTemplate", "SourceTemplate")
-                        .WithMany()
-                        .HasForeignKey("SourceTemplateId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
                     b.Navigation("Campaign");
 
                     b.Navigation("Owner");
-
-                    b.Navigation("SourceTemplate");
                 });
 
             modelBuilder.Entity("Campaign", b =>

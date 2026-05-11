@@ -1,0 +1,61 @@
+@{
+    var sides = ParseDieSides(Expression);
+    // Triangle visual center is lower than geometric center
+    var textOffset = sides == 4 ? "padding-top: 0.5em" : "";
+}
+
+<div class="d-flex flex-column align-items-center">
+    <div class="d-flex align-items-center justify-content-center position-relative"
+         style="width: @Size; height: @Size">
+        <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 100 100"
+             fill="none" stroke="currentColor" stroke-width="3" style="position: absolute; opacity: 0.35">
+            @switch (sides)
+            {
+                case 4: // triangle
+                    <polygon points="50,5 95,90 5,90" />
+                    break;
+                case 6: // square with rounded corners
+                    <rect x="8" y="8" width="84" height="84" rx="8" />
+                    break;
+                case 8: // diamond
+                    <polygon points="50,3 97,50 50,97 3,50" />
+                    break;
+                case 10: // kite/pentagon shape
+                    <polygon points="50,3 95,38 80,95 20,95 5,38" />
+                    break;
+                case 12: // dodecagon
+                    <polygon points="50,3 75,7 93,25 97,50 93,75 75,93 50,97 25,93 7,75 3,50 7,25 25,7" />
+                    break;
+                case 20: // icosahedron (triangle-ish)
+                    <polygon points="50,2 96,28 96,72 50,98 4,72 4,28" />
+                    break;
+                default: // circle for unknown
+                    <circle cx="50" cy="50" r="45" />
+                    break;
+            }
+        </svg>
+        <span class="position-relative fw-bold" style="font-size: @FontSize; z-index: 1; @textOffset">
+            @ChildContent
+        </span>
+    </div>
+    @if (!string.IsNullOrEmpty(Expression))
+    {
+        <span class="text-muted" style="font-size: 0.7em">@Expression</span>
+    }
+</div>
+
+@code {
+    [Parameter] public string? Expression { get; set; }
+    [Parameter] public string Size { get; set; } = "4em";
+    [Parameter] public string FontSize { get; set; } = "1.3em";
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private static int ParseDieSides(string? expression)
+    {
+        if (string.IsNullOrEmpty(expression)) return 6;
+        var match = System.Text.RegularExpressions.Regex.Match(expression, @"\d*d(\d+)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        if (match.Success && int.TryParse(match.Groups[1].Value, out var sides))
+            return sides;
+        return 6;
+    }
+}

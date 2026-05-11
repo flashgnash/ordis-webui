@@ -128,7 +128,9 @@ public class PlayerCharacterService(IDbContextFactory<OrdisContext> dbFactory, H
         await using var db = await dbFactory.CreateDbContextAsync();
 
         return await db
-            .Characters.Include(g => g.Gauges).Include(c => c.Rolls)
+            .Characters.Include(g => g.Gauges)
+            .Include(c => c.Rolls)
+                .ThenInclude(r => r.Rolls)
             .Where(c => c.UserId == discordId)
             .OrderBy(c => c.Rolls.Any())
             .ThenBy(c => c.Rolls.Max(r => r.Timestamp))
