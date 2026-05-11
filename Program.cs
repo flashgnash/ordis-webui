@@ -28,6 +28,7 @@ builder.Services.AddDbContextFactory<OrdisContext>((sp, opts) =>
 
 builder.Services.AddScoped<PlayerCharacterService>();
 builder.Services.AddScoped<CampaignService>();
+builder.Services.AddScoped<BuffService>();
 builder.Services.AddScoped<UserState>();
 
 builder.Services.AddRazorComponents()

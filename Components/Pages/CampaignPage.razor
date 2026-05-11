@@ -4,6 +4,8 @@
 @inject NavigationManager Navigation
 @inject CampaignService CampaignService
 @inject PlayerCharacterService CharService
+@inject BuffService BuffService
+@inject IJSRuntime JS
 @attribute [Authorize(Policy = "HasDiscordId")]
 
 
@@ -172,6 +174,105 @@
   			}
   		</div>
     </div>
+    <div class="card mt-3">
+        <div class="card-header d-flex align-items-center">
+            <h4 class="mb-0">Buff Library</h4>
+            <span class="text-muted ms-2" style="font-size: 0.85em">(@campaignBuffs.Count)</span>
+            <div class="flex-grow-1"></div>
+            <button class="btn btn-primary btn-sm" @onclick="OpenCampaignBuffDialog">+</button>
+        </div>
+        <div class="card-body">
+            @if (campaignBuffs.Any())
+            {
+                @foreach (var t in campaignBuffs)
+                {
+                    <div class="d-flex align-items-center gap-2 py-1">
+                        <span class="flex-shrink-0 text-muted" style="width: 1.5em; text-align: center">
+                            <BuffIcon Name="@t.Icon" />
+                        </span>
+                        <span>@t.Name</span>
+                        <span class="badge bg-secondary" style="font-size: 0.7em">@t.Type</span>
+                        <div class="flex-grow-1"></div>
+                        <div class="d-flex flex-wrap gap-1">
+                            @foreach (var effect in t.Effects)
+                            {
+                                var p = BuffFormula.Parse(effect.Formula);
+                                var positive = p?.op is "+=" or "*=";
+                                var lbl = p != null
+                                    ? p.Value.target[..Math.Min(3, p.Value.target.Length)].ToUpper()
+                                    : "?";
+                                <span class="badge @(positive ? "bg-success" : "bg-danger")"
+                                      style="min-width: 2.4em; font-size: 0.7em; text-align: center">
+                                    @lbl
+                                </span>
+                            }
+                        </div>
+                        <button class="btn btn-danger btn-sm" style="padding: 2px 7px; line-height: 1"
+                                @onclick="() => DeleteCampaignBuff(t)">
+                            x
+                        </button>
+                    </div>
+                }
+            }
+            else
+            {
+                <span class="text-muted">No buffs in campaign library. Export buffs from a character sheet to add them here.</span>
+            }
+        </div>
+    </div>
+
+    <Modal Title="Add campaign buff" id="campaignBuffDialog">
+        <div class="p-3 d-flex flex-column gap-3" style="min-width: 360px">
+            <div class="d-flex flex-wrap gap-3">
+                <div class="flex-grow-1" style="min-width: 150px">
+                    <label class="form-label">Name</label>
+                    <input class="form-control" @bind="cbName" />
+                </div>
+                <div class="flex-grow-1" style="min-width: 120px">
+                    <label class="form-label">Type</label>
+                    <select class="form-select bg-dark text-white border-0" @bind="cbType">
+                        <option value="@BuffType.Equipment">Equipment</option>
+                        <option value="@BuffType.Status">Status</option>
+                        <option value="@BuffType.Skill">Skill</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="d-flex flex-wrap gap-1">
+                @foreach (var icon in BuffIcon.AllIcons)
+                {
+                    var selected = cbIcon == icon;
+                    <button type="button"
+                            class="btn btn-sm d-flex align-items-center justify-content-center"
+                            style="width: 2.2em; height: 2.2em; padding: 0; border: 2px solid @(selected ? "var(--accent)" : "transparent"); color: @(selected ? "var(--accent)" : "rgba(255,255,255,0.5)")"
+                            @onclick="() => cbIcon = icon">
+                        <BuffIcon Name="@icon" Size="1.1em" />
+                    </button>
+                }
+            </div>
+
+            <div>
+                <div class="d-flex align-items-center">
+                    <label class="form-label mb-0">Effects</label>
+                    <button type="button" class="btn btn-primary btn-sm ms-auto" @onclick="AddCbEffect">+</button>
+                </div>
+                @for (int i = 0; i < cbEffects.Count; i++)
+                {
+                    var idx = i;
+                    <div class="d-flex gap-1 align-items-center mt-1">
+                        <input class="form-control" @bind="cbEffects[idx]" placeholder="e.g. str+=2" />
+                        <button type="button" class="btn btn-danger btn-sm" @onclick="() => cbEffects.RemoveAt(idx)">x</button>
+                    </div>
+                }
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-secondary flex-fill" onclick="campaignBuffDialog.close()">Cancel</button>
+                <button type="button" class="btn btn-primary flex-fill" @onclick="SaveCampaignBuff">Save</button>
+            </div>
+        </div>
+    </Modal>
+
 	</div>
 
 
@@ -181,12 +282,63 @@
 	Campaign? Campaign;
     [Parameter] public int CampaignId { get; set; }
 
+	List<BuffTemplate> campaignBuffs = new();
 	Dictionary<int,string>? NameDeletionConfirmationBoxes {get; set;}
 
 	private string DiscordId {get; set;}
 
 	public async Task DeletePlayerAsync(PlayerCharacter character) {
 		await CampaignService.RemovePlayerAsync(Campaign,character);
+	}
+
+	private async Task DeleteCampaignBuff(BuffTemplate template)
+	{
+		await BuffService.DeleteTemplateAsync(template.Id);
+		campaignBuffs = await BuffService.GetCampaignLibraryAsync(CampaignId);
+		StateHasChanged();
+	}
+
+	// -- Campaign buff add dialog --
+	private string cbName = "";
+	private string cbIcon = "shield";
+	private BuffType cbType = BuffType.Status;
+	private List<string> cbEffects = new() { "" };
+
+	private async Task OpenCampaignBuffDialog()
+	{
+		cbName = "";
+		cbIcon = "shield";
+		cbType = BuffType.Status;
+		cbEffects = new() { "" };
+		await using var dialog = await JS.InvokeAsync<IJSObjectReference>("document.getElementById", "campaignBuffDialog");
+		await dialog.InvokeVoidAsync("showModal");
+	}
+
+	private void AddCbEffect() => cbEffects.Add("");
+
+	private async Task SaveCampaignBuff()
+	{
+		if (string.IsNullOrWhiteSpace(cbName)) return;
+		var effects = cbEffects
+			.Where(f => BuffFormula.Parse(f.Trim().Replace(" ", "")) != null)
+			.Select(f => new Effect { Formula = f.Trim().Replace(" ", "") })
+			.ToList();
+		if (effects.Count == 0) return;
+
+		var template = new BuffTemplate
+		{
+			Name = cbName,
+			Icon = cbIcon,
+			Type = cbType,
+			Effects = effects,
+			CampaignId = CampaignId
+		};
+		await BuffService.CreateTemplateAsync(template);
+		campaignBuffs = await BuffService.GetCampaignLibraryAsync(CampaignId);
+
+		await using var dialog = await JS.InvokeAsync<IJSObjectReference>("document.getElementById", "campaignBuffDialog");
+		await dialog.InvokeVoidAsync("close");
+		StateHasChanged();
 	}
 
     public async Task GaugeChangedCallback(Gauge gauge)
@@ -235,6 +387,7 @@
         if (true )
         {
             Campaign = campaign;
+			campaignBuffs = await BuffService.GetCampaignLibraryAsync(CampaignId);
 
 			foreach(PlayerCharacter player in Campaign?.Players) {
 				NameDeletionConfirmationBoxes[player.Id] = "";

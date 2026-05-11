@@ -1,5 +1,6 @@
 @rendermode InteractiveServer
 @inject IJSRuntime JS
+@inject BuffService BuffService
 
 <!-- Active buffs inline panel -->
 <div class="card m-0 border-0">
@@ -30,27 +31,26 @@
             @{ var tabBuffs = GetBuffsForTab(activeTab).ToList(); }
             @if (tabBuffs.Any())
             {
-                @foreach (var buff in tabBuffs)
+                @foreach (var cb in tabBuffs)
                 {
                     <div class="d-flex flex-nowrap align-items-center gap-2 py-1">
                         <span class="flex-shrink-0 text-muted" style="width: 1.5em; text-align: center">
-                            <BuffIcon Name="@buff.Icon" />
+                            <BuffIcon Name="@cb.Template.Icon" />
                         </span>
-                        <span>@buff.Name</span>
-                        @if (buff.HasCumulativeEffects)
+                        <span>@cb.Template.Name</span>
+                        @if (cb.Template.Effects.Any(e => e.IsCumulative))
                         {
-                            var stacks = buff.Effects.Where(e => e.IsCumulative).Max(e => e.Stacks);
-                            <span class="text-muted" style="font-size: 0.8em">(@stacks)</span>
+                            <span class="text-muted" style="font-size: 0.8em">(@cb.Stacks)</span>
                             <button class="btn btn-danger btn-sm d-flex align-items-center justify-content-center"
                                     style="width: 1.6em; height: 1.6em; padding: 0"
-                                    @onclick="() => RemoveStack(buff)">
+                                    @onclick="() => ChangeStacks(cb, -1)">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16">
                                     <path d="M4 8a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7A.5.5 0 0 1 4 8"/>
                                 </svg>
                             </button>
                             <button class="btn btn-success btn-sm d-flex align-items-center justify-content-center"
                                     style="width: 1.6em; height: 1.6em; padding: 0"
-                                    @onclick="() => ApplyStacks(buff)">
+                                    @onclick="() => ApplyStack(cb)">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16">
                                     <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
                                 </svg>
@@ -58,7 +58,7 @@
                         }
                         <div class="flex-grow-1"></div>
                         <div class="d-flex flex-wrap gap-1 flex-shrink-0">
-                            @foreach (var effect in buff.Effects)
+                            @foreach (var effect in cb.Template.Effects)
                             {
                                 var p = BuffFormula.Parse(effect.Formula);
                                 var positive = p?.op is "+=" or "*=";
@@ -72,15 +72,20 @@
                             }
                         </div>
 
+                        @if (cb.Template.SourceTemplate != null && cb.Template.IsOutOfSync(cb.Template.SourceTemplate))
+                        {
+                            <span class="badge bg-warning text-dark" style="font-size: 0.65em" title="Out of sync with campaign">!</span>
+                        }
+
                         <button class="btn btn-sm" style="color:var(--accent); padding: 2px 7px; line-height: 1"
-                                @onclick="() => OpenEditDialog(buff)">
+                                @onclick="() => OpenEditDialog(cb)">
                             <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" class="bi bi-pencil-fill" viewBox="0 0 16 16">
                                 <path d="M12.854.146a.5.5 0 0 0-.707 0L10.5 1.793 14.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708zm.646 6.061L9.793 2.5 3.293 9H3.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.207zm-7.468 7.468A.5.5 0 0 1 6 13.5V13h-.5a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.5-.5V10h-.5a.5.5 0 0 1-.175-.032l-.179.178a.5.5 0 0 0-.11.168l-2 5a.5.5 0 0 0 .65.65l5-2a.5.5 0 0 0 .168-.11z"/>
                             </svg>
                         </button>
                         <button class="btn btn-danger btn-sm"
                                 style="padding: 2px 7px; line-height: 1"
-                                @onclick="() => RemoveBuff(buff)">
+                                @onclick="() => RemoveBuff(cb)">
                             x
                         </button>
                     </div>
@@ -101,7 +106,28 @@
         <div class="d-flex flex-wrap gap-3">
             <div class="flex-grow-1" style="min-width: 150px">
                 <label class="form-label">Name</label>
-                <input class="form-control" @bind="newName" />
+                <input class="form-control" @bind="newName" @bind:event="oninput" @bind:after="OnNameChanged" />
+                @if (editingBuff == null && searchResults.Any())
+                {
+                    <div class="list-group mt-1" style="max-height: 10em; overflow: auto">
+                        @foreach (var t in searchResults)
+                        {
+                            <button type="button" class="list-group-item list-group-item-action d-flex align-items-center gap-2 py-1"
+                                    @onclick="() => ImportTemplate(t)">
+                                <BuffIcon Name="@t.Icon" Size="1em" />
+                                <span>@t.Name</span>
+                                @if (t.CampaignId != null)
+                                {
+                                    <span class="badge bg-info ms-auto" style="font-size: 0.7em">Campaign</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary ms-auto" style="font-size: 0.7em">Personal</span>
+                                }
+                            </button>
+                        }
+                    </div>
+                }
             </div>
             <div class="flex-grow-1" style="min-width: 120px">
                 <label class="form-label">Type</label>
@@ -126,37 +152,6 @@
                 </button>
             }
         </div>
-
-        @if (draftEffects.Any(d => d.IsCumulative))
-        {
-            <div class="d-flex gap-2 align-items-center justify-content-center">
-                <button type="button" class="btn btn-danger d-flex align-items-center justify-content-center"
-                        style="width: 2.5em; height: 2.5em; padding: 0"
-                        @onclick="() => SetCumulativeStacks(CumulativeStackCount - 1)">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
-                        <path d="M4 8a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7A.5.5 0 0 1 4 8"/>
-                    </svg>
-                </button>
-                <input type="number" class="form-control text-center" style="width: 5em"
-                       value="@CumulativeStackCount"
-                       @onchange="(e) => SetCumulativeStacks(int.TryParse(e.Value?.ToString(), out var v) ? v : 0)" />
-                <button type="button" class="btn btn-success d-flex align-items-center justify-content-center"
-                        style="width: 2.5em; height: 2.5em; padding: 0"
-                        @onclick="() => SetCumulativeStacks(CumulativeStackCount + 1)">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
-                        <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
-                    </svg>
-                </button>
-                <button type="button" class="btn btn-secondary d-flex align-items-center justify-content-center"
-                        style="width: 2.5em; height: 2.5em; padding: 0"
-                        @onclick="ResetCumulativeStacks">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                        <path fill-rule="evenodd" d="M8 3a5 5 0 1 1-4.546 2.914.5.5 0 0 0-.908-.417A6 6 0 1 0 8 2z"/>
-                        <path d="M8 4.466V.534a.25.25 0 0 0-.41-.192L5.23 2.308a.25.25 0 0 0 0 .384l2.36 1.966A.25.25 0 0 0 8 4.466"/>
-                    </svg>
-                </button>
-            </div>
-        }
 
         <div class="d-flex flex-column gap-1">
             <div class="d-flex align-items-center">
@@ -251,6 +246,26 @@
 
         <div class="flex-grow-1"></div>
 
+        @if (editingBuff != null)
+        {
+            <div class="d-flex gap-2">
+                @if (Character?.Campaign != null)
+                {
+                    <button type="button" class="btn btn-outline-info flex-fill" @onclick="ExportEditingToCampaign"
+                            title="Export to campaign library">
+                        Export to campaign
+                    </button>
+                }
+                @if (editingBuff.Template.SourceTemplate != null && editingBuff.Template.IsOutOfSync(editingBuff.Template.SourceTemplate))
+                {
+                    <button type="button" class="btn btn-warning flex-fill" @onclick="PullFromCampaign"
+                            title="Reset to campaign default">
+                        Pull from campaign
+                    </button>
+                }
+            </div>
+        }
+
         <div class="d-flex gap-2">
             <button type="button" class="btn btn-secondary flex-fill" onclick="addBuffDialog.close()">
                 Cancel
@@ -264,14 +279,16 @@
 
 @code {
     [Parameter] public PlayerCharacter? Character { get; set; }
+    [Parameter] public string? OwnerId { get; set; }
+    [Parameter] public List<CharacterBuff> CharacterBuffs { get; set; } = new();
     [Parameter] public EventCallback OnChanged { get; set; }
-    [Parameter] public EventCallback<Buff> OnStackApplied { get; set; }
+    [Parameter] public EventCallback<CharacterBuff> OnStackApplied { get; set; }
 
     private static readonly BuffType[] Tabs = [BuffType.Equipment, BuffType.Status, BuffType.Skill];
     private BuffType activeTab = BuffType.Equipment;
 
-    private IEnumerable<Buff> GetBuffsForTab(BuffType type) =>
-        Character?.StatBlock?.Buffs?.Where(b => b.Type == type) ?? Enumerable.Empty<Buff>();
+    private IEnumerable<CharacterBuff> GetBuffsForTab(BuffType type) =>
+        CharacterBuffs.Where(cb => cb.Template.Type == type);
 
     private static string TabLabel(BuffType type) => type switch
     {
@@ -281,14 +298,64 @@
         _ => type.ToString()
     };
 
-    private string FormatEffectDisplay(Effect e)
+    // -- Search (integrated with name field, only for new buffs) --
+    private List<BuffTemplate> searchResults = new();
+
+    private async Task OnNameChanged()
     {
-        var display = BuffFormula.FormatDisplay(e.Formula);
-        if (e.IsCumulative && e.Stacks != 1)
-            display += $" (x{e.Stacks})";
-        return display;
+        if (editingBuff != null || string.IsNullOrWhiteSpace(newName))
+        {
+            searchResults.Clear();
+            return;
+        }
+        searchResults = await BuffService.SearchTemplatesAsync(
+            newName, OwnerId ?? "", Character?.Campaign?.Id);
     }
 
+    private async Task ImportTemplate(BuffTemplate template)
+    {
+        if (Character == null) return;
+
+        Guid templateIdToApply;
+        if (template.CampaignId != null && OwnerId != null)
+        {
+            // Campaign template: create a linked player-level copy
+            var playerCopy = await BuffService.ImportFromCampaignAsync(template.Id, OwnerId);
+            templateIdToApply = playerCopy.Id;
+        }
+        else
+        {
+            templateIdToApply = template.Id;
+        }
+
+        await BuffService.ApplyBuffAsync(Character.Id, templateIdToApply);
+        searchResults.Clear();
+        await CloseDialog();
+        await OnChanged.InvokeAsync();
+    }
+
+    private async Task ExportEditingToCampaign()
+    {
+        if (editingBuff == null || Character?.Campaign == null) return;
+        await BuffService.ExportToCampaignAsync(editingBuff.Template.Id, Character.Campaign.Id);
+        // Reload to pick up the new SourceTemplateId link
+        await OnChanged.InvokeAsync();
+    }
+
+    private async Task PullFromCampaign()
+    {
+        if (editingBuff == null) return;
+        await BuffService.PullFromSourceAsync(editingBuff.Template.Id);
+        // Reload template and refresh the edit dialog
+        await OnChanged.InvokeAsync();
+        // Re-open with fresh data
+        var refreshed = (await BuffService.GetCharacterBuffsAsync(Character!.Id))
+            .FirstOrDefault(cb => cb.Id == editingBuff.Id);
+        if (refreshed != null)
+            await OpenEditDialog(refreshed);
+    }
+
+    // -- Draft state for add/edit --
     private class DraftEffect
     {
         public bool AdvancedMode { get; set; }
@@ -341,7 +408,7 @@
         }
     }
 
-    private Buff? editingBuff;
+    private CharacterBuff? editingBuff;
     private string newName = "";
     private string newIcon = "shield";
     private BuffType newType = BuffType.Equipment;
@@ -352,23 +419,6 @@
         ?? Character?.StatBlock?.SpecialStats?.FirstOrDefault()?.Name?.ToLower()
         ?? Character?.Gauges?.FirstOrDefault()?.Name?.ToLower()
         ?? "";
-
-    private int CumulativeStackCount =>
-        editingBuff?.Effects.Where(e => e.IsCumulative).Select(e => e.Stacks).DefaultIfEmpty(0).Max() ?? 0;
-
-    private void SetCumulativeStacks(int value)
-    {
-        if (editingBuff == null) return;
-        foreach (var e in editingBuff.Effects.Where(e => e.IsCumulative))
-            e.Stacks = Math.Max(0, value);
-    }
-
-    private void ResetCumulativeStacks()
-    {
-        if (editingBuff == null) return;
-        foreach (var e in editingBuff.Effects.Where(e => e.IsCumulative))
-            e.Stacks = 0;
-    }
 
     private void OnTargetChanged(DraftEffect d, string value)
     {
@@ -383,18 +433,20 @@
         newName = "";
         newIcon = "shield";
         newType = activeTab;
+        searchResults.Clear();
         draftEffects = new();
         AddEmptyDraft();
         await OpenDialog();
     }
 
-    private async Task OpenEditDialog(Buff buff)
+    private async Task OpenEditDialog(CharacterBuff cb)
     {
-        editingBuff = buff;
-        newName = buff.Name;
-        newIcon = buff.Icon;
-        newType = buff.Type;
-        draftEffects = buff.Effects.Select(DraftEffect.FromEffect).ToList();
+        editingBuff = cb;
+        newName = cb.Template.Name;
+        newIcon = cb.Template.Icon;
+        newType = cb.Template.Type;
+        searchResults.Clear();
+        draftEffects = cb.Template.Effects.Select(DraftEffect.FromEffect).ToList();
         await OpenDialog();
     }
 
@@ -402,6 +454,12 @@
     {
         await using var dialog = await JS.InvokeAsync<IJSObjectReference>("document.getElementById", "addBuffDialog");
         await dialog.InvokeVoidAsync("showModal");
+    }
+
+    private async Task CloseDialog()
+    {
+        await using var dialog = await JS.InvokeAsync<IJSObjectReference>("document.getElementById", "addBuffDialog");
+        await dialog.InvokeVoidAsync("close");
     }
 
     private void AddEmptyDraft() =>
@@ -433,7 +491,7 @@
     private async Task CommitBuff()
     {
         if (string.IsNullOrWhiteSpace(newName)) return;
-        if (Character?.StatBlock == null) return;
+        if (Character == null) return;
 
         var effects = draftEffects
             .Select(d => d.ToEffect())
@@ -445,52 +503,53 @@
 
         if (editingBuff != null)
         {
-            editingBuff.Name = newName;
-            editingBuff.Icon = newIcon;
-            editingBuff.Type = newType;
-            editingBuff.Effects = effects;
+            // Update existing template
+            editingBuff.Template.Name = newName;
+            editingBuff.Template.Icon = newIcon;
+            editingBuff.Template.Type = newType;
+            editingBuff.Template.Effects = effects;
+            await BuffService.UpdateTemplateAsync(editingBuff.Template);
             editingBuff = null;
         }
         else
         {
-            Character.StatBlock.Buffs ??= new();
-            Character.StatBlock.Buffs.Add(new Buff
+            // Create new template in player library and apply to character
+            var template = new BuffTemplate
             {
                 Name = newName,
                 Icon = newIcon,
                 Type = newType,
-                Effects = effects
-            });
+                Effects = effects,
+                OwnerId = OwnerId
+            };
+            await BuffService.CreateTemplateAsync(template);
+            await BuffService.ApplyBuffAsync(Character.Id, template.Id);
         }
 
         newName = "";
         draftEffects.Clear();
-
-        await using var dialog = await JS.InvokeAsync<IJSObjectReference>("document.getElementById", "addBuffDialog");
-        await dialog.InvokeVoidAsync("close");
+        await CloseDialog();
         await OnChanged.InvokeAsync();
     }
 
-    private async Task ApplyStacks(Buff buff)
+    private async Task ApplyStack(CharacterBuff cb)
     {
-        foreach (var effect in buff.Effects)
-            if (effect.IsCumulative)
-                effect.Stacks++;
-        await OnStackApplied.InvokeAsync(buff);
+        cb.Stacks++;
+        await BuffService.UpdateStacksAsync(cb.Id, cb.Stacks);
+        await OnStackApplied.InvokeAsync(cb);
         await OnChanged.InvokeAsync();
     }
 
-    private async Task RemoveStack(Buff buff)
+    private async Task ChangeStacks(CharacterBuff cb, int delta)
     {
-        foreach (var effect in buff.Effects)
-            if (effect.IsCumulative && effect.Stacks > 0)
-                effect.Stacks--;
+        cb.Stacks = Math.Max(0, cb.Stacks + delta);
+        await BuffService.UpdateStacksAsync(cb.Id, cb.Stacks);
         await OnChanged.InvokeAsync();
     }
 
-    private async Task RemoveBuff(Buff buff)
+    private async Task RemoveBuff(CharacterBuff cb)
     {
-        Character?.StatBlock?.Buffs?.Remove(buff);
+        await BuffService.RemoveBuffAsync(cb.Id);
         await OnChanged.InvokeAsync();
     }
 }

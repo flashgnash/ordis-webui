@@ -58,6 +58,8 @@ public IEnumerable<ValidationResult> Validate(ValidationContext ctx)
 
     public ICollection<Gauge>? Gauges { get; set; }
 
+    public ICollection<CharacterBuff> Buffs { get; set; } = new List<CharacterBuff>();
+
     // public string? StatBlockHash { get; set; }
     [Column("stat_block")]
     public string? StatBlockJson { get; set; }

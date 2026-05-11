@@ -20,6 +20,10 @@ public partial class OrdisContext : DbContext
 
     public virtual DbSet<User> Users { get; set; }
 
+    public virtual DbSet<BuffTemplate> BuffTemplates { get; set; }
+
+    public virtual DbSet<CharacterBuff> CharacterBuffs { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<PlayerCharacter>(entity =>
@@ -52,7 +56,23 @@ public partial class OrdisContext : DbContext
         modelBuilder.Entity<Campaign>(entity =>
         {
             entity.HasMany(e => e.Players).WithOne(e => e.Campaign).OnDelete(DeleteBehavior.Cascade);
-                
+        });
+
+        modelBuilder.Entity<BuffTemplate>(entity =>
+        {
+            entity.ToTable("buff_templates");
+            entity.HasKey(e => e.Id);
+            entity.HasOne(e => e.Owner).WithMany().HasForeignKey(e => e.OwnerId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Campaign).WithMany().HasForeignKey(e => e.CampaignId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.SourceTemplate).WithMany().HasForeignKey(e => e.SourceTemplateId).OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<CharacterBuff>(entity =>
+        {
+            entity.ToTable("character_buffs");
+            entity.HasKey(e => e.Id);
+            entity.HasOne(e => e.Template).WithMany().HasForeignKey(e => e.TemplateId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.PlayerCharacter).WithMany(e => e.Buffs).HasForeignKey(e => e.PlayerCharacterId).OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<Server>(entity =>

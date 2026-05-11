@@ -4,6 +4,7 @@
 @inject NavigationManager Navigation
 @attribute [Authorize(Policy = "HasDiscordId")]
 @inject UserState UserState
+@inject BuffService BuffService
 @rendermode InteractiveServer
 
 
@@ -59,7 +60,7 @@
             @if (Char?.StatBlock?.Stats != null)
             {
                 <StatBlock Stats="@Char.StatBlock.Stats"
-                           Buffs="@Char.StatBlock.Buffs"
+                           Buffs="@ActiveBuffTemplates()"
                            BuffContext="@BuildBuffContext()" />
             }
         </div>
@@ -80,7 +81,10 @@
         }
 
         <div class="m-2">
-            <BuffList Character="@Char" OnChanged="@OnBuffsChanged" OnStackApplied="@OnCumulativeStackApplied" />
+            <BuffList Character="@Char" OwnerId="@DiscordId"
+                      CharacterBuffs="@characterBuffs"
+                      OnChanged="@OnBuffsChanged"
+                      OnStackApplied="@OnCumulativeStackApplied" />
         </div>
         <div class="">
             <div class="flex-grow-2 flex-row flex-wrap">
@@ -182,8 +186,24 @@ else
 @code
 {
     PlayerCharacter? Char;
+    List<CharacterBuff> characterBuffs = new();
+    string? DiscordId;
 
     [Parameter] public int CharacterId { get; set; }
+
+    private List<Buff> ActiveBuffTemplates() =>
+        characterBuffs.Select(cb => new Buff
+        {
+            Name = cb.Template.Name,
+            Icon = cb.Template.Icon,
+            Type = cb.Template.Type,
+            Effects = cb.Template.Effects.Select(e => new Effect
+            {
+                Formula = e.Formula,
+                IsCumulative = e.IsCumulative,
+                Stacks = e.IsCumulative ? cb.Stacks : 1
+            }).ToList()
+        }).ToList();
 
     public async Task GaugeChangedCallback(Gauge gauge)
     {
@@ -205,7 +225,7 @@ else
 
     private int GetGaugeBonus(string gaugeName)
     {
-        var buffs = Char?.StatBlock?.Buffs ?? Enumerable.Empty<Buff>();
+        var buffs = ActiveBuffTemplates();
         var gauge = Char?.Gauges?.FirstOrDefault(g =>
             g.Name.Equals(gaugeName, StringComparison.OrdinalIgnoreCase));
         if (gauge == null) return 0;
@@ -219,9 +239,20 @@ else
         return (int)Math.Round(effective - gauge.Max);
     }
 
-    private async Task OnCumulativeStackApplied(Buff buff)
+    private async Task OnCumulativeStackApplied(CharacterBuff cb)
     {
         if (Char?.Gauges == null) return;
+        // Build a Buff with the current stacks for delta calculation
+        var buff = new Buff
+        {
+            Name = cb.Template.Name,
+            Effects = cb.Template.Effects.Select(e => new Effect
+            {
+                Formula = e.Formula,
+                IsCumulative = e.IsCumulative,
+                Stacks = e.IsCumulative ? cb.Stacks : 1
+            }).ToList()
+        };
         var ctx = BuildBuffContext();
         foreach (var gauge in Char.Gauges)
         {
@@ -236,7 +267,7 @@ else
 
     private async Task OnBuffsChanged()
     {
-        await CharService.UpdateAsync(Char!);
+        characterBuffs = await BuffService.GetCharacterBuffsAsync(Char!.Id);
         StateHasChanged();
     }
 
@@ -250,14 +281,15 @@ else
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
 
-        var discordId = user.FindFirst("discord_id")?.Value ?? "Not logged in";
+        DiscordId = user.FindFirst("discord_id")?.Value ?? "Not logged in";
 
         // Only present the user with data if they are the character's owner
         // (this is only safe because I'm using serverside blazor)
-        if (character?.UserId == discordId)
+        if (character?.UserId == DiscordId)
         {
             UserState.SelectedCharacter = character;
             Char = character;
+            characterBuffs = await BuffService.GetCharacterBuffsAsync(character.Id);
 
 
             if (character.Gauges?.Count == 0 && character.StatBlock?.MaxHealth != null)
