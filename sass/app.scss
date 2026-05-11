@@ -449,3 +449,18 @@ input[type="checkbox"] {
 	flex: 0 0 auto;
 	width: %;
 }
+
+.player-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 0.5rem;
+}
+
+.player-card {
+  margin: 0 !important;
+}
+
+.player-card .card-body {
+  margin: 0 !important;
+  text-align: left !important;
+}
