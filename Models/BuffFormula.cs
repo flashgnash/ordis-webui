@@ -66,7 +66,8 @@ public static class BuffFormula
         catch { return null; }
     }
 
-    /// Apply all matching buff formulae to baseValue and return the effective result.
+    /// Apply all matching effects to baseValue and return the effective result.
+    /// Cumulative effects are applied once per stack.
     public static double ComputeEffective(
         IEnumerable<Buff> buffs,
         IEnumerable<string> targetNames,
@@ -76,20 +77,22 @@ public static class BuffFormula
         var names = new HashSet<string>(targetNames, StringComparer.OrdinalIgnoreCase);
         var effective = baseValue;
         foreach (var buff in buffs)
-            foreach (var formula in buff.Formulae)
+            foreach (var effect in buff.Effects)
             {
-                var parsed = Parse(formula);
+                var parsed = Parse(effect.Formula);
                 if (parsed == null || !names.Contains(parsed.Value.target)) continue;
                 var val = Evaluate(parsed.Value.expr, ctx);
                 if (val == null) continue;
-                effective = parsed.Value.op switch
-                {
-                    "+=" => effective + val.Value,
-                    "-=" => effective - val.Value,
-                    "*=" => effective * val.Value,
-                    "/=" => val.Value != 0 ? effective / val.Value : effective,
-                    _ => effective
-                };
+                var stacks = effect.IsCumulative ? Math.Max(effect.Stacks, 0) : 1;
+                for (int s = 0; s < stacks; s++)
+                    effective = parsed.Value.op switch
+                    {
+                        "+=" => effective + val.Value,
+                        "-=" => effective - val.Value,
+                        "*=" => effective * val.Value,
+                        "/=" => val.Value != 0 ? effective / val.Value : effective,
+                        _ => effective
+                    };
             }
         return effective;
     }
@@ -102,7 +105,35 @@ public static class BuffFormula
         Dictionary<string, double> ctx)
         => ComputeEffective(buffs, [target], baseValue, ctx);
 
-    /// Human-readable label, e.g. "STR + 1", "CON × dex/2".
+    /// Compute the delta a single stack application of cumulative effects would apply to a gauge value.
+    /// Used for effects that modify gauge values (e.g. poison, regen).
+    public static int ComputeGaugeValueDelta(
+        Buff buff,
+        string gaugeName,
+        Dictionary<string, double> ctx)
+    {
+        var names = new HashSet<string>(
+            [gaugeName, gaugeName + ".value"],
+            StringComparer.OrdinalIgnoreCase);
+        double delta = 0;
+        foreach (var effect in buff.Effects)
+        {
+            if (!effect.IsCumulative) continue;
+            var parsed = Parse(effect.Formula);
+            if (parsed == null || !names.Contains(parsed.Value.target)) continue;
+            var val = Evaluate(parsed.Value.expr, ctx);
+            if (val == null) continue;
+            delta += parsed.Value.op switch
+            {
+                "+=" => val.Value,
+                "-=" => -val.Value,
+                _ => 0
+            };
+        }
+        return (int)Math.Round(delta);
+    }
+
+    /// Human-readable label for an effect formula, e.g. "STR + 1", "CON × dex/2".
     public static string FormatDisplay(string formula)
     {
         var parsed = Parse(formula);

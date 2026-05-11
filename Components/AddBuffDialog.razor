@@ -166,7 +166,7 @@
         Character.StatBlock.Buffs.Add(new Buff
         {
             Name = newName,
-            Formulae = new(draftFormulae)
+            Effects = draftFormulae.Select(f => new Effect { Formula = f }).ToList()
         });
 
         newName = "";

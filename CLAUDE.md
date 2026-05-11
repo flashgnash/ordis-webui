@@ -12,8 +12,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 # Build
 dotnet build
 
-# Run (development)
-dotnet run
+# Run (development, hot reload via nix flake — run in background)
+nix develop --command run
 
 # Publish (release)
 dotnet publish --configuration Release -o out
@@ -22,6 +22,8 @@ dotnet publish --configuration Release -o out
 dotnet ef migrations add <MigrationName>
 dotnet ef database update
 ```
+
+Use `nix develop --command run` to start a hot-reload dev server in the background while working. For simple changes (e.g. markup, CSS) hot reload will pick them up automatically. For more complex changes (new services, model changes, middleware, etc.) the process will need a manual restart.
 
 The build automatically runs `npm install` then compiles `sass/app.scss` → `wwwroot/app.css` via the `sass` CLI before building.
 

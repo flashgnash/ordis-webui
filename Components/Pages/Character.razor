@@ -64,11 +64,6 @@
             }
         </div>
 
-        <div class="m-2">
-            <BuffList Character="@Char" OnChanged="@OnBuffsChanged" />
-        </div>
-
-        <!-- Stats -->
         @if (Char?.Gauges != null)
         {
             <!-- Globes -->
@@ -79,10 +74,14 @@
                     {
                         <GaugeDisplay GaugeInstance="@gauge" MaxBonus="@GetGaugeBonus(gauge!.Name)" ChangedCallback="@GaugeChangedCallback"/>
                     }
-                            
+
                 }
             </div>
         }
+
+        <div class="m-2">
+            <BuffList Character="@Char" OnChanged="@OnBuffsChanged" OnStackApplied="@OnCumulativeStackApplied" />
+        </div>
         <div class="">
             <div class="flex-grow-2 flex-row flex-wrap">
                 @if (Char?.StatBlock?.Hunger != null && Char?.StatBlock?.Hunger != 0)
@@ -211,13 +210,28 @@ else
             g.Name.Equals(gaugeName, StringComparison.OrdinalIgnoreCase));
         if (gauge == null) return 0;
         var ctx = BuildBuffContext();
-        // Formulae can target the gauge by name OR name+".max"
+        // Effects can target the gauge by name OR name+".max"
         var effective = BuffFormula.ComputeEffective(
             buffs,
             [gaugeName, gaugeName + ".max"],
             (double)gauge.Max,
             ctx);
         return (int)Math.Round(effective - gauge.Max);
+    }
+
+    private async Task OnCumulativeStackApplied(Buff buff)
+    {
+        if (Char?.Gauges == null) return;
+        var ctx = BuildBuffContext();
+        foreach (var gauge in Char.Gauges)
+        {
+            var delta = BuffFormula.ComputeGaugeValueDelta(buff, gauge.Name, ctx);
+            if (delta != 0)
+            {
+                gauge.Value = Math.Max(0, Math.Min(gauge.Value + delta, gauge.Max + GetGaugeBonus(gauge.Name)));
+                await CharService.UpdateGaugeAsync(gauge);
+            }
+        }
     }
 
     private async Task OnBuffsChanged()
