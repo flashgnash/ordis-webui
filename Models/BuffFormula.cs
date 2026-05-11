@@ -113,7 +113,7 @@ public static class BuffFormula
         Dictionary<string, double> ctx)
     {
         var names = new HashSet<string>(
-            [gaugeName, gaugeName + ".value"],
+            [gaugeName + ".value"],
             StringComparer.OrdinalIgnoreCase);
         double delta = 0;
         foreach (var effect in buff.Effects)
