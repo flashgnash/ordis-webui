@@ -40,21 +40,38 @@
                         <span>@cb.Template.Name</span>
                         @if (cb.Template.Effects.Any(e => e.IsCumulative))
                         {
-                            <span class="text-muted" style="font-size: 0.8em">(@cb.Stacks)</span>
-                            <button class="btn btn-danger btn-sm d-flex align-items-center justify-content-center"
-                                    style="width: 1.6em; height: 1.6em; padding: 0"
-                                    @onclick="() => ChangeStacks(cb, -1)">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16">
-                                    <path d="M4 8a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7A.5.5 0 0 1 4 8"/>
-                                </svg>
-                            </button>
-                            <button class="btn btn-success btn-sm d-flex align-items-center justify-content-center"
-                                    style="width: 1.6em; height: 1.6em; padding: 0"
-                                    @onclick="() => ApplyStack(cb)">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16">
-                                    <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
-                                </svg>
-                            </button>
+                            var gaugeValueOnly = cb.Template.Effects
+                                .Where(e => e.IsCumulative)
+                                .All(e => BuffFormula.Parse(e.Formula)?.target.EndsWith(".value", StringComparison.OrdinalIgnoreCase) == true);
+
+                            if (gaugeValueOnly)
+                            {
+                                <button class="btn btn-success btn-sm d-flex align-items-center justify-content-center"
+                                        style="width: 1.6em; height: 1.6em; padding: 0"
+                                        @onclick="() => ApplyStack(cb)">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
+                                    </svg>
+                                </button>
+                            }
+                            else
+                            {
+                                <span class="text-muted" style="font-size: 0.8em">(@cb.Stacks)</span>
+                                <button class="btn btn-danger btn-sm d-flex align-items-center justify-content-center"
+                                        style="width: 1.6em; height: 1.6em; padding: 0"
+                                        @onclick="() => ChangeStacks(cb, -1)">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M4 8a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7A.5.5 0 0 1 4 8"/>
+                                    </svg>
+                                </button>
+                                <button class="btn btn-success btn-sm d-flex align-items-center justify-content-center"
+                                        style="width: 1.6em; height: 1.6em; padding: 0"
+                                        @onclick="() => ApplyStack(cb)">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
+                                    </svg>
+                                </button>
+                            }
                         }
                         <div class="flex-grow-1"></div>
                         <div class="d-flex flex-wrap gap-1 flex-shrink-0">
