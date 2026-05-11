@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
-public class PlayerCharacterService(IDbContextFactory<OrdisContext> dbFactory, HttpClient httpClient)
+public class PlayerCharacterService(IDbContextFactory<OrdisContext> dbFactory, HttpClient httpClient, LiveUpdateService liveUpdates)
 {
     public async Task UpdateGaugeAsync(Gauge gauge)
     {
@@ -20,6 +20,7 @@ public class PlayerCharacterService(IDbContextFactory<OrdisContext> dbFactory, H
         }
 
         await db.SaveChangesAsync();
+        liveUpdates.NotifyCharacterChanged(gauge.PlayerCharacterId);
     }
 
     public async Task<RollResult> RollFor(PlayerCharacter character, String rollFormula)
@@ -54,7 +55,8 @@ public class PlayerCharacterService(IDbContextFactory<OrdisContext> dbFactory, H
         character.Rolls.Add(rollResult);
 
         await db.SaveChangesAsync();
-    } 
+        liveUpdates.NotifyCharacterChanged(id);
+    }
 
     public async Task<RollResult?> GetLatestRollAsync(PlayerCharacter character) {
 
@@ -74,6 +76,7 @@ public class PlayerCharacterService(IDbContextFactory<OrdisContext> dbFactory, H
         db.Characters.Update(c);
 
         await db.SaveChangesAsync();
+        liveUpdates.NotifyCharacterChanged(c.Id);
     }
 
 

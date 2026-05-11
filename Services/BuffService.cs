@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
-public class BuffService(IDbContextFactory<OrdisContext> dbFactory)
+public class BuffService(IDbContextFactory<OrdisContext> dbFactory, LiveUpdateService liveUpdates)
 {
     // -- Library queries --
 
@@ -41,6 +41,8 @@ public class BuffService(IDbContextFactory<OrdisContext> dbFactory)
         await using var db = await dbFactory.CreateDbContextAsync();
         db.BuffTemplates.Add(template);
         await db.SaveChangesAsync();
+        if (template.CampaignId != null)
+            liveUpdates.NotifyCampaignChanged(template.CampaignId.Value);
         return template;
     }
 
@@ -62,8 +64,11 @@ public class BuffService(IDbContextFactory<OrdisContext> dbFactory)
         var template = await db.BuffTemplates.FindAsync(templateId);
         if (template != null)
         {
+            var campaignId = template.CampaignId;
             db.BuffTemplates.Remove(template);
             await db.SaveChangesAsync();
+            if (campaignId != null)
+                liveUpdates.NotifyCampaignChanged(campaignId.Value);
         }
     }
 
@@ -166,6 +171,7 @@ public class BuffService(IDbContextFactory<OrdisContext> dbFactory)
         };
         db.CharacterBuffs.Add(buff);
         await db.SaveChangesAsync();
+        liveUpdates.NotifyCharacterChanged(characterId);
         return buff;
     }
 
@@ -175,8 +181,10 @@ public class BuffService(IDbContextFactory<OrdisContext> dbFactory)
         var buff = await db.CharacterBuffs.FindAsync(characterBuffId);
         if (buff != null)
         {
+            var characterId = buff.PlayerCharacterId;
             db.CharacterBuffs.Remove(buff);
             await db.SaveChangesAsync();
+            liveUpdates.NotifyCharacterChanged(characterId);
         }
     }
 
@@ -188,6 +196,7 @@ public class BuffService(IDbContextFactory<OrdisContext> dbFactory)
         {
             buff.Stacks = Math.Max(0, stacks);
             await db.SaveChangesAsync();
+            liveUpdates.NotifyCharacterChanged(buff.PlayerCharacterId);
         }
     }
 
