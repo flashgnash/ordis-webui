@@ -51,10 +51,10 @@
         </div>
 
         <!-- Two-column layout: players left, modifier library right -->
-        <div class="d-flex flex-column flex-lg-row gap-3 mt-2">
+        <div class="d-flex flex-column flex-lg-row gap-3 mt-2 align-items-start">
             <div style="flex: 7 1 0%; min-width: 0">
+                <h5 class="mb-2">Players</h5>
                 @if(Campaign.Players != null){
-                    <h4>Players</h4>
                     @foreach(PlayerCharacter player in Campaign.Players.OrderByDescending(c => c.Rolls.Any()).ThenByDescending(c => c.Rolls.Max(r => r.Timestamp))) {
                         <Modal Title="Edit Player" id="@(GetIdentifier(player,"edit"))">
                             <div class=p-3>
@@ -76,7 +76,7 @@
                             </button>
                         </Modal>
 
-                        <div class="card mb-2 w-100">
+                        <div class="card mb-2 w-100" style="border-left: none">
                             <div class="card-header py-0 px-2">
                                 <div class="text-white d-flex align-items-center">
                                     @if(player.UserId == DiscordId) {
@@ -128,50 +128,63 @@
             </div>
 
             <div style="flex: 5 1 0%; min-width: 0">
-                <div class="card">
-                    <div class="card-header d-flex align-items-center">
-                        <h4 class="mb-0">Modifier Library</h4>
-                        <span class="text-muted ms-2" style="font-size: 0.85em">(@campaignBuffs.Count)</span>
-                        <div class="flex-grow-1"></div>
-                        <button class="btn btn-primary btn-sm" @onclick="OpenCampaignBuffDialog">+</button>
-                    </div>
-                    <div class="card-body">
-                        @if (campaignBuffs.Any())
-                        {
-                            @foreach (var t in campaignBuffs)
+                <h5 class="mb-2">Modifier Library</h5>
+                <div class="card m-0 border-0">
+                    <div class="card-body m-0 p-0">
+                        <div class="d-flex align-items-center" style="border-bottom: 1px solid rgba(255,255,255,0.1)">
+                            @foreach (var tab in modTabs)
                             {
-                                <div class="d-flex align-items-center gap-2 py-1">
-                                    <span class="flex-shrink-0 text-muted" style="width: 1.5em; text-align: center">
-                                        <BuffIcon Name="@t.Icon" />
-                                    </span>
-                                    <span>@t.Name</span>
-                                    <span class="badge bg-secondary" style="font-size: 0.7em">@t.Type</span>
-                                    <div class="flex-grow-1"></div>
-                                    <div class="d-flex flex-wrap gap-1">
-                                        @foreach (var effect in t.Effects)
-                                        {
-                                            var p = BuffFormula.Parse(effect.Formula);
-                                            var positive = p?.op is "+=" or "*=";
-                                            var lbl = p != null
-                                                ? p.Value.target[..Math.Min(3, p.Value.target.Length)].ToUpper()
-                                                : "?";
-                                            <span class="badge @(positive ? "bg-success" : "bg-danger")"
-                                                  style="min-width: 2.4em; font-size: 0.7em; text-align: center">
-                                                @lbl
-                                            </span>
-                                        }
-                                    </div>
-                                    <button class="btn btn-danger btn-sm" style="padding: 2px 7px; line-height: 1"
-                                            @onclick="() => DeleteCampaignBuff(t)">
-                                        x
-                                    </button>
-                                </div>
+                                var isActive = activeModTab == tab;
+                                var count = campaignBuffs.Count(t => t.Type == tab);
+                                <a href="javascript:void(0)"
+                                   @onclick="() => activeModTab = tab"
+                                   style="padding: 0.5em 0.7em; text-decoration: none; color: @(isActive ? "var(--accent)" : "rgba(255,255,255,0.5)"); border-bottom: 2px solid @(isActive ? "var(--accent)" : "transparent"); font-size: 0.85em; white-space: nowrap">
+                                    @ModTabLabel(tab)
+                                    @if (count > 0)
+                                    {
+                                        <span style="margin-left: 0.3em; font-size: 0.85em; opacity: 0.7">@count</span>
+                                    }
+                                </a>
                             }
-                        }
-                        else
-                        {
-                            <span class="text-muted">No modifiers in library. Export from a character sheet or add them here.</span>
-                        }
+                            <div class="flex-grow-1"></div>
+                            <button class="btn btn-primary btn-sm flex-shrink-0 me-2" @onclick="OpenCampaignBuffDialog">+</button>
+                        </div>
+
+                        <div class="p-2">
+                            @{ var tabMods = campaignBuffs.Where(t => t.Type == activeModTab).OrderBy(t => t.Name).ToList(); }
+                            @if (tabMods.Any())
+                            {
+                                @foreach (var t in tabMods)
+                                {
+                                    <div class="d-flex align-items-center gap-2 py-1">
+                                        <span class="flex-shrink-0 text-muted" style="width: 1.5em; text-align: center">
+                                            <BuffIcon Name="@t.Icon" />
+                                        </span>
+                                        <span>@t.Name</span>
+                                        <div class="flex-grow-1"></div>
+                                        <div class="d-flex flex-wrap gap-1">
+                                            @foreach (var effect in t.Effects)
+                                            {
+                                                var p = BuffFormula.Parse(effect.Formula);
+                                                var positive = p?.op is "+=" or "*=";
+                                                <span class="badge @(positive ? "bg-success" : "bg-danger")"
+                                                      style="font-size: 0.7em">
+                                                    @BuffFormula.FormatDisplay(effect.Formula)
+                                                </span>
+                                            }
+                                        </div>
+                                        <button class="btn btn-danger btn-sm" style="padding: 2px 7px; line-height: 1"
+                                                @onclick="() => DeleteCampaignBuff(t)">
+                                            x
+                                        </button>
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <span class="text-muted">No @ModTabLabel(activeModTab).ToLower()</span>
+                            }
+                        </div>
                     </div>
                 </div>
             </div>
@@ -239,7 +252,17 @@
     [Parameter] public int CampaignId { get; set; }
 
 	List<BuffTemplate> campaignBuffs = new();
-	Dictionary<int,string>? NameDeletionConfirmationBoxes {get; set;}
+	Dictionary<int,string> NameDeletionConfirmationBoxes {get; set;} = new();
+
+	private static readonly BuffType[] modTabs = [BuffType.Equipment, BuffType.Status, BuffType.Skill];
+	private BuffType activeModTab = BuffType.Equipment;
+	private static string ModTabLabel(BuffType type) => type switch
+	{
+		BuffType.Equipment => "Equipment",
+		BuffType.Status => "Statuses",
+		BuffType.Skill => "Skill Modifiers",
+		_ => type.ToString()
+	};
 
 	private string DiscordId {get; set;}
 
