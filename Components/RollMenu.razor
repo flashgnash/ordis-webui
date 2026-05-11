@@ -109,11 +109,11 @@
           ErrorMessage = null;
           LastResult = null;
           LoadingRoll = true;        
-          var response = await CharacterService.RollFor(Character,RollText);    
+          var response = await CharacterService.RollFor(Character,RollText);
 
-          await DiscordService.SendEmbedAsync($"Rolling for {Character.Name}...", response.Message);    
           LastResult = response;
           LoadingRoll = false;
+          _ = DiscordService.SendEmbedAsync($"Rolling for {Character.Name}...", response.Message);
         }
         catch (Exception e){
           LoadingRoll = false;
