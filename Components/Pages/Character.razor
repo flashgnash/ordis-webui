@@ -56,14 +56,14 @@
             </div>
         </div>
         
-        <div class="d-flex flex-wrap gap-1" style="text-size: 10px">
-            @if (Char?.StatBlock?.Stats != null)
-            {
+        @if (Char?.StatBlock?.Stats != null)
+        {
+            <div class="p-2">
                 <StatBlock Stats="@Char.StatBlock.Stats"
                            Buffs="@ActiveBuffTemplates()"
                            BuffContext="@BuildBuffContext()" />
-            }
-        </div>
+            </div>
+        }
 
         @if (Char?.Gauges != null)
         {
@@ -106,17 +106,6 @@
             </div>
         </div>
 
-
-        <div class="d-flex flex-wrap">
-            <div class="flex-row flex-grow-1">
-                <div class="flex-fill">
-                    <DescriptableList Name="Inventory" Descriptables="@(Char?.Inventory?.Cast<IDescriptable>())" />
-                </div>
-                <div class="flex-fill">
-                    <DescriptableList Name="Spells" Descriptables="@(Char?.Spells?.Cast<IDescriptable>())" />
-                </div>
-            </div>
-        </div>
 
         <br>
         @if(Char.Rolls != null) {

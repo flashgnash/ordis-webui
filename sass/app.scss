@@ -14,6 +14,7 @@ $table-color: $text-colour;
 $table-striped-bg: $light;
 $table-accent-bg: $light;
 $table-border-color: $dark;
+$container-padding-x: 0.2rem;
 @import "../node_modules/bootstrap/scss/bootstrap";
 
 .text-muted {
@@ -388,6 +389,7 @@ input[type="checkbox"] {
   flex-grow: 4;
 }
 
+
 @media (max-width: 900px) {
   .wrap-on-mobile {
     /* flex-direction: column; /* Stack panels vertically */
@@ -463,4 +465,35 @@ input[type="checkbox"] {
 .player-card .card-body {
   margin: 0 !important;
   text-align: left !important;
+}
+
+.stat-pill {
+  display: flex;
+  flex: 1 1 0%;
+  flex-direction: column;
+  align-items: center;
+  background: $light;
+  border-radius: 4px;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.stat-pill-label {
+  padding: 0.3em 0.4em;
+  text-transform: uppercase;
+  font-weight: 600;
+  opacity: 0.6;
+  font-size: 0.85em;
+  width: 100%;
+  text-align: center;
+  background: $dark;
+}
+
+.stat-pill-value {
+  padding: 0.3em 0.5em;
+  background: rgba(255, 255, 255, 0.07);
+  font-weight: 600;
+  font-size: 1.2em;
+  width: 100%;
+  text-align: center;
 }
