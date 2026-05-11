@@ -1,7 +1,183 @@
-﻿@page "/home"
+@rendermode InteractiveServer
+@page "/"
+@page "/home"
+@inject AuthenticationStateProvider AuthStateProvider
+@inject CampaignService CampaignService
+@inject PlayerCharacterService CharService
+@attribute [Authorize(Policy = "HasDiscordId")]
 
 <PageTitle>Home</PageTitle>
 
-<h1>Hello, worlddddddccssddc!</h1>
+<div class="container-fluid mt-4" style="overflow: auto">
 
-Welcome to your new app.
+    @if (DiscordName != null)
+    {
+        <h2>Welcome, @DiscordName</h2>
+    }
+
+    <div class="d-flex flex-column flex-lg-row gap-4 mt-3">
+
+        <!-- Campaigns -->
+        <div style="flex: 1 1 0%; min-width: 0">
+            <div class="d-flex align-items-center mb-2">
+                <h4 class="mb-0">Campaigns</h4>
+                <div class="flex-grow-1"></div>
+                @if (Campaigns != null && Campaigns.Any())
+                {
+                    <a href="/campaigns" class="text-decoration-none" style="color: var(--accent)">View all</a>
+                }
+            </div>
+
+            @if (Campaigns != null && Campaigns.Any())
+            {
+                <div class="d-flex flex-column gap-2">
+                    @foreach (var campaign in TopCampaigns)
+                    {
+                        <a href="@($"/campaigns/{campaign.Id}")" class="card player-card text-decoration-none text-reset">
+                            <div class="card-header py-1 px-2">
+                                <div class="text-white d-flex align-items-center">
+                                    <span class="fs-5">@campaign.Name</span>
+                                    <div class="flex-grow-1"></div>
+                                    @if (campaign.Players != null)
+                                    {
+                                        <span class="text-muted" style="font-size: 0.85em">@campaign.Players.Count player@(campaign.Players.Count != 1 ? "s" : "")</span>
+                                    }
+                                </div>
+                            </div>
+                            <div class="card-body p-2">
+                                <div class="d-flex gap-2 flex-wrap">
+                                    @if (!string.IsNullOrEmpty(campaign.DefaultRollDie))
+                                    {
+                                        <span class="badge bg-secondary">@campaign.DefaultRollDie</span>
+                                    }
+                                    @if (!string.IsNullOrEmpty(campaign.StatModifierFormula))
+                                    {
+                                        <span class="badge bg-secondary">@campaign.StatModifierFormula</span>
+                                    }
+                                </div>
+                                @if (campaign.Players != null && campaign.Players.Any())
+                                {
+                                    <div class="d-flex gap-1 flex-wrap mt-1" style="font-size: 0.85em">
+                                        @foreach (var player in campaign.Players.Take(5))
+                                        {
+                                            <span class="text-muted">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" class="bi bi-person-fill" viewBox="0 0 16 16">
+                                                    <path d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6"/>
+                                                </svg>
+                                                @player.Name
+                                            </span>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        </a>
+                    }
+                </div>
+            }
+            else if (Campaigns != null)
+            {
+                <p class="text-muted">No campaigns yet.</p>
+            }
+        </div>
+
+        <!-- Characters -->
+        <div style="flex: 1 1 0%; min-width: 0">
+            <div class="d-flex align-items-center mb-2">
+                <h4 class="mb-0">Characters</h4>
+                <div class="flex-grow-1"></div>
+                @if (Characters != null && Characters.Any())
+                {
+                    <a href="/characters" class="text-decoration-none" style="color: var(--accent)">View all</a>
+                }
+            </div>
+
+            @if (Characters != null && Characters.Any())
+            {
+                <div class="d-flex flex-column gap-2">
+                    @foreach (var character in TopCharacters)
+                    {
+                        <a href="@($"/characters/{character.Id}")" class="card player-card text-decoration-none text-reset">
+                            <div class="card-header py-1 px-2">
+                                <div class="text-white d-flex align-items-center">
+                                    <span class="fs-5">@(character.Name ?? "Unnamed")</span>
+                                    <div class="flex-grow-1"></div>
+                                    @if (character.StatBlock?.Level != null)
+                                    {
+                                        <span class="text-muted" style="font-size: 0.85em">Lv. @character.StatBlock.Level</span>
+                                    }
+                                </div>
+                            </div>
+                            <div class="card-body p-2">
+                                @if (character.Gauges != null && character.Gauges.Any())
+                                {
+                                    <div class="d-flex align-items-center gap-3 w-100">
+                                        <div class="d-flex flex-column gap-1" style="flex: 1 1 0%; min-width: 0">
+                                            @foreach (var gauge in character.Gauges)
+                                            {
+                                                <Bar GaugeInstance="@gauge" />
+                                            }
+                                        </div>
+                                        @{
+                                            var lastRoll = character.Rolls?.OrderByDescending(r => r.Timestamp).FirstOrDefault();
+                                        }
+                                        @if (lastRoll != null)
+                                        {
+                                            <div class="flex-shrink-0">
+                                                <DieShape Expression="@(lastRoll.Rolls?.FirstOrDefault()?.Expression ?? lastRoll.Message)">
+                                                    @lastRoll.Result
+                                                </DieShape>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                                else if (character.StatBlock?.Stats != null && character.StatBlock.Stats.Any())
+                                {
+                                    <StatBlock Stats="@character.StatBlock.Stats" />
+                                }
+                            </div>
+                        </a>
+                    }
+                </div>
+            }
+            else if (Characters != null)
+            {
+                <p class="text-muted">No characters yet.</p>
+            }
+        </div>
+
+    </div>
+</div>
+
+@code {
+    string? DiscordId;
+    string? DiscordName;
+    IEnumerable<Campaign>? Campaigns;
+    IEnumerable<PlayerCharacter>? Characters;
+
+    IEnumerable<Campaign> TopCampaigns => Campaigns?
+        .OrderByDescending(c => c.Players?
+            .Where(p => p.UserId == DiscordId)
+            .SelectMany(p => p.Rolls ?? Enumerable.Empty<RollResult>())
+            .Max(r => r.Timestamp))
+        .Take(3) ?? Enumerable.Empty<Campaign>();
+
+    IEnumerable<PlayerCharacter> TopCharacters => Characters?
+        .OrderByDescending(c => c.Rolls != null && c.Rolls.Any())
+        .ThenByDescending(c => c.Rolls?.Max(r => r.Timestamp))
+        .Take(3) ?? Enumerable.Empty<PlayerCharacter>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        DiscordId = user.FindFirst("discord_id")?.Value;
+        DiscordName = user.FindFirst("discord_name")?.Value;
+
+        if (DiscordId != null)
+        {
+            Campaigns = await CampaignService.GetByDiscordIdAsync(DiscordId);
+            Characters = await CharService.GetByDiscordIdAsync(DiscordId);
+        }
+    }
+}
