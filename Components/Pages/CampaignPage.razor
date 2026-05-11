@@ -52,9 +52,10 @@
 
         <!-- Two-column layout: players left, modifier library right -->
         <div class="d-flex flex-column flex-lg-row gap-3 mt-2 align-items-start">
-            <div style="flex: 7 1 0%; min-width: 0">
+            <div style="flex: 1 1 0%; min-width: 0">
                 <h5 class="mb-2">Players</h5>
                 @if(Campaign.Players != null){
+                <div class="d-flex flex-wrap gap-2">
                     @foreach(PlayerCharacter player in Campaign.Players.OrderByDescending(c => c.Rolls.Any()).ThenByDescending(c => c.Rolls.Max(r => r.Timestamp))) {
                         <Modal Title="Edit Player" id="@(GetIdentifier(player,"edit"))">
                             <div class=p-3>
@@ -76,7 +77,7 @@
                             </button>
                         </Modal>
 
-                        <div class="card mb-2 w-100" style="border-left: none">
+                        <div class="card" style="flex: 1 1 300px; max-width: 500px; border-left: none">
                             <div class="card-header py-0 px-2">
                                 <div class="text-white d-flex align-items-center">
                                     @if(player.UserId == DiscordId) {
@@ -124,10 +125,11 @@
                             </div>
                         </div>
                     }
+                </div>
                 }
             </div>
 
-            <div style="flex: 5 1 0%; min-width: 0">
+            <div style="flex: 1 1 280px; max-width: 400px">
                 <h5 class="mb-2">Modifier Library</h5>
                 <div class="card m-0 border-0">
                     <div class="card-body m-0 p-0">
