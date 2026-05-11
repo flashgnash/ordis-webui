@@ -89,11 +89,6 @@
                             }
                         </div>
 
-                        @if (cb.Template.SourceTemplate != null && cb.Template.IsOutOfSync(cb.Template.SourceTemplate))
-                        {
-                            <span class="badge bg-warning text-dark" style="font-size: 0.65em" title="Out of sync with campaign">!</span>
-                        }
-
                         <button class="btn btn-sm" style="color:var(--accent); padding: 2px 7px; line-height: 1"
                                 @onclick="() => OpenEditDialog(cb)">
                             <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" class="bi bi-pencil-fill" viewBox="0 0 16 16">
