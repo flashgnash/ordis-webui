@@ -140,6 +140,17 @@ public static class BuffFormula
         if (parsed == null) return formula;
         var (target, op, expr) = parsed.Value;
         var sym = op switch { "+=" => "+", "-=" => "-", "*=" => "×", "/=" => "÷", _ => op };
-        return $"{target.ToUpper()} {sym} {expr}";
+        return $"{FormatTarget(target)} {sym} {expr}";
+    }
+
+    public static string FormatTarget(string target)
+    {
+        string label;
+        if (target.EndsWith(".value", StringComparison.OrdinalIgnoreCase))
+            label = target[..^6];
+        else
+            label = target;
+        // Capitalise first letter
+        return label.Length > 0 ? char.ToUpper(label[0]) + label[1..] : label;
     }
 }
