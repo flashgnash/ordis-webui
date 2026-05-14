@@ -60,6 +60,18 @@ html, body {
   color: var(--text-colour);
 }
 
+.page {
+  display: flex;
+  flex-direction: row;
+  height: 100%;
+}
+
+main {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+}
+
 
 .striped-list {
   display: table;
