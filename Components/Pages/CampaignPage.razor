@@ -55,7 +55,7 @@
         <!-- Two-column layout: players left, modifier library right -->
         <div class="d-flex flex-column flex-xl-row gap-3 mt-2 align-items-stretch align-items-xl-start">
             <div style="flex: 1 1 0%; min-width: 0">
-                <h5 class="mb-2">Players</h5>
+                <h5 class="mb-2">Players (@VisiblePlayers.Count())</h5>
                 @if(Campaign.Players != null){
                 <div class="player-grid">
                     @foreach(PlayerCharacter player in VisiblePlayers) {
@@ -74,7 +74,7 @@
                             </div>
                             <button class="btn btn-danger w-100"
                                     disabled="@(NameDeletionConfirmationBoxes[player.Id] != player.Name)"
-                                    @onclick="async () => await DeletePlayerAsync(player)">
+                                    @onclick="async () => await DeletePlayerWithCloseAsync(player)">
                                 Delete
                             </button>
                         </Modal>
@@ -127,6 +127,7 @@
                     }
                 </div>
                 }
+
             </div>
 
             <div style="flex: 1 1 280px">
@@ -189,6 +190,79 @@
                         </div>
                     </div>
                 </div>
+
+                @if(IsDM) {
+                <div class="mt-4">
+                    <div class="d-flex align-items-center mb-2">
+                        <h5 class="mb-0">NPCs (@VisibleNpcs.Count())</h5>
+                        <button class="btn btn-primary btn-sm ms-2" @onclick="CreateNpcAsync">+</button>
+                    </div>
+                    <div class="player-grid">
+                        @foreach(PlayerCharacter npc in VisibleNpcs) {
+                            <Modal Title="Edit NPC" id="@(GetIdentifier(npc,"edit"))">
+                                <div class=p-3>
+                                    <CharacterCRUD Character="@npc"/>
+                                </div>
+                            </Modal>
+
+                            <Modal Title="Delete NPC" id="@(GetIdentifier(npc,"delete"))">
+                                <h2>Do you really want to delete the NPC "@npc.Name"?</h2>
+                                <br>
+                                <div class="form-group">
+                                    <h5 class="text-muted">Please type the name to confirm:</h5>
+                                    <input class="form-input fs-5 m-2" placeholder=@npc.Name @bind="@NameDeletionConfirmationBoxes[npc.Id]">
+                                </div>
+                                <button class="btn btn-danger w-100"
+                                        disabled="@(NameDeletionConfirmationBoxes[npc.Id] != npc.Name)"
+                                        @onclick="async () => await DeleteNpcWithCloseAsync(npc)">
+                                    Delete
+                                </button>
+                            </Modal>
+
+                            <div class="card player-card">
+                                <div class="card-header py-0 px-2">
+                                    <div class="text-white d-flex align-items-center">
+                                        <a style="color:var(--accent)" href="@($"/characters/{npc.Id}")">@(npc.Name ?? "Unknown")</a>
+                                        <div class="flex-grow-1"></div>
+                                        <button class="text-danger p-1" @onclick="async () => await HandleNpcDeleteClickAsync(npc)">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" class="bi bi-trash-fill" viewBox="0 0 16 16">
+                                                <path d="M2.5 1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1H3v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V4h.5a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1zm3 4a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5M8 5a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7A.5.5 0 0 1 8 5m3 .5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 1 0"/>
+                                            </svg>
+                                        </button>
+                                        <button class="p-1" style="color:var(--accent)" onClick="@(GetIdentifier(npc,"edit")).showModal()">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" class="bi bi-pencil-fill" viewBox="0 0 16 16">
+                                                <path d="M12.854.146a.5.5 0 0 0-.707 0L10.5 1.793 14.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708zm.646 6.061L9.793 2.5 3.293 9H3.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.207zm-7.468 7.468A.5.5 0 0 1 6 13.5V13h-.5a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.5-.5V10h-.5a.5.5 0 0 1-.175-.032l-.179.178a.5.5 0 0 0-.11.168l-2 5a.5.5 0 0 0 .65.65l5-2a.5.5 0 0 0 .168-.11z"/>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="card-body p-2 w-100">
+                                    @if(npc.Gauges != null) {
+                                        <div class="d-flex align-items-center gap-3 w-100">
+                                            <div class="d-flex flex-column gap-1" style="flex: 1 1 0%; min-width: 0">
+                                                @foreach(Gauge gauge in npc.Gauges) {
+                                                    <Bar GaugeInstance="@gauge" />
+                                                }
+                                            </div>
+                                            @{
+                                                var lastNpcRoll = npc?.Rolls?.OrderByDescending(r => r.Timestamp).FirstOrDefault();
+                                            }
+                                            @if (lastNpcRoll != null)
+                                            {
+                                                <div class="flex-shrink-0">
+                                                    <DieShape Expression="@(lastNpcRoll.Rolls?.FirstOrDefault()?.Expression ?? lastNpcRoll.Message)">
+                                                        @lastNpcRoll.Result
+                                                    </DieShape>
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+                }
             </div>
         </div>
 
@@ -271,12 +345,65 @@
 	private bool IsDM => Campaign?.DungeonMasterId == DiscordId;
 
 	private IEnumerable<PlayerCharacter> VisiblePlayers => (Campaign?.Players ?? Enumerable.Empty<PlayerCharacter>())
-		.Where(p => IsDM || p.UserId == DiscordId)
+		.Where(p => !p.IsNpc && (IsDM || p.UserId == DiscordId))
 		.OrderByDescending(c => c.Rolls.Any())
 		.ThenByDescending(c => c.Rolls.Max(r => r.Timestamp));
 
+	private IEnumerable<PlayerCharacter> VisibleNpcs => (Campaign?.Players ?? Enumerable.Empty<PlayerCharacter>())
+		.Where(p => p.IsNpc)
+		.OrderBy(p => p.Name);
+
 	public async Task DeletePlayerAsync(PlayerCharacter character) {
 		await CampaignService.RemovePlayerAsync(Campaign,character);
+	}
+
+	private async Task CloseModalAsync(string id)
+	{
+		await using var dialog = await JS.InvokeAsync<IJSObjectReference>("document.getElementById", id);
+		await dialog.InvokeVoidAsync("close");
+	}
+
+	private async Task DeletePlayerWithCloseAsync(PlayerCharacter player)
+	{
+		await CloseModalAsync(GetIdentifier(player, "delete"));
+		await DeletePlayerAsync(player);
+	}
+
+	private async Task DeleteNpcWithCloseAsync(PlayerCharacter npc)
+	{
+		await CloseModalAsync(GetIdentifier(npc, "delete"));
+		await DeleteNpcWithGraceAsync(npc);
+	}
+
+	private DateTime? _lastNpcDeleted;
+	private bool NpcGracePeriodActive => _lastNpcDeleted.HasValue && (DateTime.UtcNow - _lastNpcDeleted.Value).TotalSeconds < 30;
+
+	private async Task HandleNpcDeleteClickAsync(PlayerCharacter npc)
+	{
+		if (NpcGracePeriodActive)
+		{
+			_lastNpcDeleted = DateTime.UtcNow;
+			await DeletePlayerAsync(npc);
+		}
+		else
+		{
+			await JS.InvokeVoidAsync("eval", $"document.getElementById('{GetIdentifier(npc, "delete")}').showModal()");
+		}
+	}
+
+	private async Task DeleteNpcWithGraceAsync(PlayerCharacter npc)
+	{
+		_lastNpcDeleted = DateTime.UtcNow;
+		await DeletePlayerAsync(npc);
+	}
+
+	public async Task CreateNpcAsync() {
+		await CampaignService.AddNpcAsync(CampaignId);
+		Campaign = await CampaignService.GetByIdAsync(CampaignId);
+		Campaign.Players = Campaign.Players ?? new List<PlayerCharacter>();
+		foreach (PlayerCharacter p in Campaign.Players)
+			NameDeletionConfirmationBoxes.TryAdd(p.Id, "");
+		StateHasChanged();
 	}
 
 	private async Task DeleteCampaignBuff(BuffTemplate template)

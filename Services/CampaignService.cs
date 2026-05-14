@@ -3,6 +3,30 @@ using Microsoft.EntityFrameworkCore;
 public class CampaignService(IDbContextFactory<OrdisContext> dbFactory, LiveUpdateService liveUpdates)
 {
 
+    public async Task<PlayerCharacter> AddNpcAsync(int campaignId)
+    {
+        var db = await dbFactory.CreateDbContextAsync();
+
+        var campaign = await db.Campaigns.Include(c => c.Players).FirstOrDefaultAsync(c => c.Id == campaignId);
+
+        var npc = new PlayerCharacter
+        {
+            Name = "New NPC",
+            IsNpc = true,
+            Gauges = new List<Gauge>(),
+            Inventory = new List<Item>(),
+            Spells = new List<Spell>(),
+            Rolls = new List<RollResult>(),
+            StatBlock = new StatBlock { Stats = new(), SpecialStats = new() },
+        };
+
+        campaign.Players.Add(npc);
+        await db.SaveChangesAsync();
+        liveUpdates.NotifyCampaignChanged(campaignId);
+
+        return npc;
+    }
+
     public async Task RemovePlayerAsync(Campaign campaign, PlayerCharacter player) {
         
         var db = await dbFactory.CreateDbContextAsync();

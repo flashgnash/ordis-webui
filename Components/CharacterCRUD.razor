@@ -33,7 +33,7 @@
   </div>
 
   <div class="m-2 text-center text-danger fs-4">
-    @if(Character.UserId == null) {
+    @if(Character.UserId == null && !Character.IsNpc) {
       <div>
         <label>Discord User ID</label>
         <span title="Set this to give ownership of this character to a player. This box disappears once a value has been set" class="m-auto fs-5" style="cursor: default; user-select: none; color:var(--accent)">?</span>
