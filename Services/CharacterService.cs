@@ -34,9 +34,20 @@ public class PlayerCharacterService(IDbContextFactory<OrdisContext> dbFactory, H
         {
             case System.Net.HttpStatusCode.InternalServerError:
             case System.Net.HttpStatusCode.BadRequest:
+            case System.Net.HttpStatusCode.NotFound:
                 throw new InvalidRollException();
         }
-        var rollResult = await response.Content.ReadFromJsonAsync<RollResult>();
+
+        RollResult? rollResult;
+        try
+        {
+            rollResult = await response.Content.ReadFromJsonAsync<RollResult>();
+        }
+        catch
+        {
+            throw new InvalidRollException();
+        }
+        if (rollResult == null) throw new InvalidRollException();
         
         await SaveRollAsync(character.Id, rollResult);
 

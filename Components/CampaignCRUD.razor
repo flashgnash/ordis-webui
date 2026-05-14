@@ -22,15 +22,33 @@
     <input class="form-control" placeholder="floor((stat - 10) / 2)" @bind="Campaign.StatModifierFormula"/>		
     <br>
 
-    <ListEditor TItem="PlayerCharacter" Items="Campaign.Players" AddItem="AddCharacter" Name="character">
-        <ItemTemplate Context="player">
-            <label class="form-label">Name</label>
-            <input class="form-control" @bind="player.Name"/>
-
-            <label class="form-label">Discord ID</label>
-            <input class="form-control" @bind="player.UserId"/>
-        </ItemTemplate>
-    </ListEditor>
+    <div class="form-group d-flex flex-wrap bg-dark m-2 p-2 rounded">
+        <div class="d-flex w-100 flex-row flex-nowrap align-items-center">
+            <label class="form-label mb-0 fs-5">@Players.Count() player(s)</label>
+            <div class="flex-grow-1"></div>
+            <button type="button" class="btn btn-primary p-2" style="width:3em;aspect-ratio:1/1" @onclick="AddCharacterAsync">+</button>
+        </div>
+        @foreach (var player in Players) {
+            <div class="w-100 d-flex flex-nowrap mt-2">
+                <div class="card flex-grow-1 m-0 bg-light p-3 d-flex flex-column gap-2">
+                    <div>
+                        <label class="form-label">Name</label>
+                        <input class="form-control" @bind="player.Name"/>
+                    </div>
+                    <div>
+                        <label class="form-label">Discord ID</label>
+                        <input class="form-control" @bind="player.UserId"/>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-danger flex-shrink-0" style="width:2em"
+                        @onclick="() => Campaign.Players.Remove(player)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash-fill" viewBox="0 0 16 16">
+                        <path d="M2.5 1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1H3v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V4h.5a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1zm3 4a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5M8 5a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7A.5.5 0 0 1 8 5m3 .5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 1 0"/>
+                    </svg>
+                </button>
+            </div>
+        }
+    </div>
 
     <div class="flex-grow-1"></div>
 
@@ -53,11 +71,26 @@
             Campaign.Players = new List<PlayerCharacter>();
     }
 
-    void AddCharacter()
-    {
-        Campaign.Players.Add(new PlayerCharacter());
+    private IEnumerable<PlayerCharacter> Players =>
+        Campaign.Players?.Where(p => !p.IsNpc) ?? Enumerable.Empty<PlayerCharacter>();
 
-        Console.WriteLine($"Added character, total now: {Campaign.Players.Count}");
+    async Task AddCharacterAsync()
+    {
+        if (Campaign.Id > 0)
+        {
+            var player = await CampaignService.AddPlayerToCampaignAsync(Campaign.Id);
+            Campaign.Players.Add(player);
+        }
+        else
+        {
+            Campaign.Players.Add(new PlayerCharacter
+            {
+                Gauges = new List<Gauge>(),
+                Inventory = new List<Item>(),
+                Spells = new List<Spell>(),
+                Rolls = new List<RollResult>(),
+            });
+        }
     }
 
     async Task SaveAsync()

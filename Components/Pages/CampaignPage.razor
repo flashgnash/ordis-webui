@@ -21,7 +21,7 @@
 
     <Modal Title="Roll" id="rollDialog">
         <div class=p-3>
-            <RollMenu />
+            <RollMenu Character="@_rollDialogCharacter" />
         </div>
     </Modal>
 
@@ -55,7 +55,12 @@
         <!-- Two-column layout: players left, modifier library right -->
         <div class="d-flex flex-column flex-xl-row gap-3 mt-2 align-items-stretch align-items-xl-start">
             <div style="flex: 1 1 0%; min-width: 0">
-                <h5 class="mb-2">Players (@VisiblePlayers.Count())</h5>
+                <div class="d-flex align-items-center mb-2">
+                    <h5 class="mb-0">Players (@VisiblePlayers.Count())</h5>
+                    @if(IsDM) {
+                        <button class="btn btn-primary btn-sm ms-2" @onclick="CreatePlayerAsync">+</button>
+                    }
+                </div>
                 @if(Campaign.Players != null){
                 <div class="player-grid">
                     @foreach(PlayerCharacter player in VisiblePlayers) {
@@ -70,7 +75,8 @@
                             <br>
                             <div class="form-group">
                                 <h5 class="text-muted">Please type the name of your campaign to confirm:</h5>
-                                <input class="form-input fs-5 m-2" placeholder=@player.Name @bind="@NameDeletionConfirmationBoxes[player.Id]">
+                                <input class="form-input fs-5 m-2" placeholder=@player.Name @bind="@NameDeletionConfirmationBoxes[player.Id]"
+                                       @onkeydown="async e => await OnDeleteConfirmKeyDown(e, player, false)">
                             </div>
                             <button class="btn btn-danger w-100"
                                     disabled="@(NameDeletionConfirmationBoxes[player.Id] != player.Name)"
@@ -89,7 +95,7 @@
                                         <span>@(player.Name ?? "Unknown")</span>
                                     }
                                     <div class="flex-grow-1"></div>
-                                    <button class="text-danger p-1" onClick="@(GetIdentifier(player,"delete")).showModal()">
+                                    <button class="text-danger p-1" @onclick="async () => await HandlePlayerDeleteClickAsync(player)">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" class="bi bi-trash-fill" viewBox="0 0 16 16">
                                             <path d="M2.5 1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1H3v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V4h.5a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1zm3 4a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5M8 5a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7A.5.5 0 0 1 8 5m3 .5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 1 0"/>
                                         </svg>
@@ -120,6 +126,12 @@
                                                 </DieShape>
                                             </div>
                                         }
+                                    </div>
+                                }
+                                @if(IsDM) {
+                                    <div class="d-flex gap-1 mt-1">
+                                        <button class="btn btn-sm btn-secondary flex-fill" @onclick="async () => await OpenRollDialogAsync(player)">Roll</button>
+                                        <button class="btn btn-sm btn-secondary flex-fill" @onclick="async () => await OpenQuickStatusAsync(player)">+ Status</button>
                                     </div>
                                 }
                             </div>
@@ -193,9 +205,14 @@
 
                 @if(IsDM) {
                 <div class="mt-4">
-                    <div class="d-flex align-items-center mb-2">
+                    <div class="d-flex align-items-center mb-2 flex-wrap gap-1">
                         <h5 class="mb-0">NPCs (@VisibleNpcs.Count())</h5>
                         <button class="btn btn-primary btn-sm ms-2" @onclick="CreateNpcAsync">+</button>
+                        @if (SelectedNpcIds.Any()) {
+                            <span class="ms-2 text-muted" style="font-size:0.85em">@SelectedNpcIds.Count selected</span>
+                            <button class="btn btn-secondary btn-sm ms-1" @onclick="OpenBulkEditDialogAsync">Edit</button>
+                            <button class="btn btn-danger btn-sm ms-1" @onclick="OpenBulkDeleteDialogAsync">Delete</button>
+                        }
                     </div>
                     <div class="player-grid">
                         @foreach(PlayerCharacter npc in VisibleNpcs) {
@@ -210,7 +227,8 @@
                                 <br>
                                 <div class="form-group">
                                     <h5 class="text-muted">Please type the name to confirm:</h5>
-                                    <input class="form-input fs-5 m-2" placeholder=@npc.Name @bind="@NameDeletionConfirmationBoxes[npc.Id]">
+                                    <input class="form-input fs-5 m-2" placeholder=@npc.Name @bind="@NameDeletionConfirmationBoxes[npc.Id]"
+                                           @onkeydown="async e => await OnDeleteConfirmKeyDown(e, npc, true)">
                                 </div>
                                 <button class="btn btn-danger w-100"
                                         disabled="@(NameDeletionConfirmationBoxes[npc.Id] != npc.Name)"
@@ -220,9 +238,13 @@
                             </Modal>
 
                             <div class="card player-card">
-                                <div class="card-header py-0 px-2">
-                                    <div class="text-white d-flex align-items-center">
-                                        <a style="color:var(--accent)" href="@($"/characters/{npc.Id}")">@(npc.Name ?? "Unknown")</a>
+                                <div class="card-header py-0 px-2 d-flex align-items-center">
+                                        <input type="checkbox" class="me-2 flex-shrink-0" style="cursor:pointer"
+                                               checked="@SelectedNpcIds.Contains(npc.Id)"
+                                               @onchange="e => ToggleNpcSelection(npc.Id, (bool)e.Value!)" />
+                                        <input class="form-control form-control-sm border-0" style="width:auto; background:rgba(255,255,255,0.1); color:white"
+                                               @bind="npc.Name" @bind:event="oninput"
+                                               @onblur="async () => await CharService.UpdateAsync(npc)" />
                                         <div class="flex-grow-1"></div>
                                         <button class="text-danger p-1" @onclick="async () => await HandleNpcDeleteClickAsync(npc)">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" class="bi bi-trash-fill" viewBox="0 0 16 16">
@@ -234,7 +256,6 @@
                                                 <path d="M12.854.146a.5.5 0 0 0-.707 0L10.5 1.793 14.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708zm.646 6.061L9.793 2.5 3.293 9H3.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.207zm-7.468 7.468A.5.5 0 0 1 6 13.5V13h-.5a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.5-.5V10h-.5a.5.5 0 0 1-.175-.032l-.179.178a.5.5 0 0 0-.11.168l-2 5a.5.5 0 0 0 .65.65l5-2a.5.5 0 0 0 .168-.11z"/>
                                             </svg>
                                         </button>
-                                    </div>
                                 </div>
                                 <div class="card-body p-2 w-100">
                                     @if(npc.Gauges != null) {
@@ -257,6 +278,14 @@
                                             }
                                         </div>
                                     }
+                                    <div class="d-flex gap-1 mt-1">
+                                        <input class="form-control form-control-sm border-0 flex-fill" style="background:rgba(255,255,255,0.1); color:white"
+                                               placeholder="@(Campaign?.DefaultRollDie ?? "1d20")"
+                                               value="@NpcRollFormulas.GetValueOrDefault(npc.Id, "")"
+                                               @onchange="e => NpcRollFormulas[npc.Id] = e.Value?.ToString() ?? string.Empty"  />
+                                        <button class="btn btn-sm btn-secondary" @onclick="async () => await RollForNpcAsync(npc)">Roll</button>
+                                        <button class="btn btn-sm btn-secondary" @onclick="async () => await OpenQuickStatusAsync(npc)">+ Status</button>
+                                    </div>
                                 </div>
                             </div>
                         }
@@ -265,6 +294,64 @@
                 }
             </div>
         </div>
+
+
+        <Modal Title="Apply Status" id="quickStatusDialog">
+            <div class="p-3 d-flex flex-column gap-2" style="min-width: 260px">
+                @if (campaignBuffs.Any()) {
+                    @foreach (var buff in campaignBuffs.OrderBy(b => b.Name)) {
+                        <button class="btn btn-secondary text-start d-flex align-items-center gap-2"
+                                @onclick="async () => await ApplyQuickStatusAsync(buff)">
+                            <BuffIcon Name="@buff.Icon" />
+                            <span>@buff.Name</span>
+                        </button>
+                    }
+                } else {
+                    <p class="text-muted">No campaign buffs defined.</p>
+                }
+                <button class="btn btn-secondary mt-2" onclick="quickStatusDialog.close()">Close</button>
+            </div>
+        </Modal>
+
+        <Modal Title="Delete selected NPCs" id="bulkDeleteNpcDialog">
+            <div class="p-3">
+                <p>Delete @SelectedNpcIds.Count selected NPC(s)? This cannot be undone.</p>
+                <div class="d-flex gap-2 mt-3">
+                    <button class="btn btn-secondary flex-fill" onclick="bulkDeleteNpcDialog.close()">Cancel</button>
+                    <button class="btn btn-danger flex-fill" @onclick="DeleteSelectedNpcsAsync">Delete</button>
+                </div>
+            </div>
+        </Modal>
+
+        <Modal Title="Edit selected NPCs" id="bulkEditNpcDialog">
+            <div class="p-3 d-flex flex-column gap-3" style="min-width: 320px">
+                <p class="text-muted mb-0" style="font-size:0.85em">Changes apply to all @SelectedNpcIds.Count selected NPC(s). Leave a field blank to keep existing values.</p>
+                @foreach (var gaugeName in BulkGaugeNames) {
+                    <div>
+                        <label class="form-label mb-1">@gaugeName</label>
+                        <div class="d-flex gap-2">
+                            <div class="flex-fill">
+                                <input type="number" class="form-control" placeholder="Value"
+                                       value="@BulkGaugeValues[gaugeName]"
+                                       @onchange="e => BulkGaugeValues[gaugeName] = e.Value is string s && int.TryParse(s, out var v) ? v : null" />
+                            </div>
+                            <div class="flex-fill">
+                                <input type="number" class="form-control" placeholder="Max"
+                                       value="@BulkGaugeMaxes[gaugeName]"
+                                       @onchange="e => BulkGaugeMaxes[gaugeName] = e.Value is string s && int.TryParse(s, out var v) ? v : null" />
+                            </div>
+                        </div>
+                    </div>
+                }
+                @if (!BulkGaugeNames.Any()) {
+                    <p class="text-muted">Selected NPCs have no gauges to edit.</p>
+                }
+                <div class="d-flex gap-2">
+                    <button class="btn btn-secondary flex-fill" onclick="bulkEditNpcDialog.close()">Cancel</button>
+                    <button class="btn btn-primary flex-fill" @onclick="ApplyBulkEditsAsync">Apply</button>
+                </div>
+            </div>
+        </Modal>
 
         <Modal Title="Add campaign buff" id="campaignBuffDialog">
             <div class="p-3 d-flex flex-column gap-3" style="min-width: 360px">
@@ -353,6 +440,81 @@
 		.Where(p => p.IsNpc)
 		.OrderBy(p => p.Name);
 
+	// -- NPC multi-select --
+	private HashSet<int> SelectedNpcIds = new();
+	private IEnumerable<PlayerCharacter> SelectedNpcs => VisibleNpcs.Where(n => SelectedNpcIds.Contains(n.Id));
+	private IEnumerable<string> BulkGaugeNames => SelectedNpcs
+		.Where(n => n.Gauges != null)
+		.SelectMany(n => n.Gauges.Select(g => g.Name ?? ""))
+		.Where(n => !string.IsNullOrEmpty(n))
+		.Distinct()
+		.OrderBy(n => n);
+
+	private Dictionary<string, int?> BulkGaugeValues = new();
+	private Dictionary<string, int?> BulkGaugeMaxes = new();
+
+	private void ToggleNpcSelection(int id, bool selected)
+	{
+		if (selected) SelectedNpcIds.Add(id);
+		else SelectedNpcIds.Remove(id);
+	}
+
+	private async Task OpenBulkDeleteDialogAsync()
+	{
+		await using var dialog = await JS.InvokeAsync<IJSObjectReference>("document.getElementById", "bulkDeleteNpcDialog");
+		await dialog.InvokeVoidAsync("showModal");
+	}
+
+	private async Task DeleteSelectedNpcsAsync()
+	{
+		await CloseModalAsync("bulkDeleteNpcDialog");
+		foreach (var npc in SelectedNpcs.ToList())
+			await DeletePlayerAsync(npc);
+		SelectedNpcIds.Clear();
+	}
+
+	private async Task OpenBulkEditDialogAsync()
+	{
+		BulkGaugeValues = BulkGaugeNames.ToDictionary(n => n, _ => (int?)null);
+		BulkGaugeMaxes = BulkGaugeNames.ToDictionary(n => n, _ => (int?)null);
+		await using var dialog = await JS.InvokeAsync<IJSObjectReference>("document.getElementById", "bulkEditNpcDialog");
+		await dialog.InvokeVoidAsync("showModal");
+	}
+
+	private async Task ApplyBulkEditsAsync()
+	{
+		foreach (var npc in SelectedNpcs)
+		{
+			foreach (var gauge in npc.Gauges ?? Enumerable.Empty<Gauge>())
+			{
+				if (string.IsNullOrEmpty(gauge.Name)) continue;
+				bool changed = false;
+				if (BulkGaugeValues.TryGetValue(gauge.Name, out var val) && val.HasValue)
+				{
+					gauge.Value = val.Value;
+					changed = true;
+				}
+				if (BulkGaugeMaxes.TryGetValue(gauge.Name, out var max) && max.HasValue)
+				{
+					gauge.Max = max.Value;
+					changed = true;
+				}
+				if (changed) await CharService.UpdateGaugeAsync(gauge);
+			}
+		}
+		await CloseModalAsync("bulkEditNpcDialog");
+	}
+
+	private async Task OnDeleteConfirmKeyDown(KeyboardEventArgs e, PlayerCharacter character, bool isNpc)
+	{
+		if (e.Key != "Enter") return;
+		if (NameDeletionConfirmationBoxes.TryGetValue(character.Id, out var typed) && typed == character.Name)
+		{
+			if (isNpc) await DeleteNpcWithCloseAsync(character);
+			else await DeletePlayerWithCloseAsync(character);
+		}
+	}
+
 	public async Task DeletePlayerAsync(PlayerCharacter character) {
 		await CampaignService.RemovePlayerAsync(Campaign,character);
 	}
@@ -378,9 +540,17 @@
 	private DateTime? _lastNpcDeleted;
 	private bool NpcGracePeriodActive => _lastNpcDeleted.HasValue && (DateTime.UtcNow - _lastNpcDeleted.Value).TotalSeconds < 30;
 
+	private async Task HandlePlayerDeleteClickAsync(PlayerCharacter player)
+	{
+		if (player.Name == "New Player")
+			await DeletePlayerAsync(player);
+		else
+			await JS.InvokeVoidAsync("eval", $"document.getElementById('{GetIdentifier(player, "delete")}').showModal()");
+	}
+
 	private async Task HandleNpcDeleteClickAsync(PlayerCharacter npc)
 	{
-		if (NpcGracePeriodActive)
+		if (npc.Name == "New NPC" || NpcGracePeriodActive)
 		{
 			_lastNpcDeleted = DateTime.UtcNow;
 			await DeletePlayerAsync(npc);
@@ -395,6 +565,52 @@
 	{
 		_lastNpcDeleted = DateTime.UtcNow;
 		await DeletePlayerAsync(npc);
+	}
+
+	// -- Player roll dialog --
+	private PlayerCharacter? _rollDialogCharacter;
+
+	private async Task OpenRollDialogAsync(PlayerCharacter character)
+	{
+		_rollDialogCharacter = character;
+		await using var dialog = await JS.InvokeAsync<IJSObjectReference>("document.getElementById", "rollDialog");
+		await dialog.InvokeVoidAsync("showModal");
+	}
+
+	// -- NPC inline roll --
+	private Dictionary<int, string> NpcRollFormulas = new();
+
+	private async Task RollForNpcAsync(PlayerCharacter npc)
+	{
+		var formula = NpcRollFormulas.TryGetValue(npc.Id, out var f) && !string.IsNullOrWhiteSpace(f)
+			? f : (Campaign?.DefaultRollDie ?? "1d20");
+		try { await CharService.RollFor(npc, formula); } catch { }
+	}
+
+	// -- Quick status --
+	private PlayerCharacter? _quickStatusTarget;
+
+	private async Task OpenQuickStatusAsync(PlayerCharacter character)
+	{
+		_quickStatusTarget = character;
+		await using var dialog = await JS.InvokeAsync<IJSObjectReference>("document.getElementById", "quickStatusDialog");
+		await dialog.InvokeVoidAsync("showModal");
+	}
+
+	private async Task ApplyQuickStatusAsync(BuffTemplate buff)
+	{
+		if (_quickStatusTarget == null) return;
+		await BuffService.ApplyBuffAsync(_quickStatusTarget.Id, buff.Id);
+		await CloseModalAsync("quickStatusDialog");
+	}
+
+	public async Task CreatePlayerAsync() {
+		await CampaignService.AddPlayerToCampaignAsync(CampaignId);
+		Campaign = await CampaignService.GetByIdAsync(CampaignId);
+		Campaign.Players = Campaign.Players ?? new List<PlayerCharacter>();
+		foreach (PlayerCharacter p in Campaign.Players)
+			NameDeletionConfirmationBoxes.TryAdd(p.Id, "");
+		StateHasChanged();
 	}
 
 	public async Task CreateNpcAsync() {
