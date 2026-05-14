@@ -58,7 +58,7 @@
                 <h5 class="mb-2">Players</h5>
                 @if(Campaign.Players != null){
                 <div class="player-grid">
-                    @foreach(PlayerCharacter player in Campaign.Players.OrderByDescending(c => c.Rolls.Any()).ThenByDescending(c => c.Rolls.Max(r => r.Timestamp))) {
+                    @foreach(PlayerCharacter player in VisiblePlayers) {
                         <Modal Title="Edit Player" id="@(GetIdentifier(player,"edit"))">
                             <div class=p-3>
                                 <CharacterCRUD Character="@player"/>
@@ -267,6 +267,13 @@
 	};
 
 	private string DiscordId {get; set;}
+
+	private bool IsDM => Campaign?.DungeonMasterId == DiscordId;
+
+	private IEnumerable<PlayerCharacter> VisiblePlayers => (Campaign?.Players ?? Enumerable.Empty<PlayerCharacter>())
+		.Where(p => IsDM || p.UserId == DiscordId)
+		.OrderByDescending(c => c.Rolls.Any())
+		.ThenByDescending(c => c.Rolls.Max(r => r.Timestamp));
 
 	public async Task DeletePlayerAsync(PlayerCharacter character) {
 		await CampaignService.RemovePlayerAsync(Campaign,character);
