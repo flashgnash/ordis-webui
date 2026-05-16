@@ -58,7 +58,7 @@
                 <div class="d-flex align-items-center mb-2">
                     <h5 class="mb-0">Players (@VisiblePlayers.Count())</h5>
                     @if(IsDM) {
-                        <button class="btn btn-primary btn-sm ms-2" @onclick="CreatePlayerAsync">+</button>
+                        <button class="btn btn-primary btn-sm ms-2" @onclick="OpenPlayerPresetPickerAsync">+</button>
                     }
                 </div>
                 @if(Campaign.Players != null){
@@ -207,7 +207,8 @@
                 <div class="mt-4">
                     <div class="d-flex align-items-center mb-2 flex-wrap gap-1">
                         <h5 class="mb-0">NPCs (@VisibleNpcs.Count())</h5>
-                        <button class="btn btn-primary btn-sm ms-2" @onclick="CreateNpcAsync">+</button>
+                        <input type="number" class="form-control form-control-sm ms-2" style="width:4em" min="1" max="99" @bind="_npcCount" />
+                        <button class="btn btn-primary btn-sm" @onclick="OpenNpcPresetPickerAsync">+</button>
                         @if (SelectedNpcIds.Any()) {
                             <span class="ms-2 text-muted" style="font-size:0.85em">@SelectedNpcIds.Count selected</span>
                             <button class="btn btn-secondary btn-sm ms-1" @onclick="OpenBulkEditDialogAsync">Edit</button>
@@ -350,6 +351,28 @@
                     <button class="btn btn-secondary flex-fill" onclick="bulkEditNpcDialog.close()">Cancel</button>
                     <button class="btn btn-primary flex-fill" @onclick="ApplyBulkEditsAsync">Apply</button>
                 </div>
+            </div>
+        </Modal>
+
+        <Modal Title="Select Player Template" id="playerPresetDialog">
+            <div class="p-3 d-flex flex-column gap-2" style="min-width: 260px">
+                @foreach (var preset in Campaign.Presets ?? []) {
+                    <button class="btn btn-secondary text-start" @onclick="async () => await CreatePlayerFromPresetAsync(preset.Id)">
+                        @preset.Name
+                    </button>
+                }
+                <button class="btn btn-secondary mt-1" onclick="playerPresetDialog.close()">Cancel</button>
+            </div>
+        </Modal>
+
+        <Modal Title="Select NPC Template" id="npcPresetDialog">
+            <div class="p-3 d-flex flex-column gap-2" style="min-width: 260px">
+                @foreach (var preset in Campaign.Presets ?? []) {
+                    <button class="btn btn-secondary text-start" @onclick="async () => await CreateNpcsFromPresetAsync(preset.Id)">
+                        @preset.Name
+                    </button>
+                }
+                <button class="btn btn-secondary mt-1" onclick="npcPresetDialog.close()">Cancel</button>
             </div>
         </Modal>
 
@@ -604,22 +627,36 @@
 		await CloseModalAsync("quickStatusDialog");
 	}
 
-	public async Task CreatePlayerAsync() {
-		await CampaignService.AddPlayerToCampaignAsync(CampaignId);
-		Campaign = await CampaignService.GetByIdAsync(CampaignId);
-		Campaign.Players = Campaign.Players ?? new List<PlayerCharacter>();
-		foreach (PlayerCharacter p in Campaign.Players)
-			NameDeletionConfirmationBoxes.TryAdd(p.Id, "");
-		StateHasChanged();
+	private int _npcCount = 1;
+
+	private async Task OpenPlayerPresetPickerAsync()
+	{
+		if (Campaign.Presets?.Count == 1)
+			await CreatePlayerFromPresetAsync(Campaign.Presets.First().Id);
+		else
+			await JS.InvokeVoidAsync("eval", "playerPresetDialog.showModal()");
 	}
 
-	public async Task CreateNpcAsync() {
-		await CampaignService.AddNpcAsync(CampaignId);
-		Campaign = await CampaignService.GetByIdAsync(CampaignId);
-		Campaign.Players = Campaign.Players ?? new List<PlayerCharacter>();
-		foreach (PlayerCharacter p in Campaign.Players)
-			NameDeletionConfirmationBoxes.TryAdd(p.Id, "");
-		StateHasChanged();
+	private async Task OpenNpcPresetPickerAsync()
+	{
+		if (Campaign.Presets?.Count == 1)
+			await CreateNpcsFromPresetAsync(Campaign.Presets.First().Id);
+		else
+			await JS.InvokeVoidAsync("eval", "npcPresetDialog.showModal()");
+	}
+
+	private async Task CreatePlayerFromPresetAsync(int presetId)
+	{
+		await CloseModalAsync("playerPresetDialog");
+		await CampaignService.CreateCharactersFromPresetAsync(CampaignId, presetId, false, 1);
+		await RefreshCampaignData();
+	}
+
+	private async Task CreateNpcsFromPresetAsync(int presetId)
+	{
+		await CloseModalAsync("npcPresetDialog");
+		await CampaignService.CreateCharactersFromPresetAsync(CampaignId, presetId, true, _npcCount);
+		await RefreshCampaignData();
 	}
 
 	private async Task DeleteCampaignBuff(BuffTemplate template)

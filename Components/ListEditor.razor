@@ -1,6 +1,6 @@
 @typeparam TItem
 
-<div class="form-group d-flex flex-wrap bg-dark m-2 p-2 rounded" style="">
+<div class="form-group d-flex flex-wrap bg-dark m-1 p-1 m-md-2 p-md-2 rounded" style="">
     <div class="d-flex w-100 flex-row flex-nowrap">
         <label class="form-label flex-shrink-1 fs-5">@Items?.Count() @(Name)(s)</label>
         @if(Hint != null) {
@@ -9,13 +9,13 @@
         <div class="flex-grow-1"></div>
         <button type="button" class="btn btn-primary bg-primary h-100 flex-shrink-1 p-2" @onclick="AddItem" style="width: 3em; aspect-ratio: 1 / 1 ">+</button>
     </div>
-    <div class="flex-fill flex-wrap d-flex gap-2 m-0" style="overflow: auto;">
+    <div class="flex-fill flex-wrap d-flex gap-1 gap-md-2 m-0" style="overflow: auto;">
     @if (Items != null)
     {
         @foreach (var item in Items)
         {
             <div class="w-100 d-flex flex-nowrap">
-                <div @key="item" class="card flex-grow-1 flex-fill m-0 bg-light p-4 d-flex flex-wrap">
+                <div @key="item" class="card flex-grow-1 flex-fill m-0 bg-light p-2 p-md-4 d-flex flex-wrap">
                     @ItemTemplate(item)
                 </div>
                 <button @onclick="() => RemoveItem(item)" class="flex-shrink-1 h-100 bg-danger btn btn-danger" style="width:2em" type="button">

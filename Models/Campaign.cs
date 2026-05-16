@@ -8,6 +8,8 @@ public class Campaign
 
     public ICollection<PlayerCharacter>? Players { get; set; }
 
+    public ICollection<CharacterPreset>? Presets { get; set; }
+
     public string? DefaultRollDie { get; set; }
     public string? StatModifierFormula { get; set; }
 }
