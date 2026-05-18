@@ -163,6 +163,9 @@ public class CampaignService(IDbContextFactory<OrdisContext> dbFactory, LiveUpda
             .FirstOrDefaultAsync(c => c.Id == campaignId);
 
         var preset = campaign.Presets.First(p => p.Id == presetId);
+
+        Console.WriteLine(preset);
+        
         var baseName = preset.Name ?? "Character";
 
         var usedNumbers = campaign.Players
@@ -190,7 +193,6 @@ public class CampaignService(IDbContextFactory<OrdisContext> dbFactory, LiveUpda
                 StatBlockJson = preset.StatBlockJson,
                 Gauges = preset.Gauges.Select(g => new Gauge
                 {
-                    Id = Guid.NewGuid(),
                     Name = g.Name ?? "gauge",
                     Max = g.Max,
                     Value = g.Max,
