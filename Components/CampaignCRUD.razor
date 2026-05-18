@@ -22,104 +22,117 @@
     <input class="form-control" placeholder="floor((stat - 10) / 2)" @bind="Campaign.StatModifierFormula"/>
     <br>
 
-    <div class="form-group d-flex flex-column bg-dark p-2 rounded gap-2">
-        <div class="d-flex w-100 flex-row flex-nowrap align-items-center">
-            <label class="form-label mb-0 fs-6 fw-bold">Character Presets</label>
-            <div class="flex-grow-1"></div>
-            <button type="button" class="btn btn-primary btn-sm p-1" style="width:2.2em;aspect-ratio:1/1" @onclick="AddPresetAsync">+</button>
+    <div class="d-flex flex-column flex-xl-row gap-3 mt-1">
+        <div style="flex: 1 1 0%; min-width: 0">
+            <div class="d-flex align-items-center">
+                <label class="form-label mb-0 fs-6 fw-bold">Character Presets</label>
+                <div class="flex-grow-1"></div>
+                <button type="button" class="btn btn-primary btn-sm p-1" style="width:2.2em;aspect-ratio:1/1" @onclick="AddPresetAsync">+</button>
+            </div>
+            <hr class="mt-1 mb-2" style="border-color: rgba(255,255,255,0.15)" />
+
+            <div class="d-flex flex-column gap-2">
+                @foreach (var preset in Presets.ToList()) {
+                    <div class="card p-2">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <input class="form-control form-control-sm fw-bold" placeholder="Preset name" @bind="preset.Name" style="max-width: 14em" />
+                            <div class="flex-grow-1"></div>
+                            <button type="button" class="btn btn-primary btn-sm" @onclick="async () => await SavePresetAsync(preset)">Save</button>
+                            <button type="button" class="btn btn-danger btn-sm" @onclick="async () => await RemovePresetAsync(preset)">Delete</button>
+                        </div>
+
+                        <div class="d-flex flex-wrap gap-2 mb-2">
+                            <div class="flex-fill" style="min-width: 6em">
+                                <label class="form-label mb-0 small text-muted">Default Roll</label>
+                                <input class="form-control form-control-sm" placeholder="1d20" @bind="GetStatBlock(preset).DefaultRoll"/>
+                            </div>
+                            <div class="flex-fill" style="min-width: 10em">
+                                <label class="form-label mb-0 small text-muted">Mod Formula</label>
+                                <input class="form-control form-control-sm" placeholder="floor((stat - 10) / 2)" @bind="GetStatBlock(preset).ModifierFormula"/>
+                            </div>
+                            <div style="width: 5em">
+                                <label class="form-label mb-0 small text-muted">Level</label>
+                                <input type="number" class="form-control form-control-sm" @bind="GetStatBlock(preset).Level"/>
+                            </div>
+                        </div>
+
+                        <div class="d-flex flex-column gap-1" style="max-height: 60vh; overflow: auto;">
+                            <ListEditor TItem="PresetGauge" Items="preset.Gauges" AddItem="() => AddGauge(preset)" Name="Gauge">
+                                <ItemTemplate Context="gauge">
+                                    <input class="form-control form-control-sm text-center gauge-edit-title"
+                                           style="background:@gauge.Colour; border: var(--bg-dark)"
+                                           @bind="gauge.Name" />
+                                    <div class="d-flex flex-wrap gap-1 mt-1">
+                                        <div class="d-flex gap-1 align-items-center flex-fill" style="min-width:7em">
+                                            <label class="form-label mb-0 small text-muted flex-shrink-0">Max</label>
+                                            <input class="form-control form-control-sm text-center" type="number" @bind="gauge.Max"/>
+                                        </div>
+                                        <div class="d-flex gap-1 align-items-center flex-fill" style="min-width:7em">
+                                            <label class="form-label mb-0 small text-muted flex-shrink-0">Colour</label>
+                                            <input class="form-control form-control-sm bg-dark form-control-color p-0 flex-fill" type="color" style="border: none; height:2em" @bind="gauge.Colour" />
+                                        </div>
+                                    </div>
+                                </ItemTemplate>
+                            </ListEditor>
+
+                            <div class="d-flex align-items-center mt-1">
+                                <label class="form-label mb-0 small fw-bold">Special Stats</label>
+                                <span title="Stats whose values get added to rolls directly rather than run through the normal modifier formula" style="cursor: default; user-select: none; color:var(--accent)" class="ms-1 small">?</span>
+                                <div class="flex-grow-1"></div>
+                                <button type="button" class="btn btn-primary btn-sm p-0" style="width:1.8em;height:1.8em" @onclick="() => AddSpecialStat(preset)">+</button>
+                            </div>
+                            <div class="d-flex flex-wrap gap-1">
+                                @foreach (var stat in GetStatBlock(preset).SpecialStats.ToList()) {
+                                    <div class="stat-pill position-relative" style="min-width:4.5em; max-width:6em">
+                                        <button type="button" class="btn btn-sm p-0 position-absolute" style="top:1px;right:1px;line-height:1;z-index:1;color:var(--bs-danger)" @onclick="() => GetStatBlock(preset).SpecialStats.Remove(stat)">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" fill="currentColor" viewBox="0 0 16 16">
+                                                <path d="M2.5 1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1H3v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V4h.5a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1z"/>
+                                            </svg>
+                                        </button>
+                                        <input class="border-0 text-center w-100" style="font-size:0.7em; padding:0.3em 0.4em; outline:none; color:white; opacity:0.8; background:var(--bg-dark, #192227); text-transform:uppercase; font-weight:600" @bind="stat.Name" />
+                                        <input type="number" class="border-0 text-center w-100" style="font-size:1.1em; padding:0.3em; outline:none; color:white; font-weight:600; background:rgba(255,255,255,0.07)" @bind="stat.Value" />
+                                    </div>
+                                }
+                            </div>
+
+                            <div class="d-flex align-items-center mt-1">
+                                <label class="form-label mb-0 small fw-bold">Stats</label>
+                                <div class="flex-grow-1"></div>
+                                <button type="button" class="btn btn-primary btn-sm p-0" style="width:1.8em;height:1.8em" @onclick="() => AddStat(preset)">+</button>
+                            </div>
+                            <div class="d-flex flex-wrap gap-1">
+                                @foreach (var stat in GetStatBlock(preset).Stats.ToList()) {
+                                    <div class="stat-pill position-relative" style="min-width:4.5em; max-width:6em">
+                                        <button type="button" class="btn btn-sm p-0 position-absolute" style="top:1px;right:1px;line-height:1;z-index:1;color:var(--bs-danger)" @onclick="() => GetStatBlock(preset).Stats.Remove(stat)">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" fill="currentColor" viewBox="0 0 16 16">
+                                                <path d="M2.5 1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1H3v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V4h.5a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1z"/>
+                                            </svg>
+                                        </button>
+                                        <input class="border-0 text-center w-100" style="font-size:0.7em; padding:0.3em 0.4em; outline:none; color:white; opacity:0.8; background:var(--bg-dark, #192227); text-transform:uppercase; font-weight:600" @bind="stat.Name" />
+                                        <input type="number" class="border-0 text-center w-100" style="font-size:1.1em; padding:0.3em; outline:none; color:white; font-weight:600; background:rgba(255,255,255,0.07)" @bind="stat.Value" />
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
         </div>
 
-        @foreach (var preset in Presets.ToList()) {
-            <div class="card border-0 p-2">
-                <div class="d-flex flex-wrap gap-1 mb-2">
-                    <div class="flex-fill" style="min-width: 100px">
-                        <label class="form-label mb-0 w-100 text-center small">Name</label>
-                        <input class="form-control form-control-sm" placeholder="Goblin" @bind="preset.Name"/>
-                    </div>
-                    <div class="flex-fill" style="min-width: 70px">
-                        <label class="form-label mb-0 w-100 text-center small">Default Roll</label>
-                        <input class="form-control form-control-sm" placeholder="1d20" @bind="GetStatBlock(preset).DefaultRoll"/>
-                    </div>
-                    <div class="flex-fill" style="min-width: 70px">
-                        <label class="form-label mb-0 w-100 text-center small">Mod Formula</label>
-                        <input class="form-control form-control-sm" placeholder="floor((stat - 10) / 2)" @bind="GetStatBlock(preset).ModifierFormula"/>
-                    </div>
-                    <div style="width: 60px">
-                        <label class="form-label mb-0 w-100 text-center small">Level</label>
-                        <input type="number" class="form-control form-control-sm" @bind="GetStatBlock(preset).Level"/>
-                    </div>
-                </div>
-
-                <div class="d-flex flex-column m-0 gap-1" style="max-height: 60vh; overflow: auto;">
-                    <ListEditor TItem="PresetGauge" Items="preset.Gauges" AddItem="() => AddGauge(preset)" Name="Gauge">
-                        <ItemTemplate Context="gauge">
-                            <input class="form-control form-control-sm text-center gauge-edit-title"
-                                   style="background:@gauge.Colour; border: var(--bg-dark)"
-                                   @bind="gauge.Name" />
-                            <div class="d-flex flex-wrap gap-1 mt-1">
-                                <div class="d-flex gap-1 align-items-center flex-fill" style="min-width:7em">
-                                    <label class="form-label mb-0 small text-muted flex-shrink-0">Max</label>
-                                    <input class="form-control form-control-sm text-center" type="number" @bind="gauge.Max"/>
-                                </div>
-                                <div class="d-flex gap-1 align-items-center flex-fill" style="min-width:7em">
-                                    <label class="form-label mb-0 small text-muted flex-shrink-0">Colour</label>
-                                    <input class="form-control form-control-sm bg-dark form-control-color p-0 flex-fill" type="color" style="border: none; height:2em" @bind="gauge.Colour" />
-                                </div>
-                            </div>
-                        </ItemTemplate>
-                    </ListEditor>
-
-                    <div class="d-flex align-items-center mt-1">
-                        <label class="form-label mb-0 small fw-bold">Special Stats</label>
-                        <span title="Stats whose values get added to rolls directly rather than run through the normal modifier formula" style="cursor: default; user-select: none; color:var(--accent)" class="ms-1 small">?</span>
-                        <div class="flex-grow-1"></div>
-                        <button type="button" class="btn btn-primary btn-sm p-0" style="width:1.8em;height:1.8em" @onclick="() => AddSpecialStat(preset)">+</button>
-                    </div>
-                    <div class="d-flex flex-wrap gap-1">
-                        @foreach (var stat in GetStatBlock(preset).SpecialStats.ToList()) {
-                            <div class="stat-pill position-relative" style="min-width:4.5em; max-width:6em">
-                                <button type="button" class="btn btn-sm p-0 position-absolute" style="top:1px;right:1px;line-height:1;z-index:1;color:var(--bs-danger)" @onclick="() => GetStatBlock(preset).SpecialStats.Remove(stat)">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" fill="currentColor" viewBox="0 0 16 16">
-                                        <path d="M2.5 1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1H3v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V4h.5a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1z"/>
-                                    </svg>
-                                </button>
-                                <input class="border-0 text-center w-100" style="font-size:0.7em; padding:0.3em 0.4em; outline:none; color:white; opacity:0.8; background:var(--bg-dark, #192227); text-transform:uppercase; font-weight:600" @bind="stat.Name" />
-                                <input type="number" class="border-0 text-center w-100" style="font-size:1.1em; padding:0.3em; outline:none; color:white; font-weight:600; background:rgba(255,255,255,0.07)" @bind="stat.Value" />
-                            </div>
-                        }
-                    </div>
-
-                    <div class="d-flex align-items-center mt-1">
-                        <label class="form-label mb-0 small fw-bold">Stats</label>
-                        <div class="flex-grow-1"></div>
-                        <button type="button" class="btn btn-primary btn-sm p-0" style="width:1.8em;height:1.8em" @onclick="() => AddStat(preset)">+</button>
-                    </div>
-                    <div class="d-flex flex-wrap gap-1">
-                        @foreach (var stat in GetStatBlock(preset).Stats.ToList()) {
-                            <div class="stat-pill position-relative" style="min-width:4.5em; max-width:6em">
-                                <button type="button" class="btn btn-sm p-0 position-absolute" style="top:1px;right:1px;line-height:1;z-index:1;color:var(--bs-danger)" @onclick="() => GetStatBlock(preset).Stats.Remove(stat)">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" fill="currentColor" viewBox="0 0 16 16">
-                                        <path d="M2.5 1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1H3v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V4h.5a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1z"/>
-                                    </svg>
-                                </button>
-                                <input class="border-0 text-center w-100" style="font-size:0.7em; padding:0.3em 0.4em; outline:none; color:white; opacity:0.8; background:var(--bg-dark, #192227); text-transform:uppercase; font-weight:600" @bind="stat.Name" />
-                                <input type="number" class="border-0 text-center w-100" style="font-size:1.1em; padding:0.3em; outline:none; color:white; font-weight:600; background:rgba(255,255,255,0.07)" @bind="stat.Value" />
-                            </div>
-                        }
-                    </div>
-                </div>
-
-                <div class="d-flex gap-1 mt-2">
-                    <button type="button" class="btn btn-primary btn-sm flex-fill" @onclick="async () => await SavePresetAsync(preset)">Save Preset</button>
-                    <button type="button" class="btn btn-danger btn-sm" @onclick="async () => await RemovePresetAsync(preset)">Delete</button>
-                </div>
+        <div style="flex: 0 1 320px; min-width: 0">
+            <div class="d-flex align-items-center">
+                <label class="form-label mb-0 fs-6 fw-bold">Modifier Library</label>
             </div>
-        }
+            <hr class="mt-1 mb-2" style="border-color: rgba(255,255,255,0.15)" />
+            <div class="card p-0">
+                <ModifierLibrary CampaignId="@Campaign.Id" />
+            </div>
+        </div>
     </div>
 
     <div class="flex-grow-1"></div>
 
-    <button class="btn btn-primary form-control w-100" @onclick="SaveAsync">Save</button>
+    <button class="btn btn-primary form-control w-100 mt-3" @onclick="SaveAsync">Save</button>
 </div>
 
 @code {

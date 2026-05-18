@@ -144,66 +144,6 @@
             </div>
 
             <div style="flex: 1 1 280px">
-                <h5 class="mb-2">Modifier Library</h5>
-                <div class="card m-0 border-0">
-                    <div class="card-body m-0 p-0">
-                        <div class="d-flex align-items-center" style="border-bottom: 1px solid rgba(255,255,255,0.1)">
-                            @foreach (var tab in modTabs)
-                            {
-                                var isActive = activeModTab == tab;
-                                var count = campaignBuffs.Count(t => t.Type == tab);
-                                <a href="javascript:void(0)"
-                                   @onclick="() => activeModTab = tab"
-                                   style="padding: 0.5em 0.7em; text-decoration: none; color: @(isActive ? "var(--accent)" : "rgba(255,255,255,0.5)"); border-bottom: 2px solid @(isActive ? "var(--accent)" : "transparent"); font-size: 0.85em; white-space: nowrap">
-                                    @ModTabLabel(tab)
-                                    @if (count > 0)
-                                    {
-                                        <span style="margin-left: 0.3em; font-size: 0.85em; opacity: 0.7">@count</span>
-                                    }
-                                </a>
-                            }
-                            <div class="flex-grow-1"></div>
-                            <button class="btn btn-primary btn-sm flex-shrink-0 me-2" @onclick="OpenCampaignBuffDialog">+</button>
-                        </div>
-
-                        <div class="p-2">
-                            @{ var tabMods = campaignBuffs.Where(t => t.Type == activeModTab).OrderBy(t => t.Name).ToList(); }
-                            @if (tabMods.Any())
-                            {
-                                @foreach (var t in tabMods)
-                                {
-                                    <div class="d-flex align-items-center gap-2 py-1">
-                                        <span class="flex-shrink-0 text-muted" style="width: 1.5em; text-align: center">
-                                            <BuffIcon Name="@t.Icon" />
-                                        </span>
-                                        <span>@t.Name</span>
-                                        <div class="flex-grow-1"></div>
-                                        <div class="d-flex flex-wrap gap-1">
-                                            @foreach (var effect in t.Effects)
-                                            {
-                                                var p = BuffFormula.Parse(effect.Formula);
-                                                var positive = p?.op is "+=" or "*=";
-                                                <span class="badge @(positive ? "bg-success" : "bg-danger")"
-                                                      style="font-size: 0.7em">
-                                                    @BuffFormula.FormatDisplay(effect.Formula)
-                                                </span>
-                                            }
-                                        </div>
-                                        <button class="btn btn-danger btn-sm" style="padding: 2px 7px; line-height: 1"
-                                                @onclick="() => DeleteCampaignBuff(t)">
-                                            x
-                                        </button>
-                                    </div>
-                                }
-                            }
-                            else
-                            {
-                                <span class="text-muted">No @ModTabLabel(activeModTab).ToLower()</span>
-                            }
-                        </div>
-                    </div>
-                </div>
-
                 @if(IsDM) {
                 <div class="mt-4">
                     <div class="d-flex w-100 align-items-center mb-2 m-2 flex-wrap gap-2">
@@ -305,14 +245,40 @@
                                           </svg>
                                         </button>
                                         </div>
-                                        <div class="d-flex w-100">
-                                        @if(npc.Statuses != null) {
-                                          @foreach (var status in npc.Statuses)
-                                          {
-                                            <span>Hi</span>
-                                          }
-                                        }
-                                        <button class="btn btn-sm btn-secondary"  @onclick="async () => await OpenQuickStatusAsync(npc)">+</button>
+                                        <div class="d-flex flex-wrap align-items-center gap-1 w-100">
+                                            @if(npc.Buffs != null && npc.Buffs.Any()) {
+                                                @foreach (var buff in npc.Buffs) {
+                                                    <span class="badge bg-secondary d-flex align-items-center gap-1" style="font-size: 0.8em; cursor: pointer"
+                                                          @onclick="async () => await RemoveNpcBuffAsync(buff)">
+                                                        <BuffIcon Name="@(buff.Template?.Icon ?? "shield")" Size="0.9em" />
+                                                        @(buff.Template?.Name ?? "?")
+                                                        <span style="opacity: 0.6">&times;</span>
+                                                    </span>
+                                                }
+                                            } else {
+                                                <span class="text-muted" style="font-size: 0.8em">(no statuses)</span>
+                                            }
+                                            <div style="position: relative; display: inline-block">
+                                                <button class="btn btn-sm btn-secondary" style="padding: 0 0.4em; line-height: 1.4"
+                                                        @onclick="() => ToggleNpcStatusPopover(npc.Id)">+</button>
+                                                @if (_npcStatusPopoverId == npc.Id) {
+                                                    <div class="card" style="position: absolute; bottom: 100%; left: 0; z-index: 10; min-width: 160px; max-height: 200px; overflow-y: auto; margin-bottom: 4px">
+                                                        <div class="card-body p-1 d-flex flex-column gap-1">
+                                                            @if (campaignBuffs.Any()) {
+                                                                @foreach (var buff in campaignBuffs.OrderBy(b => b.Name)) {
+                                                                    <button class="btn btn-sm btn-secondary text-start d-flex align-items-center gap-1"
+                                                                            @onclick="async () => await ApplyNpcStatusAsync(npc, buff)">
+                                                                        <BuffIcon Name="@buff.Icon" Size="0.9em" />
+                                                                        <span style="font-size: 0.85em">@buff.Name</span>
+                                                                    </button>
+                                                                }
+                                                            } else {
+                                                                <span class="text-muted p-1" style="font-size: 0.8em">No buffs defined</span>
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                }
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -404,58 +370,6 @@
             </div>
         </Modal>
 
-        <Modal Title="Add campaign buff" id="campaignBuffDialog">
-            <div class="p-3 d-flex flex-column gap-3" style="min-width: 360px">
-                <div class="d-flex flex-wrap gap-3">
-                    <div class="flex-grow-1" style="min-width: 150px">
-                        <label class="form-label">Name</label>
-                        <input class="form-control" @bind="cbName" />
-                    </div>
-                    <div class="flex-grow-1" style="min-width: 120px">
-                        <label class="form-label">Type</label>
-                        <select class="form-select bg-dark text-white border-0" @bind="cbType">
-                            <option value="@BuffType.Equipment">Equipment</option>
-                            <option value="@BuffType.Status">Status</option>
-                            <option value="@BuffType.Skill">Skill</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="d-flex flex-wrap gap-1">
-                    @foreach (var icon in BuffIcon.AllIcons)
-                    {
-                        var selected = cbIcon == icon;
-                        <button type="button"
-                                class="btn btn-sm d-flex align-items-center justify-content-center"
-                                style="width: 2.2em; height: 2.2em; padding: 0; border: 2px solid @(selected ? "var(--accent)" : "transparent"); color: @(selected ? "var(--accent)" : "rgba(255,255,255,0.5)")"
-                                @onclick="() => cbIcon = icon">
-                            <BuffIcon Name="@icon" Size="1.1em" />
-                        </button>
-                    }
-                </div>
-
-                <div>
-                    <div class="d-flex align-items-center">
-                        <label class="form-label mb-0">Effects</label>
-                        <button type="button" class="btn btn-primary btn-sm ms-auto" @onclick="AddCbEffect">+</button>
-                    </div>
-                    @for (int i = 0; i < cbEffects.Count; i++)
-                    {
-                        var idx = i;
-                        <div class="d-flex gap-1 align-items-center mt-1">
-                            <input class="form-control" @bind="cbEffects[idx]" placeholder="e.g. str+=2" />
-                            <button type="button" class="btn btn-danger btn-sm" @onclick="() => cbEffects.RemoveAt(idx)">x</button>
-                        </div>
-                    }
-                </div>
-
-                <div class="d-flex gap-2">
-                    <button type="button" class="btn btn-secondary flex-fill" onclick="campaignBuffDialog.close()">Cancel</button>
-                    <button type="button" class="btn btn-primary flex-fill" @onclick="SaveCampaignBuff">Save</button>
-                </div>
-            </div>
-        </Modal>
-
     </div>
 
 
@@ -467,16 +381,6 @@
 
 	List<BuffTemplate> campaignBuffs = new();
 	Dictionary<int,string> NameDeletionConfirmationBoxes {get; set;} = new();
-
-	private static readonly BuffType[] modTabs = [BuffType.Equipment, BuffType.Status, BuffType.Skill];
-	private BuffType activeModTab = BuffType.Equipment;
-	private static string ModTabLabel(BuffType type) => type switch
-	{
-		BuffType.Equipment => "Equipment",
-		BuffType.Status => "Statuses",
-		BuffType.Skill => "Skill Modifiers",
-		_ => type.ToString()
-	};
 
 	private string DiscordId {get; set;}
 
@@ -665,6 +569,28 @@
 		if (_quickStatusTarget == null) return;
 		await BuffService.ApplyBuffAsync(_quickStatusTarget.Id, buff.Id);
 		await CloseModalAsync("quickStatusDialog");
+		await RefreshCampaignData();
+	}
+
+	private async Task RemoveNpcBuffAsync(CharacterBuff buff)
+	{
+		await BuffService.RemoveBuffAsync(buff.Id);
+		await RefreshCampaignData();
+	}
+
+	// -- NPC status popover --
+	private int? _npcStatusPopoverId;
+
+	private void ToggleNpcStatusPopover(int npcId)
+	{
+		_npcStatusPopoverId = _npcStatusPopoverId == npcId ? null : npcId;
+	}
+
+	private async Task ApplyNpcStatusAsync(PlayerCharacter npc, BuffTemplate buff)
+	{
+		_npcStatusPopoverId = null;
+		await BuffService.ApplyBuffAsync(npc.Id, buff.Id);
+		await RefreshCampaignData();
 	}
 
 	private int _npcCount = 1;
@@ -697,56 +623,6 @@
 		await CloseModalAsync("npcPresetDialog");
 		await CampaignService.CreateCharactersFromPresetAsync(CampaignId, presetId, true, _npcCount);
 		await RefreshCampaignData();
-	}
-
-	private async Task DeleteCampaignBuff(BuffTemplate template)
-	{
-		await BuffService.DeleteTemplateAsync(template.Id);
-		campaignBuffs = await BuffService.GetCampaignLibraryAsync(CampaignId);
-		StateHasChanged();
-	}
-
-	// -- Campaign buff add dialog --
-	private string cbName = "";
-	private string cbIcon = "shield";
-	private BuffType cbType = BuffType.Status;
-	private List<string> cbEffects = new() { "" };
-
-	private async Task OpenCampaignBuffDialog()
-	{
-		cbName = "";
-		cbIcon = "shield";
-		cbType = BuffType.Status;
-		cbEffects = new() { "" };
-		await using var dialog = await JS.InvokeAsync<IJSObjectReference>("document.getElementById", "campaignBuffDialog");
-		await dialog.InvokeVoidAsync("showModal");
-	}
-
-	private void AddCbEffect() => cbEffects.Add("");
-
-	private async Task SaveCampaignBuff()
-	{
-		if (string.IsNullOrWhiteSpace(cbName)) return;
-		var effects = cbEffects
-			.Where(f => BuffFormula.Parse(f.Trim().Replace(" ", "")) != null)
-			.Select(f => new Effect { Formula = f.Trim().Replace(" ", "") })
-			.ToList();
-		if (effects.Count == 0) return;
-
-		var template = new BuffTemplate
-		{
-			Name = cbName,
-			Icon = cbIcon,
-			Type = cbType,
-			Effects = effects,
-			CampaignId = CampaignId
-		};
-		await BuffService.CreateTemplateAsync(template);
-		campaignBuffs = await BuffService.GetCampaignLibraryAsync(CampaignId);
-
-		await using var dialog = await JS.InvokeAsync<IJSObjectReference>("document.getElementById", "campaignBuffDialog");
-		await dialog.InvokeVoidAsync("close");
-		StateHasChanged();
 	}
 
     public async Task GaugeChangedCallback(Gauge gauge)

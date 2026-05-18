@@ -238,6 +238,10 @@ public class CampaignService(IDbContextFactory<OrdisContext> dbFactory, LiveUpda
                 .ThenInclude(p => p.Rolls)
                     .ThenInclude(r => r.Rolls)
 
+            .Include(g => g.Players)
+                .ThenInclude(p => p.Buffs)
+                    .ThenInclude(b => b.Template)
+
             .Include(g => g.Presets)
 
             .SingleOrDefaultAsync(c => c.Id == id);
