@@ -40,3 +40,11 @@ window.setupSlider = function(options) {
         sendValue(val); // force send immediately on release
     });
 };
+
+window.fixGaugeText = function() {
+  document.querySelectorAll(".gauge-edit-title").forEach(el => {
+    const c = getComputedStyle(el).backgroundColor.match(/\d+/g).map(Number);
+    const L = 0.2126*c[0] + 0.7152*c[1] + 0.0722*c[2];
+    el.style.color = L > 160 ? "black" : "white";
+  });
+};
