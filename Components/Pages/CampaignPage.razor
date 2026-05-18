@@ -333,12 +333,12 @@
                         <div class="d-flex gap-2">
                             <div class="flex-fill">
                                 <input type="number" class="form-control" placeholder="Value"
-                                       value="@BulkGaugeValues[gaugeName]"
+                                       value="@(BulkGaugeValues.GetValueOrDefault(gaugeName))"
                                        @onchange="e => BulkGaugeValues[gaugeName] = e.Value is string s && int.TryParse(s, out var v) ? v : null" />
                             </div>
                             <div class="flex-fill">
                                 <input type="number" class="form-control" placeholder="Max"
-                                       value="@BulkGaugeMaxes[gaugeName]"
+                                       value="@(BulkGaugeMaxes.GetValueOrDefault(gaugeName))"
                                        @onchange="e => BulkGaugeMaxes[gaugeName] = e.Value is string s && int.TryParse(s, out var v) ? v : null" />
                             </div>
                         </div>
