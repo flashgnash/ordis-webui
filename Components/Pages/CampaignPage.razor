@@ -208,7 +208,11 @@
                 <div class="mt-4">
                     <div class="d-flex align-items-center mb-2 flex-wrap gap-1">
 
-                        <button @onclick="SelectAllNpcs" ToggleNpcSelection(npc.Id, (bool)e.Value!)>Select all</button>
+
+                        <input type="checkbox" class="me-2 flex-shrink-0" style="cursor:pointer"
+                               checked="@AllNpcsSelected"
+                               @onclick="SelectAllNpcs" />
+
                         <h5 class="mb-0">NPCs (@VisibleNpcs.Count())</h5>
                         <input type="number" class="form-control form-control-sm ms-2" style="width:4em" min="1" max="99" @bind="_npcCount" />
                         <button class="btn btn-primary btn-sm" @onclick="OpenNpcPresetPickerAsync">+</button>
@@ -480,9 +484,15 @@
 	private Dictionary<string, int?> BulkGaugeValues = new();
 	private Dictionary<string, int?> BulkGaugeMaxes = new();
 
+  private bool? AllNpcsSelected => VisibleNpcs.Count() == SelectedNpcIds.Count();
+  
   private void SelectAllNpcs() {
-    foreach (PlayerCharacter npc in VisibleNpcs) {
-          SelectedNpcIds.Add(npc.Id);
+    if(AllNpcsSelected == true) {
+      SelectedNpcIds = new();      
+    }
+    else {
+        foreach (PlayerCharacter npc in VisibleNpcs)
+              SelectedNpcIds.Add(npc.Id);
     }
   }
 
