@@ -206,18 +206,18 @@
 
                 @if(IsDM) {
                 <div class="mt-4">
-                    <div class="d-flex align-items-center mb-2 flex-wrap gap-1">
+                    <div class="d-flex w-100 align-items-center mb-2 m-2 flex-wrap gap-2">
 
 
-                        <input type="checkbox" class="me-2 flex-shrink-0" style="cursor:pointer"
+                        <input type="checkbox" class="flex-shrink-0" style=""
                                checked="@AllNpcsSelected"
                                @onclick="SelectAllNpcs" />
 
-                        <h5 class="mb-0">NPCs (@VisibleNpcs.Count())</h5>
+
+                        <h5 class="mb-0 flex-grow-1 ">NPCs (@VisibleNpcs.Count())</h5>
                         <input type="number" class="form-control form-control-sm ms-2" style="width:4em" min="1" max="99" @bind="_npcCount" />
                         <button class="btn btn-primary btn-sm" @onclick="OpenNpcPresetPickerAsync">+</button>
                         @if (SelectedNpcIds.Any()) {
-                            <span class="ms-2 text-muted" style="font-size:0.85em">@SelectedNpcIds.Count selected</span>
                             <button class="btn btn-secondary btn-sm ms-1" @onclick="OpenBulkEditDialogAsync">Edit</button>
                             <button class="btn btn-danger btn-sm ms-1" @onclick="OpenBulkDeleteDialogAsync">Delete</button>
                         }
@@ -484,7 +484,7 @@
 	private Dictionary<string, int?> BulkGaugeValues = new();
 	private Dictionary<string, int?> BulkGaugeMaxes = new();
 
-  private bool? AllNpcsSelected => VisibleNpcs.Count() == SelectedNpcIds.Count();
+  private bool? AllNpcsSelected => VisibleNpcs.Count() > 0 && VisibleNpcs.Count() == SelectedNpcIds.Count();
   
   private void SelectAllNpcs() {
     if(AllNpcsSelected == true) {
