@@ -288,11 +288,12 @@
                                         </div>
                                     }
                                     <div class="d-flex gap-1 mt-1">
-                                        <input class="form-control form-control-sm border-0 flex-fill" style="background:rgba(255,255,255,0.1); color:white"
+                                      <div class="d-flex flex-wrap justify-items-center align-items-center">
+                                        <input class="form-control form-control-sm border-0" style="background:white"
                                                placeholder="@(Campaign?.DefaultRollDie ?? "1d20")"
                                                value="@NpcRollFormulas.GetValueOrDefault(npc.Id, "")"
                                                @onchange="e => NpcRollFormulas[npc.Id] = e.Value?.ToString() ?? string.Empty"  />
-                                        <button class="btn btn-sm btn-secondary" @onclick="async () => await RollForNpcAsync(npc)">
+                                        <button class="btn btn-sm btn-secondary w-100" @onclick="async () => await RollForNpcAsync(npc)">
                                           <svg
                                               width="50"
                                               height="45"
@@ -303,7 +304,16 @@
                                               <path d="M3 0a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V3a3 3 0 0 0-3-3zm2.5 4a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0m8 0a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0M12 13.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3M5.5 12a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0M8 9.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3" />
                                           </svg>
                                         </button>
-                                        <button class="btn btn-sm btn-secondary" @onclick="async () => await OpenQuickStatusAsync(npc)">+ Status</button>
+                                        </div>
+                                        <div class="d-flex w-100">
+                                        @if(npc.Statuses != null) {
+                                          @foreach (var status in npc.Statuses)
+                                          {
+                                            <span>Hi</span>
+                                          }
+                                        }
+                                        <button class="btn btn-sm btn-secondary"  @onclick="async () => await OpenQuickStatusAsync(npc)">+</button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

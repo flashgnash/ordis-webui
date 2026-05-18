@@ -134,6 +134,7 @@ public class PlayerCharacterService(IDbContextFactory<OrdisContext> dbFactory, H
             .Include(g => g.Gauges)
             .Include(g => g.Campaign)
             .Include(g => g.Rolls)
+            .Include(g => g.Statuses)
             .SingleOrDefaultAsync(c => c.Id == id);
     }
 
