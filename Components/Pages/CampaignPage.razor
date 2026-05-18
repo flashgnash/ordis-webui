@@ -64,6 +64,7 @@
                 @if(Campaign.Players != null){
                 <div class="player-grid">
                     @foreach(PlayerCharacter player in VisiblePlayers) {
+                        NameDeletionConfirmationBoxes.TryAdd(player.Id, "");
                         <Modal Title="Edit Player" id="@(GetIdentifier(player,"edit"))">
                             <div class=p-3>
                                 <CharacterCRUD Character="@player"/>
@@ -217,6 +218,7 @@
                     </div>
                     <div class="player-grid">
                         @foreach(PlayerCharacter npc in VisibleNpcs) {
+                            NameDeletionConfirmationBoxes.TryAdd(npc.Id, "");
                             <Modal Title="Edit NPC" id="@(GetIdentifier(npc,"edit"))">
                                 <div class=p-3>
                                     <CharacterCRUD Character="@npc"/>
@@ -456,8 +458,8 @@
 
 	private IEnumerable<PlayerCharacter> VisiblePlayers => (Campaign?.Players ?? Enumerable.Empty<PlayerCharacter>())
 		.Where(p => !p.IsNpc && (IsDM || p.UserId == DiscordId))
-		.OrderByDescending(c => c.Rolls.Any())
-		.ThenByDescending(c => c.Rolls.Max(r => r.Timestamp));
+		.OrderByDescending(c => c.Rolls?.Any() ?? false)
+		.ThenByDescending(c => c.Rolls != null && c.Rolls.Any() ? c.Rolls.Max(r => r.Timestamp) : null);
 
 	private IEnumerable<PlayerCharacter> VisibleNpcs => (Campaign?.Players ?? Enumerable.Empty<PlayerCharacter>())
 		.Where(p => p.IsNpc)
@@ -725,14 +727,8 @@
     }
 
 
-	private string GetIdentifier(Campaign campaign, string modalType) {
-	    var clean = new string(campaign.Name.Where(char.IsLetter).ToArray());
-	    return clean + modalType;
-	}
-	private string GetIdentifier(PlayerCharacter character, string modalType) {
-	    var clean = new string(character.Name?.Where(char.IsLetter).ToArray());
-	    return clean + modalType;
-	}
+	private string GetIdentifier(Campaign campaign, string modalType) => $"campaign_{campaign.Id}_{modalType}";
+	private string GetIdentifier(PlayerCharacter character, string modalType) => $"pc_{character.Id}_{modalType}";
     
 
 	protected async override Task OnInitializedAsync()
@@ -755,7 +751,7 @@
             Campaign = campaign;
 			campaignBuffs = await BuffService.GetCampaignLibraryAsync(CampaignId);
 
-			foreach(PlayerCharacter player in Campaign?.Players) {
+			foreach(PlayerCharacter player in Campaign?.Players ?? Enumerable.Empty<PlayerCharacter>()) {
 				NameDeletionConfirmationBoxes[player.Id] = "";
 			}
 

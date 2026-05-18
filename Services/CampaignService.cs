@@ -5,8 +5,9 @@ public class CampaignService(IDbContextFactory<OrdisContext> dbFactory, LiveUpda
 
     public async Task<PlayerCharacter> AddPlayerToCampaignAsync(int campaignId)
     {
-        var db = await dbFactory.CreateDbContextAsync();
+        await using var db = await dbFactory.CreateDbContextAsync();
         var campaign = await db.Campaigns.Include(c => c.Players).FirstOrDefaultAsync(c => c.Id == campaignId);
+        if (campaign == null) throw new InvalidOperationException($"Campaign {campaignId} not found");
         var player = new PlayerCharacter
         {
             Name = "New Player",
@@ -25,9 +26,9 @@ public class CampaignService(IDbContextFactory<OrdisContext> dbFactory, LiveUpda
 
     public async Task<PlayerCharacter> AddNpcAsync(int campaignId)
     {
-        var db = await dbFactory.CreateDbContextAsync();
-
+        await using var db = await dbFactory.CreateDbContextAsync();
         var campaign = await db.Campaigns.Include(c => c.Players).FirstOrDefaultAsync(c => c.Id == campaignId);
+        if (campaign == null) throw new InvalidOperationException($"Campaign {campaignId} not found");
 
         var npc = new PlayerCharacter
         {
@@ -48,13 +49,13 @@ public class CampaignService(IDbContextFactory<OrdisContext> dbFactory, LiveUpda
     }
 
     public async Task RemovePlayerAsync(Campaign campaign, PlayerCharacter player) {
-        
-        var db = await dbFactory.CreateDbContextAsync();
 
+        await using var db = await dbFactory.CreateDbContextAsync();
         var fetchedCampaign = await db.Campaigns.Include(c => c.Players).FirstOrDefaultAsync(c => c.Id == campaign.Id);
+        if (fetchedCampaign == null) return;
 
-
-        var pc = fetchedCampaign.Players.First(p => p.Id == player.Id);
+        var pc = fetchedCampaign.Players?.FirstOrDefault(p => p.Id == player.Id);
+        if (pc == null) return;
         fetchedCampaign.Players.Remove(pc);
 
         Console.WriteLine($"Removing player {player.Name} from {fetchedCampaign.Name}");
@@ -74,7 +75,7 @@ public class CampaignService(IDbContextFactory<OrdisContext> dbFactory, LiveUpda
         var savedPresets = c.Presets;
         c.Presets = null;
 
-        var db = await dbFactory.CreateDbContextAsync();
+        await using var db = await dbFactory.CreateDbContextAsync();
 
         db.Campaigns.Update(c);
 
@@ -124,8 +125,9 @@ public class CampaignService(IDbContextFactory<OrdisContext> dbFactory, LiveUpda
 
     public async Task AddPresetAsync(int campaignId)
     {
-        var db = await dbFactory.CreateDbContextAsync();
+        await using var db = await dbFactory.CreateDbContextAsync();
         var campaign = await db.Campaigns.Include(c => c.Presets).FirstOrDefaultAsync(c => c.Id == campaignId);
+        if (campaign == null) return;
         campaign.Presets ??= new List<CharacterPreset>();
         campaign.Presets.Add(new CharacterPreset
         {
@@ -148,7 +150,7 @@ public class CampaignService(IDbContextFactory<OrdisContext> dbFactory, LiveUpda
 
     public async Task UpdatePresetAsync(CharacterPreset preset)
     {
-        var db = await dbFactory.CreateDbContextAsync();
+        await using var db = await dbFactory.CreateDbContextAsync();
         db.CharacterPresets.Update(preset);
         await db.SaveChangesAsync();
         liveUpdates.NotifyCampaignChanged(preset.CampaignId);
@@ -156,13 +158,15 @@ public class CampaignService(IDbContextFactory<OrdisContext> dbFactory, LiveUpda
 
     public async Task<List<PlayerCharacter>> CreateCharactersFromPresetAsync(int campaignId, int presetId, bool isNpc, int count)
     {
-        var db = await dbFactory.CreateDbContextAsync();
+        await using var db = await dbFactory.CreateDbContextAsync();
         var campaign = await db.Campaigns
             .Include(c => c.Players)
             .Include(c => c.Presets)
             .FirstOrDefaultAsync(c => c.Id == campaignId);
+        if (campaign == null) return new();
 
-        var preset = campaign.Presets.First(p => p.Id == presetId);
+        var preset = campaign.Presets?.FirstOrDefault(p => p.Id == presetId);
+        if (preset == null) return new();
 
         Console.WriteLine(preset);
         
@@ -214,7 +218,7 @@ public class CampaignService(IDbContextFactory<OrdisContext> dbFactory, LiveUpda
         return created;
     }
     public async Task DeleteAsync(int campaignId) {
-        var db = await dbFactory.CreateDbContextAsync();
+        await using var db = await dbFactory.CreateDbContextAsync();
 
         db.Campaigns.Remove(new Campaign(){Id = campaignId});
 
