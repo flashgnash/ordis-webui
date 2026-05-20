@@ -100,57 +100,18 @@
                             </button>
                         </Modal>
 
-                        <div class="card player-card">
-                            <div class="card-header py-0 px-2">
-                                <div class="text-white d-flex align-items-center">
-                                    @if(player.UserId == DiscordId) {
-                                        <a style="color:var(--accent)" href="@($"/characters/{player.Id}")">@(player.Name ?? "Unknown") (you)</a>
-                                    }
-                                    else {
-                                        <span>@(player.Name ?? "Unknown")</span>
-                                    }
-                                    <div class="flex-grow-1"></div>
-                                    <button class="text-danger p-1" @onclick="async () => await HandlePlayerDeleteClickAsync(player)">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" class="bi bi-trash-fill" viewBox="0 0 16 16">
-                                            <path d="M2.5 1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1H3v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V4h.5a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1zm3 4a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5M8 5a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7A.5.5 0 0 1 8 5m3 .5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 1 0"/>
-                                        </svg>
-                                    </button>
-                                    <button class="p-1" style="color:var(--accent)" onClick="@(GetIdentifier(player,"edit")).showModal()">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" class="bi bi-pencil-fill" viewBox="0 0 16 16">
-                                            <path d="M12.854.146a.5.5 0 0 0-.707 0L10.5 1.793 14.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708zm.646 6.061L9.793 2.5 3.293 9H3.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.207zm-7.468 7.468A.5.5 0 0 1 6 13.5V13h-.5a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.5-.5V10h-.5a.5.5 0 0 1-.175-.032l-.179.178a.5.5 0 0 0-.11.168l-2 5a.5.5 0 0 0 .65.65l5-2a.5.5 0 0 0 .168-.11z"/>
-                                        </svg>
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="card-body p-2 w-100">
-                                @if(player.Gauges != null) {
-                                    <div class="d-flex align-items-center gap-3 w-100">
-                                        <div class="d-flex flex-column gap-1" style="flex: 1 1 0%; min-width: 0">
-                                            @foreach(Gauge gauge in player.Gauges) {
-                                                <Bar GaugeInstance="@gauge" />
-                                            }
-                                        </div>
-                                        @{
-                                            var lastRoll = player?.Rolls?.OrderByDescending(r => r.Timestamp).FirstOrDefault();
-                                        }
-                                        @if (lastRoll != null)
-                                        {
-                                            <div class="flex-shrink-0">
-                                                <DieShape Expression="@(lastRoll.Rolls?.FirstOrDefault()?.Expression ?? lastRoll.Message)">
-                                                    @lastRoll.Result
-                                                </DieShape>
-                                            </div>
-                                        }
-                                    </div>
-                                }
-                                @if(IsDM) {
-                                    <div class="d-flex gap-1 mt-1">
-                                        <button class="btn btn-sm btn-secondary flex-fill" @onclick="async () => await OpenRollDialogAsync(player)">Roll</button>
-                                        <button class="btn btn-sm btn-secondary flex-fill" @onclick="async () => await OpenQuickStatusAsync(player)">+ Status</button>
-                                    </div>
-                                }
-                            </div>
-                        </div>
+                        <CharacterCard Character="@player"
+                                      IsOwnCharacter="@(player.UserId == DiscordId)"
+                                      ShowInlineRoll="@IsDM"
+                                      ShowStatusFooter="@IsDM"
+                                      AvailableBuffs="@campaignBuffs"
+                                      DefaultRollDie="@Campaign?.DefaultRollDie"
+                                      RollFormula="@NpcRollFormulas.GetValueOrDefault(player.Id, "")"
+                                      RollFormulaChanged="v => NpcRollFormulas[player.Id] = v"
+                                      OnDelete="async () => await HandlePlayerDeleteClickAsync(player)"
+                                      OnEdit="() => OpenEditModalAsync(player)"
+                                      OnRoll="async () => await RollForNpcAsync(player)"
+                                      OnChanged="RefreshCampaignData" />
                     }
                 </div>
                 }
@@ -253,129 +214,21 @@
                                 </button>
                             </Modal>
 
-                            <div class="card player-card">
-                                <div class="card-header py-0 px-2 d-flex align-items-center">
-                                        <input type="checkbox" class="me-2 flex-shrink-0" style="cursor:pointer"
-                                               checked="@SelectedNpcIds.Contains(npc.Id)"
-                                               @onchange="e => ToggleNpcSelection(npc.Id, (bool)e.Value!)" />
-                                        <input class="form-control form-control-sm border-0" style="width:auto; background:rgba(255,255,255,0.1); color:white"
-                                               @bind="npc.Name" @bind:event="oninput"
-                                               @onblur="async () => await CharService.UpdateAsync(npc)" />
-                                        <div class="flex-grow-1"></div>
-                                        <button class="text-danger p-1" @onclick="async () => await HandleNpcDeleteClickAsync(npc)">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" class="bi bi-trash-fill" viewBox="0 0 16 16">
-                                                <path d="M2.5 1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1H3v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V4h.5a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1zm3 4a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5M8 5a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7A.5.5 0 0 1 8 5m3 .5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 1 0"/>
-                                            </svg>
-                                        </button>
-                                        <button class="p-1" style="color:var(--accent)" onClick="@(GetIdentifier(npc,"edit")).showModal()">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" class="bi bi-pencil-fill" viewBox="0 0 16 16">
-                                                <path d="M12.854.146a.5.5 0 0 0-.707 0L10.5 1.793 14.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708zm.646 6.061L9.793 2.5 3.293 9H3.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.207zm-7.468 7.468A.5.5 0 0 1 6 13.5V13h-.5a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.5-.5V10h-.5a.5.5 0 0 1-.175-.032l-.179.178a.5.5 0 0 0-.11.168l-2 5a.5.5 0 0 0 .65.65l5-2a.5.5 0 0 0 .168-.11z"/>
-                                            </svg>
-                                        </button>
-                                </div>
-                                <div class="card-body p-2 w-100">
-                                    @if(npc.Gauges != null) {
-                                        <div class="d-flex align-items-center gap-2 w-100">
-                                            <div class="d-flex flex-column gap-1" style="flex: 1 1 0%; min-width: 0">
-                                                @foreach(Gauge gauge in npc.Gauges) {
-                                                    <Bar GaugeInstance="@gauge" />
-                                                }
-                                            </div>
-                                            @{
-                                                var lastNpcRoll = npc?.Rolls?.OrderByDescending(r => r.Timestamp).FirstOrDefault();
-                                            }
-                                            @if (lastNpcRoll != null)
-                                            {
-                                                <div class="flex-shrink-0">
-                                                    <DieShape Expression="@(lastNpcRoll.Rolls?.FirstOrDefault()?.Expression ?? lastNpcRoll.Message)">
-                                                        @lastNpcRoll.Result
-                                                    </DieShape>
-                                                </div>
-                                            }
-                                        </div>
-                                    }
-                                    @{
-                                        var npcDefaultRoll = npc.StatBlock?.DefaultRoll ?? Campaign?.DefaultRollDie ?? "1d20";
-                                        var npcStats = npc.StatBlock?.Stats ?? new List<Stat>();
-                                    }
-                                    <div class="d-flex gap-1 mt-1 align-items-center">
-                                        <div style="position:relative; flex: 1 1 0%; min-width: 0">
-                                            <input class="form-control form-control-sm" list="@($"npc-rolls-{npc.Id}")"
-                                                   placeholder="@npcDefaultRoll"
-                                                   value="@NpcRollFormulas.GetValueOrDefault(npc.Id, "")"
-                                                   @onchange="e => NpcRollFormulas[npc.Id] = e.Value?.ToString() ?? string.Empty" />
-                                            <datalist id="@($"npc-rolls-{npc.Id}")">
-                                                <option value="@npcDefaultRoll">Default</option>
-                                                @foreach (var stat in npcStats) {
-                                                    <option value="@($"{npcDefaultRoll}+{stat.Name}")">@stat.Name</option>
-                                                }
-                                            </datalist>
-                                        </div>
-                                        <button class="btn btn-sm btn-secondary flex-shrink-0" @onclick="async () => await RollForNpcAsync(npc)">
-                                            <svg width="20" height="18" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16">
-                                                <path d="M3 0a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V3a3 3 0 0 0-3-3zm2.5 4a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0m8 0a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0M12 13.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3M5.5 12a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0M8 9.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3" />
-                                            </svg>
-                                        </button>
-                                    </div>
-                                </div>
-                                <div class="card-footer py-1 px-2 d-flex align-items-center gap-1 flex-wrap">
-                                    @if(npc.Buffs != null && npc.Buffs.Any()) {
-                                        @foreach (var buff in npc.Buffs) {
-                                            <div style="position: relative; display: inline-block">
-                                                <span class="d-flex align-items-center" style="cursor:pointer" @onclick="() => ToggleBuffActionPopover(buff.Id)">
-                                                    <BuffIcon Name="@(buff.Template?.Icon ?? "shield")" Size="1em" />
-                                                    @if (buff.Stacks > 0) {
-                                                        <span style="font-size:0.6em; font-weight:700; margin-left:-0.2em">@buff.Stacks</span>
-                                                    }
-                                                </span>
-                                                @if (_buffActionPopoverId == buff.Id) {
-                                                    <div class="card" style="position:absolute; bottom:100%; left:0; z-index:10; min-width:120px; margin-bottom:4px">
-                                                        <div class="p-1 d-flex flex-column gap-1">
-                                                            <span class="px-1 fw-bold" style="font-size:0.85em">@(buff.Template?.Name ?? "?")</span>
-                                                            <button class="btn btn-sm btn-secondary text-start" style="display:block; width:100%; font-size:0.8em" @onclick="async () => await BuffActionAsync(buff, 1)">+ Stack</button>
-                                                            @if (buff.Stacks > 0) {
-                                                                <button class="btn btn-sm btn-secondary text-start" style="display:block; width:100%; font-size:0.8em" @onclick="async () => await BuffActionAsync(buff, -1)">- Stack</button>
-                                                            }
-                                                            <div style="margin-top:0.3em; padding-top:0.3em; border-top:1px solid rgba(255,255,255,0.15)">
-                                                                <button class="btn btn-sm text-start d-flex align-items-center gap-1" style="display:block; width:100%; font-size:0.8em; background:#ff4136; color:white" @onclick="async () => await BuffActionRemoveAsync(buff)">
-                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" fill="currentColor" viewBox="0 0 16 16">
-                                                                        <path d="M2.5 1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1H3v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V4h.5a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1z"/>
-                                                                    </svg>
-                                                                    Remove
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                }
-                                            </div>
-                                        }
-                                    } else {
-                                        <span class="text-muted" style="font-size: 0.75em">(no statuses)</span>
-                                    }
-                                    <div class="flex-grow-1"></div>
-                                    <div style="position: relative; display: inline-block">
-                                        <button class="btn btn-sm btn-secondary" style="padding: 0 0.4em; line-height: 1.2; font-size: 0.8em"
-                                                @onclick="() => ToggleNpcStatusPopover(npc.Id)">+</button>
-                                        @if (_npcStatusPopoverId == npc.Id) {
-                                            <div class="card" style="position: absolute; bottom: 100%; right: 0; z-index: 10; min-width: 160px; max-height: 200px; overflow-y: auto; margin-bottom: 4px">
-                                                <div class="p-1 d-flex flex-column gap-1">
-                                                    @if (campaignBuffs.Any()) {
-                                                        @foreach (var buff in campaignBuffs.OrderBy(b => b.Name)) {
-                                                            <button class="btn btn-sm btn-secondary text-start d-flex align-items-center gap-1" style="display:block; width:100%"
-                                                                    @onclick="async () => await ApplyNpcStatusAsync(npc, buff)">
-                                                                <BuffIcon Name="@buff.Icon" Size="0.9em" />
-                                                                <span style="font-size: 0.85em">@buff.Name</span>
-                                                            </button>
-                                                        }
-                                                    } else {
-                                                        <span class="text-muted p-1" style="font-size: 0.8em">No buffs defined</span>
-                                                    }
-                                                </div>
-                                            </div>
-                                        }
-                                    </div>
-                                </div>
-                            </div>
+                            <CharacterCard Character="@npc"
+                                          IsNpc="true"
+                                          ShowCheckbox="true"
+                                          IsSelected="@SelectedNpcIds.Contains(npc.Id)"
+                                          IsSelectedChanged="v => ToggleNpcSelection(npc.Id, v)"
+                                          ShowInlineRoll="true"
+                                          ShowStatusFooter="true"
+                                          AvailableBuffs="@campaignBuffs"
+                                          DefaultRollDie="@Campaign?.DefaultRollDie"
+                                          RollFormula="@NpcRollFormulas.GetValueOrDefault(npc.Id, "")"
+                                          RollFormulaChanged="v => NpcRollFormulas[npc.Id] = v"
+                                          OnDelete="async () => await HandleNpcDeleteClickAsync(npc)"
+                                          OnEdit="() => OpenEditModalAsync(npc)"
+                                          OnRoll="async () => await RollForNpcAsync(npc)"
+                                          OnChanged="RefreshCampaignData" />
                         }
                     </div>
                 </div>
@@ -605,6 +458,11 @@
 		await DeletePlayerAsync(npc);
 	}
 
+	private async Task OpenEditModalAsync(PlayerCharacter character)
+	{
+		await JS.InvokeVoidAsync("eval", $"{GetIdentifier(character, "edit")}.showModal()");
+	}
+
 	// -- Player roll dialog --
 	private PlayerCharacter? _rollDialogCharacter;
 
@@ -664,34 +522,6 @@
 		await RefreshCampaignData();
 	}
 
-	private async Task RemoveNpcBuffAsync(CharacterBuff buff)
-	{
-		await BuffService.RemoveBuffAsync(buff.Id);
-		await RefreshCampaignData();
-	}
-
-	// -- Buff action popover --
-	private Guid? _buffActionPopoverId;
-
-	private void ToggleBuffActionPopover(Guid buffId)
-	{
-		_buffActionPopoverId = _buffActionPopoverId == buffId ? null : buffId;
-	}
-
-	private async Task BuffActionAsync(CharacterBuff buff, int delta)
-	{
-		_buffActionPopoverId = null;
-		await BuffService.UpdateStacksAsync(buff.Id, buff.Stacks + delta);
-		await RefreshCampaignData();
-	}
-
-	private async Task BuffActionRemoveAsync(CharacterBuff buff)
-	{
-		_buffActionPopoverId = null;
-		await BuffService.RemoveBuffAsync(buff.Id);
-		await RefreshCampaignData();
-	}
-
 	// -- Bulk status --
 	private bool _showBulkStatusPopover;
 
@@ -705,21 +535,6 @@
 		_showBulkStatusPopover = false;
 		foreach (var npc in SelectedNpcs.ToList())
 			await BuffService.ApplyBuffAsync(npc.Id, buff.Id);
-		await RefreshCampaignData();
-	}
-
-	// -- NPC status popover --
-	private int? _npcStatusPopoverId;
-
-	private void ToggleNpcStatusPopover(int npcId)
-	{
-		_npcStatusPopoverId = _npcStatusPopoverId == npcId ? null : npcId;
-	}
-
-	private async Task ApplyNpcStatusAsync(PlayerCharacter npc, BuffTemplate buff)
-	{
-		_npcStatusPopoverId = null;
-		await BuffService.ApplyBuffAsync(npc.Id, buff.Id);
 		await RefreshCampaignData();
 	}
 
