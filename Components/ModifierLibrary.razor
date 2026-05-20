@@ -98,7 +98,7 @@
             {
                 var idx = i;
                 <div class="d-flex gap-1 align-items-center mt-1">
-                    <input class="form-control" @bind="cbEffects[idx]" placeholder="e.g. str+=2" />
+                    <input class="form-control" @bind="cbEffects[idx]" placeholder="e.g. str+=2" list="effectVarSuggestions" />
                     <button type="button" class="btn btn-danger btn-sm" @onclick="() => cbEffects.RemoveAt(idx)">x</button>
                 </div>
             }
@@ -111,8 +111,20 @@
     </div>
 }
 
+<datalist id="effectVarSuggestions">
+    @foreach (var s in Suggestions)
+    {
+        <option value="@s" />
+    }
+</datalist>
+
 @code {
     [Parameter] public int CampaignId { get; set; }
+    [Parameter] public List<string> VariableNames { get; set; } = new();
+
+    private List<string> Suggestions => VariableNames
+        .SelectMany(v => new[] { $"{v}+=", $"{v}-=", $"{v}*=", $"{v}/=", $"{v}=" })
+        .ToList();
 
     private List<BuffTemplate> campaignBuffs = new();
     private static readonly BuffType[] modTabs = [BuffType.Equipment, BuffType.Status, BuffType.Skill];
