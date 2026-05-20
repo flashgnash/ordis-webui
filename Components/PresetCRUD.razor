@@ -1,0 +1,108 @@
+@rendermode InteractiveServer
+@inject CampaignService CampaignService
+@inject IJSRuntime JS
+
+<EditForm Model="Preset" OnValidSubmit="SaveAsync" class="form h-100">
+
+  <div class="d-flex flex-nowrap gap-3 m-2">
+      <div class="flex-fill">
+        <label class="form-label w-100 text-center">Name</label>
+        <input class="form-control" placeholder="Goblin" @bind="Preset.Name"/>
+      </div>
+      <div class="flex-fill">
+        <label class="form-label w-100 text-center">Default Roll</label>
+        <input class="form-control" placeholder="1d20" @bind="Preset.StatBlock.DefaultRoll"/>
+      </div>
+      <div class="flex-fill">
+        <label class="form-label w-100 text-center">Mod Formula</label>
+        <input class="form-control" placeholder="floor((stat - 10) / 2)" @bind="Preset.StatBlock.ModifierFormula"/>
+      </div>
+      <div class="flex-fill">
+        <label class="form-label w-100 text-center">Level</label>
+        <input type="number" class="form-control" @bind="Preset.StatBlock.Level"/>
+      </div>
+  </div>
+
+  <div class="d-flex flex-nowrap m-0">
+    <div class="flex-fill" style="max-width:50%; max-height: 78vh; overflow: auto;">
+      <ListEditor TItem="PresetGauge" Items="Preset.Gauges" AddItem="AddGauge" Name="Gauge">
+        <ItemTemplate Context="gauge">
+          <input class="form-control text-center gauge-edit-title"
+                 style="background:@gauge.Colour; border: var(--bg-dark)"
+                 @bind="gauge.Name" />
+          <hr>
+          <label class="form-label">Maximum</label>
+          <input class="form-control" type="number" @bind="gauge.Max"/>
+          <label class="form-label">Colour</label>
+          <div class="d-flex flex-row gap-1">
+            <input class="form-control" @bind="gauge.Colour"/>
+            <input class="form-control bg-dark form-control-color" type="color" style="border: none" @bind="gauge.Colour" />
+          </div>
+        </ItemTemplate>
+      </ListEditor>
+    </div>
+
+    <div class="flex-fill" style="max-width:50%; max-height: 78vh; overflow: auto;">
+      <ListEditor TItem="Stat" Items="Preset.StatBlock.SpecialStats" AddItem="AddSpecialStat" Name="Special Stat" Hint="Stats whose values get added to rolls directly rather than run through the normal modifier formula">
+        <ItemTemplate Context="stat">
+          <div>
+            <input class="form-control text-center" @bind="stat.Name"/>
+            <hr>
+            <input class="form-control" type="number" @bind="stat.Value"/>
+          </div>
+        </ItemTemplate>
+      </ListEditor>
+
+      <ListEditor TItem="Stat" Items="Preset.StatBlock.Stats" AddItem="AddStat" Name="Stat">
+        <ItemTemplate Context="stat">
+          <div>
+            <input class="form-control text-center" @bind="stat.Name"/>
+            <hr>
+            <input class="form-control" type="number" @bind="stat.Value"/>
+          </div>
+        </ItemTemplate>
+      </ListEditor>
+    </div>
+  </div>
+
+  <div class="flex-grow-1"></div>
+  <button class="btn btn-primary form-control w-100">Save Preset</button>
+
+</EditForm>
+
+@code {
+    [Parameter]
+    public CharacterPreset Preset { get; set; } = new();
+
+    [Parameter]
+    public EventCallback OnSaved { get; set; }
+
+    public async Task SaveAsync()
+    {
+        Preset.Gauges = Preset.Gauges;
+        Preset.StatBlock = Preset.StatBlock;
+        await CampaignService.UpdatePresetAsync(Preset);
+        await OnSaved.InvokeAsync();
+    }
+
+    public void AddGauge() =>
+        Preset.Gauges.Add(new PresetGauge { Name = $"gauge-{Preset.Gauges.Count}", Max = 10 });
+
+    public void AddStat() =>
+        Preset.StatBlock.Stats.Add(new Stat { Name = $"stat-{Preset.StatBlock.Stats.Count}", Value = 0 });
+
+    public void AddSpecialStat() =>
+        Preset.StatBlock.SpecialStats.Add(new Stat { Name = $"special-{Preset.StatBlock.SpecialStats.Count}", Value = 0 });
+
+    protected override async Task OnInitializedAsync()
+    {
+        Preset.StatBlock ??= new StatBlock { Stats = new(), SpecialStats = new() };
+        Preset.StatBlock.Stats ??= new();
+        Preset.StatBlock.SpecialStats ??= new();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool first)
+    {
+        await JS.InvokeVoidAsync("fixGaugeText");
+    }
+}

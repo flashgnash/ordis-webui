@@ -33,7 +33,7 @@
   </div>
 
   <div class="m-2 text-center text-danger fs-4">
-    @if(Character.UserId == null) {
+    @if(Character.UserId == null && !Character.IsNpc) {
       <div>
         <label>Discord User ID</label>
         <span title="Set this to give ownership of this character to a player. This box disappears once a value has been set" class="m-auto fs-5" style="cursor: default; user-select: none; color:var(--accent)">?</span>
@@ -167,13 +167,4 @@
   }	
 }
 
-<script>
-function fixGaugeText() {
-  document.querySelectorAll(".gauge-edit-title").forEach(el => {
-    const c = getComputedStyle(el).backgroundColor.match(/\d+/g).map(Number);
-    const L = 0.2126*c[0] + 0.7152*c[1] + 0.0722*c[2];
-    el.style.color = L > 160 ? "black" : "white";
-  });
-}
-</script>
 

@@ -120,14 +120,14 @@
                             </svg>
                             Rolls
                              <div class="flex-grow-1"> </div>
-                            (@Char.Rolls.Count())
+                            (@(Char.Rolls?.Count() ?? 0))
                         </span>
                     </div>
                     <div class="flex-fill card-body p-2 w-100" style="max-height: 10em; overflow: auto;">
 
                         <table class="table spaced">
                             <tbody>
-                                @foreach (RollResult roll in Char.Rolls.OrderBy(r => r.Timestamp))
+                                @foreach (RollResult roll in (Char.Rolls ?? Enumerable.Empty<RollResult>()).OrderBy(r => r.Timestamp))
                                 {
                                     <tr>
                                        <td class="text-muted">

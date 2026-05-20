@@ -1,0 +1,235 @@
+@inject PlayerCharacterService CharService
+@inject BuffService BuffService
+
+<div class="card player-card">
+    <div class="card-header py-0 px-2 d-flex align-items-center">
+        @if (ShowCheckbox) {
+            <input type="checkbox" class="me-2 flex-shrink-0" style="cursor:pointer"
+                   checked="@IsSelected"
+                   @onchange="e => IsSelectedChanged.InvokeAsync((bool)e.Value!)" />
+        }
+        @if (IsNpc) {
+            <input class="form-control form-control-sm border-0" style="width:auto; background:rgba(255,255,255,0.1); color:white"
+                   @bind="Character.Name" @bind:event="oninput"
+                   @onblur="async () => await CharService.UpdateAsync(Character)" />
+        } else {
+            @if (IsOwnCharacter) {
+                <a style="color:var(--accent)" href="@($"/characters/{Character.Id}")">@(Character.Name ?? "Unknown") (you)</a>
+            } else {
+                <span>@(Character.Name ?? "Unknown")</span>
+            }
+        }
+        <div class="flex-grow-1"></div>
+        <button class="text-danger p-1" @onclick="OnDelete">
+            <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" class="bi bi-trash-fill" viewBox="0 0 16 16">
+                <path d="M2.5 1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1H3v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V4h.5a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1z"/>
+            </svg>
+        </button>
+        <button class="p-1" style="color:var(--accent)" @onclick="OnEdit">
+            <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" class="bi bi-pencil-fill" viewBox="0 0 16 16">
+                <path d="M12.854.146a.5.5 0 0 0-.707 0L10.5 1.793 14.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708zm.646 6.061L9.793 2.5 3.293 9H3.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.207zm-7.468 7.468A.5.5 0 0 1 6 13.5V13h-.5a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.5-.5V10h-.5a.5.5 0 0 1-.175-.032l-.179.178a.5.5 0 0 0-.11.168l-2 5a.5.5 0 0 0 .65.65l5-2a.5.5 0 0 0 .168-.11z"/>
+            </svg>
+        </button>
+    </div>
+    <div class="card-body p-2 w-100">
+        @if(Character.Gauges != null) {
+            <div class="d-flex align-items-center gap-2 w-100">
+                <div class="d-flex flex-column gap-1" style="flex: 1 1 0%; min-width: 0">
+                    @foreach(Gauge gauge in Character.Gauges) {
+                        <Bar GaugeInstance="@gauge" />
+                    }
+                </div>
+                @{
+                    var lastRoll = Character?.Rolls?.OrderByDescending(r => r.Timestamp).FirstOrDefault();
+                }
+                @if (lastRoll != null)
+                {
+                    <div class="flex-shrink-0">
+                        <DieShape Expression="@(lastRoll.Rolls?.FirstOrDefault()?.Expression ?? lastRoll.Message)">
+                            @lastRoll.Result
+                        </DieShape>
+                    </div>
+                }
+            </div>
+        }
+        @if (ShowInlineRoll) {
+            var defaultRoll = Character.StatBlock?.DefaultRoll ?? DefaultRollDie ?? "1d20";
+            var stats = Character.StatBlock?.Stats ?? new List<Stat>();
+            <div class="d-flex gap-1 mt-1 align-items-center">
+                <div style="position:relative; flex: 1 1 0%; min-width: 0">
+                    <input class="form-control form-control-sm" list="@($"rolls-{Character.Id}")"
+                           placeholder="@defaultRoll"
+                           value="@RollFormula"
+                           @onchange="e => RollFormulaChanged.InvokeAsync(e.Value?.ToString() ?? string.Empty)" />
+                    <datalist id="@($"rolls-{Character.Id}")">
+                        <option value="@defaultRoll">Default</option>
+                        @foreach (var stat in stats) {
+                            <option value="@($"{defaultRoll}+{stat.Name}")">@stat.Name</option>
+                        }
+                    </datalist>
+                </div>
+                <button class="btn btn-sm btn-secondary flex-shrink-0" @onclick="OnRoll">
+                    <svg width="20" height="18" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M3 0a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V3a3 3 0 0 0-3-3zm2.5 4a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0m8 0a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0M12 13.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3M5.5 12a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0M8 9.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3" />
+                    </svg>
+                </button>
+            </div>
+        }
+    </div>
+    @if (ShowStatusFooter) {
+        <div class="card-footer py-1 px-2 d-flex align-items-center gap-1 flex-wrap">
+            @if(Character.Buffs != null && Character.Buffs.Any()) {
+                @foreach (var buff in Character.Buffs) {
+                    var buffColour = GetBuffColour(buff);
+                    <div style="position: relative; display: inline-block">
+                        <span class="d-flex align-items-center" style="cursor:pointer; color:@buffColour" @onclick="() => ToggleBuffPopover(buff.Id)">
+                            <BuffIcon Name="@(buff.Template?.Icon ?? "shield")" Size="1em" />
+                            @if (buff.Stacks > 0) {
+                                <span style="font-size:0.6em; font-weight:700; margin-left:-0.2em">@buff.Stacks</span>
+                            }
+                        </span>
+                        @if (_buffPopoverId == buff.Id) {
+                            <div class="card" style="position:absolute; bottom:100%; left:0; z-index:10; min-width:120px; margin-bottom:4px">
+                                <div class="p-1 d-flex flex-column gap-1">
+                                    <span class="px-1 fw-bold" style="font-size:0.85em">@(buff.Template?.Name ?? "?")</span>
+                                    <button class="btn btn-sm btn-secondary text-start" style="display:block; width:100%; font-size:0.8em" @onclick="async () => await UpdateStackAsync(buff, 1)">+ Stack</button>
+                                    @if (buff.Stacks > 0) {
+                                        <button class="btn btn-sm btn-secondary text-start" style="display:block; width:100%; font-size:0.8em" @onclick="async () => await UpdateStackAsync(buff, -1)">- Stack</button>
+                                    }
+                                    <div style="margin-top:0.3em; padding-top:0.3em; border-top:1px solid rgba(255,255,255,0.15)">
+                                        <button class="btn btn-sm text-start d-flex align-items-center gap-1" style="display:block; width:100%; font-size:0.8em; background:#ff4136; color:white" @onclick="async () => await RemoveBuffAsync(buff)">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" fill="currentColor" viewBox="0 0 16 16">
+                                                <path d="M2.5 1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1H3v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V4h.5a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1z"/>
+                                            </svg>
+                                            Remove
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            } else {
+                <span class="text-muted" style="font-size: 0.75em">(no statuses)</span>
+            }
+            <div class="flex-grow-1"></div>
+            <div style="position: relative; display: inline-block">
+                <button class="btn btn-sm btn-secondary" style="padding: 0 0.4em; line-height: 1.2; font-size: 0.8em"
+                        @onclick="ToggleAddStatusPopover">+</button>
+                @if (_showAddStatus) {
+                    <div class="card" style="position: absolute; bottom: 100%; right: 0; z-index: 10; min-width: 160px; max-height: 200px; overflow-y: auto; margin-bottom: 4px">
+                        <div class="p-1 d-flex flex-column gap-1">
+                            @if (AvailableBuffs?.Any() == true) {
+                                @foreach (var buff in AvailableBuffs.OrderBy(b => b.Name)) {
+                                    <button class="btn btn-sm btn-secondary text-start d-flex align-items-center gap-1" style="display:block; width:100%"
+                                            @onclick="async () => await ApplyBuffAsync(buff)">
+                                        <BuffIcon Name="@buff.Icon" Size="0.9em" />
+                                        <span style="font-size: 0.85em">@buff.Name</span>
+                                    </button>
+                                }
+                            } else {
+                                <span class="text-muted p-1" style="font-size: 0.8em">No buffs defined</span>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public PlayerCharacter Character { get; set; } = null!;
+    [Parameter] public bool IsNpc { get; set; }
+    [Parameter] public bool IsOwnCharacter { get; set; }
+    [Parameter] public bool ShowCheckbox { get; set; }
+    [Parameter] public bool IsSelected { get; set; }
+    [Parameter] public EventCallback<bool> IsSelectedChanged { get; set; }
+    [Parameter] public bool ShowInlineRoll { get; set; }
+    [Parameter] public bool ShowStatusFooter { get; set; }
+    [Parameter] public string? DefaultRollDie { get; set; }
+    [Parameter] public string? RollFormula { get; set; }
+    [Parameter] public EventCallback<string> RollFormulaChanged { get; set; }
+    [Parameter] public EventCallback OnRoll { get; set; }
+    [Parameter] public EventCallback OnDelete { get; set; }
+    [Parameter] public EventCallback OnEdit { get; set; }
+    [Parameter] public List<BuffTemplate>? AvailableBuffs { get; set; }
+    [Parameter] public EventCallback OnChanged { get; set; }
+
+    private Guid? _buffPopoverId;
+    private bool _showAddStatus;
+
+    private void ToggleBuffPopover(Guid id) => _buffPopoverId = _buffPopoverId == id ? null : id;
+    private void ToggleAddStatusPopover() => _showAddStatus = !_showAddStatus;
+
+    private string GetBuffColour(CharacterBuff charBuff)
+    {
+        var effects = charBuff.Template?.Effects;
+        if (effects == null || !effects.Any() || Character.Gauges == null)
+            return "currentColor";
+
+        var matchedColours = new List<string>();
+        foreach (var effect in effects)
+        {
+            var parsed = BuffFormula.Parse(effect.Formula);
+            if (parsed == null) continue;
+            var target = parsed.Value.target;
+            // Strip ".value" or ".max" suffix for matching
+            if (target.EndsWith(".value", StringComparison.OrdinalIgnoreCase))
+                target = target[..^6];
+            else if (target.EndsWith(".max", StringComparison.OrdinalIgnoreCase))
+                target = target[..^4];
+
+            foreach (var gauge in Character.Gauges)
+            {
+                if (string.Equals(gauge.Name, target, StringComparison.OrdinalIgnoreCase)
+                    && !string.IsNullOrEmpty(gauge.Colour))
+                {
+                    matchedColours.Add(gauge.Colour);
+                    break;
+                }
+            }
+        }
+
+        if (matchedColours.Count == 0)
+            return "currentColor";
+        if (matchedColours.Count == 1)
+            return matchedColours[0];
+
+        // Blend: average the RGB values
+        int r = 0, g = 0, b = 0;
+        foreach (var c in matchedColours)
+        {
+            var hex = c.TrimStart('#');
+            if (hex.Length >= 6)
+            {
+                r += Convert.ToInt32(hex[0..2], 16);
+                g += Convert.ToInt32(hex[2..4], 16);
+                b += Convert.ToInt32(hex[4..6], 16);
+            }
+        }
+        var n = matchedColours.Count;
+        return $"#{r/n:X2}{g/n:X2}{b/n:X2}";
+    }
+
+    private async Task UpdateStackAsync(CharacterBuff buff, int delta)
+    {
+        _buffPopoverId = null;
+        await BuffService.UpdateStacksAsync(buff.Id, buff.Stacks + delta);
+        await OnChanged.InvokeAsync();
+    }
+
+    private async Task RemoveBuffAsync(CharacterBuff buff)
+    {
+        _buffPopoverId = null;
+        await BuffService.RemoveBuffAsync(buff.Id);
+        await OnChanged.InvokeAsync();
+    }
+
+    private async Task ApplyBuffAsync(BuffTemplate buff)
+    {
+        _showAddStatus = false;
+        await BuffService.ApplyBuffAsync(Character.Id, buff.Id);
+        await OnChanged.InvokeAsync();
+    }
+}

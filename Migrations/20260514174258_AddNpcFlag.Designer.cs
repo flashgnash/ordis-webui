@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -10,9 +11,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Ordis.Migrations
 {
     [DbContext(typeof(OrdisContext))]
-    partial class OrdisContextModelSnapshot : ModelSnapshot
+    [Migration("20260514174258_AddNpcFlag")]
+    partial class AddNpcFlag
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -113,34 +116,6 @@ namespace Ordis.Migrations
                     b.HasIndex("TemplateId");
 
                     b.ToTable("character_buffs", (string)null);
-                });
-
-            modelBuilder.Entity("CharacterPreset", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("CampaignId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("GaugesJson")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Name")
-                        .HasColumnType("text");
-
-                    b.Property<string>("StatBlockJson")
-                        .HasColumnType("text")
-                        .HasColumnName("stat_block");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CampaignId");
-
-                    b.ToTable("CharacterPresets", (string)null);
                 });
 
             modelBuilder.Entity("Gauge", b =>
@@ -507,17 +482,6 @@ namespace Ordis.Migrations
                     b.Navigation("Template");
                 });
 
-            modelBuilder.Entity("CharacterPreset", b =>
-                {
-                    b.HasOne("Campaign", "Campaign")
-                        .WithMany("Presets")
-                        .HasForeignKey("CampaignId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Campaign");
-                });
-
             modelBuilder.Entity("Gauge", b =>
                 {
                     b.HasOne("PlayerCharacter", null)
@@ -579,8 +543,6 @@ namespace Ordis.Migrations
             modelBuilder.Entity("Campaign", b =>
                 {
                     b.Navigation("Players");
-
-                    b.Navigation("Presets");
                 });
 
             modelBuilder.Entity("Item", b =>

@@ -158,12 +158,14 @@
         .OrderByDescending(c => c.Players?
             .Where(p => p.UserId == DiscordId)
             .SelectMany(p => p.Rolls ?? Enumerable.Empty<RollResult>())
-            .Max(r => r.Timestamp))
+            .Select(r => r.Timestamp)
+            .DefaultIfEmpty()
+            .Max())
         .Take(3) ?? Enumerable.Empty<Campaign>();
 
     IEnumerable<PlayerCharacter> TopCharacters => Characters?
         .OrderByDescending(c => c.Rolls != null && c.Rolls.Any())
-        .ThenByDescending(c => c.Rolls?.Max(r => r.Timestamp))
+        .ThenByDescending(c => c.Rolls != null && c.Rolls.Any() ? c.Rolls.Max(r => r.Timestamp) : null)
         .Take(3) ?? Enumerable.Empty<PlayerCharacter>();
 
     protected override async Task OnInitializedAsync()

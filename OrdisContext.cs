@@ -18,6 +18,8 @@ public partial class OrdisContext : DbContext
 
     public virtual DbSet<Campaign> Campaigns { get; set; }
 
+    public virtual DbSet<CharacterPreset> CharacterPresets { get; set; }
+
     public virtual DbSet<User> Users { get; set; }
 
     public virtual DbSet<BuffTemplate> BuffTemplates { get; set; }
@@ -56,6 +58,15 @@ public partial class OrdisContext : DbContext
         modelBuilder.Entity<Campaign>(entity =>
         {
             entity.HasMany(e => e.Players).WithOne(e => e.Campaign).OnDelete(DeleteBehavior.Cascade);
+            entity.HasMany(e => e.Presets).WithOne(e => e.Campaign).HasForeignKey(e => e.CampaignId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<CharacterPreset>(entity =>
+        {
+            entity.ToTable("CharacterPresets");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).ValueGeneratedOnAdd();
+            entity.Property(e => e.StatBlockJson).HasColumnName("stat_block");
         });
 
         modelBuilder.Entity<BuffTemplate>(entity =>

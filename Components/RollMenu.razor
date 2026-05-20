@@ -148,9 +148,17 @@
 
     Dictionary<string, string> btnClasses = new();
 
+    private PlayerCharacter? _prevCharacter;
+
     protected override void OnInitialized() {
         ClearRoll();
+    }
 
+    protected override void OnParametersSet() {
+        if (Character != _prevCharacter) {
+            _prevCharacter = Character;
+            ClearRoll();
+        }
     }
 
     private string Truncate(string input, int length = 3)

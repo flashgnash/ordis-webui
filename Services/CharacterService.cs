@@ -34,9 +34,20 @@ public class PlayerCharacterService(IDbContextFactory<OrdisContext> dbFactory, H
         {
             case System.Net.HttpStatusCode.InternalServerError:
             case System.Net.HttpStatusCode.BadRequest:
+            case System.Net.HttpStatusCode.NotFound:
                 throw new InvalidRollException();
         }
-        var rollResult = await response.Content.ReadFromJsonAsync<RollResult>();
+
+        RollResult? rollResult;
+        try
+        {
+            rollResult = await response.Content.ReadFromJsonAsync<RollResult>();
+        }
+        catch
+        {
+            throw new InvalidRollException();
+        }
+        if (rollResult == null) throw new InvalidRollException();
         
         await SaveRollAsync(character.Id, rollResult);
 
@@ -69,7 +80,7 @@ public class PlayerCharacterService(IDbContextFactory<OrdisContext> dbFactory, H
 
     public async Task UpdateAsync(PlayerCharacter c)
     {
-        var db = await dbFactory.CreateDbContextAsync();
+        await using var db = await dbFactory.CreateDbContextAsync();
 
         c.StatBlock = c.StatBlock;
 
@@ -81,8 +92,8 @@ public class PlayerCharacterService(IDbContextFactory<OrdisContext> dbFactory, H
 
 
     public async Task CreateAsync(PlayerCharacter c) {
-        
-        var db = await dbFactory.CreateDbContextAsync();
+
+        await using var db = await dbFactory.CreateDbContextAsync();
 
         await db.Characters.AddAsync(c);
 
@@ -123,6 +134,8 @@ public class PlayerCharacterService(IDbContextFactory<OrdisContext> dbFactory, H
             .Include(g => g.Gauges)
             .Include(g => g.Campaign)
             .Include(g => g.Rolls)
+            .Include(g => g.Buffs)
+                .ThenInclude(b => b.Template)
             .SingleOrDefaultAsync(c => c.Id == id);
     }
 

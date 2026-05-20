@@ -1,32 +1,32 @@
 @typeparam TItem
 
-<div class="form-group d-flex flex-wrap bg-dark m-2 p-2 rounded" style="">
-    <div class="d-flex w-100 flex-row flex-nowrap">
-        <label class="form-label flex-shrink-1 fs-5">@Items?.Count() @(Name)(s)</label>
+<div class="d-flex flex-column gap-1">
+    <div class="d-flex align-items-center">
+        <label class="form-label mb-0 small fw-bold">@Items?.Count() @(Name)(s)</label>
         @if(Hint != null) {
-            <span title="@Hint" class="m-auto fs-5" style="cursor: default; user-select: none; color:var(--accent)">?</span>
+            <span title="@Hint" class="ms-1 small" style="cursor: default; user-select: none; color:var(--accent)">?</span>
         }
         <div class="flex-grow-1"></div>
-        <button type="button" class="btn btn-primary bg-primary h-100 flex-shrink-1 p-2" @onclick="AddItem" style="width: 3em; aspect-ratio: 1 / 1 ">+</button>
+        <button type="button" class="btn btn-primary btn-sm p-0" style="width:1.8em;height:1.8em" @onclick="AddItem">+</button>
     </div>
-    <div class="flex-fill flex-wrap d-flex gap-2 m-0" style="overflow: auto;">
     @if (Items != null)
     {
-        @foreach (var item in Items)
-        {
-            <div class="w-100 d-flex flex-nowrap">
-                <div @key="item" class="card flex-grow-1 flex-fill m-0 bg-light p-4 d-flex flex-wrap">
-                    @ItemTemplate(item)
+        <div class="d-flex flex-wrap gap-1">
+            @foreach (var item in Items)
+            {
+                <div class="d-flex flex-nowrap" style="flex: 1 1 14em; min-width: 0">
+                    <div @key="item" class="card flex-grow-1 px-2 py-1 d-flex flex-wrap" style="min-width: 0; color: white">
+                        @ItemTemplate(item)
+                    </div>
+                    <button @onclick="() => RemoveItem(item)" class="btn btn-danger flex-shrink-0 d-flex align-items-center justify-content-center" style="width:2em; border-top-left-radius:0; border-bottom-left-radius:0" type="button">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-trash-fill" viewBox="0 0 16 16">
+                          <path d="M2.5 1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1H3v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V4h.5a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1zm3 4a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5M8 5a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7A.5.5 0 0 1 8 5m3 .5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 1 0"/>
+                        </svg>
+                    </button>
                 </div>
-                <button @onclick="() => RemoveItem(item)" class="flex-shrink-1 h-100 bg-danger btn btn-danger" style="width:2em" type="button">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash-fill" viewBox="0 0 16 16">
-                      <path d="M2.5 1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1H3v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V4h.5a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1zm3 4a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5M8 5a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7A.5.5 0 0 1 8 5m3 .5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 1 0"/>
-                    </svg>
-                </button>
-            </div>
-        }
+            }
+        </div>
     }
-    </div>
 </div>
 
 @code {

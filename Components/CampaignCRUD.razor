@@ -1,40 +1,138 @@
 @rendermode InteractiveServer
 @inject AuthenticationStateProvider AuthStateProvider
 @inject CampaignService CampaignService
-@inject PlayerCharacterService CharacterService
+@inject IJSRuntime JS
 
 <div class="form h-100">
     <label class="form-label">Name</label>
     <input class="form-control" placeholder="My Awesome Campaign" @bind="Campaign.Name"/>
     <br>
 
-    <span>
-        <label class="form-label">Default Dice</label>
-        <span title="The default die to use for rolls (this can include stats, mathematical formulae, etc)" style="cursor: default; user-select: none; color:var(--accent)">?</span>
-    </span>
-    <input class="form-control" placeholder="1d20" @bind="Campaign.DefaultRollDie"/>
-    <br>
+    <div class="d-flex flex-wrap gap-2 mb-3">
+        <div style="flex: 1 1 12em; min-width: 0">
+            <span>
+                <label class="form-label">Default Dice</label>
+                <span title="The default die to use for rolls (this can include stats, mathematical formulae, etc)" style="cursor: default; user-select: none; color:var(--accent)">?</span>
+            </span>
+            <input class="form-control" placeholder="1d20" @bind="Campaign.DefaultRollDie"/>
+        </div>
+        <div style="flex: 1 1 12em; min-width: 0">
+            <span>
+                <label class="form-label">Stat modifier formula</label>
+                <span title="Formula to use for stat mods" style="cursor: default; user-select: none; color:var(--accent)">?</span>
+            </span>
+            <input class="form-control" placeholder="floor((stat - 10) / 2)" @bind="Campaign.StatModifierFormula"/>
+        </div>
+    </div>
 
-    <span>
-        <label class="form-label">Stat modifier formula</label>
-        <span title="Formula to use for stat mods" style="cursor: default; user-select: none; color:var(--accent)">?</span>
-    </span>
-    <input class="form-control" placeholder="floor((stat - 10) / 2)" @bind="Campaign.StatModifierFormula"/>		
-    <br>
+    <div class="d-flex flex-wrap gap-3 mt-1">
+        <div style="flex: 1 1 300px; min-width: 0">
+            <div class="d-flex align-items-center">
+                <label class="form-label mb-0 fs-6 fw-bold">Modifier Library</label>
+            </div>
+            <hr class="mt-1 mb-2" style="border-color: rgba(255,255,255,0.15)" />
+            <div class="card p-0" style="color: white">
+                <ModifierLibrary CampaignId="@Campaign.Id" />
+            </div>
+        </div>
 
-    <ListEditor TItem="PlayerCharacter" Items="Campaign.Players" AddItem="AddCharacter" Name="character">
-        <ItemTemplate Context="player">
-            <label class="form-label">Name</label>
-            <input class="form-control" @bind="player.Name"/>
+        <div style="flex: 1 1 300px; min-width: 0">
+            <div class="d-flex align-items-center">
+                <label class="form-label mb-0 fs-6 fw-bold">Character Presets</label>
+                <div class="flex-grow-1"></div>
+                <button type="button" class="btn btn-primary btn-sm p-0" style="width:1.8em;height:1.8em" @onclick="AddPresetAsync">+</button>
+            </div>
+            <hr class="mt-1 mb-2" style="border-color: rgba(255,255,255,0.15)" />
 
-            <label class="form-label">Discord ID</label>
-            <input class="form-control" @bind="player.UserId"/>
-        </ItemTemplate>
-    </ListEditor>
+            <div class="d-flex flex-column gap-2">
+                @foreach (var preset in Presets.ToList()) {
+                    <div class="card p-2" style="color: white">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <input class="form-control form-control-sm fw-bold flex-grow-1" placeholder="Preset name" @bind="preset.Name" style="min-width: 6em" />
+                            <input type="number" class="form-control form-control-sm text-center flex-shrink-0" placeholder="Lvl" @bind="GetStatBlock(preset).Level" style="width: 4em" title="Level" />
+                            <button type="button" class="btn btn-primary btn-sm flex-shrink-0" @onclick="async () => await SavePresetAsync(preset)">Save</button>
+                            <button type="button" class="btn btn-danger btn-sm flex-shrink-0" @onclick="async () => await RemovePresetAsync(preset)">Delete</button>
+                        </div>
+
+                        <div class="d-flex flex-wrap gap-2 mb-2">
+                            <div class="flex-fill" style="min-width: 6em">
+                                <label class="form-label mb-0 small text-muted">Default Roll</label>
+                                <input class="form-control form-control-sm" placeholder="1d20" @bind="GetStatBlock(preset).DefaultRoll"/>
+                            </div>
+                            <div class="flex-fill" style="min-width: 10em">
+                                <label class="form-label mb-0 small text-muted">Mod Formula</label>
+                                <input class="form-control form-control-sm" placeholder="floor((stat - 10) / 2)" @bind="GetStatBlock(preset).ModifierFormula"/>
+                            </div>
+                        </div>
+
+                        <div class="d-flex flex-column gap-1" style="max-height: 60vh; overflow: auto;">
+                            <ListEditor TItem="PresetGauge" Items="preset.Gauges" AddItem="() => AddGauge(preset)" Name="Gauge">
+                                <ItemTemplate Context="gauge">
+                                    <div class="d-flex align-items-center gap-1">
+                                        <label class="flex-shrink-0" style="position:relative; cursor:pointer; width:1.6em; height:1.6em">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" fill="@gauge.Colour" viewBox="0 0 16 16" style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); pointer-events:none">
+                                                <path d="M12.433 10.07C14.133 10.585 16 11.15 16 8a8 8 0 1 0-8 8c.834 0 1.492-.132 2.007-.33.272-.108.561-.347.561-.645 0-.318-.26-.564-.551-.745a3 3 0 0 1-.546-.426 3.5 3.5 0 0 1 2.07-5.782M5 12a1 1 0 1 1 0-2 1 1 0 0 1 0 2m.5-6a1 1 0 1 1 0-2 1 1 0 0 1 0 2M8 5a1 1 0 1 1 0-2 1 1 0 0 1 0 2m3.5 1a1 1 0 1 1 0-2 1 1 0 0 1 0 2"/>
+                                            </svg>
+                                            <input type="color" @bind="gauge.Colour" style="opacity:0; position:absolute; inset:0; width:100%; height:100%; cursor:pointer" />
+                                        </label>
+                                        <input class="form-control form-control-sm" style="flex:1 1 0%; min-width:0" @bind="gauge.Name" />
+                                        <input class="form-control form-control-sm text-center flex-shrink-0" type="number" placeholder="Max" @bind="gauge.Max" style="width:5em" />
+                                    </div>
+                                </ItemTemplate>
+                            </ListEditor>
+
+                            <div class="d-flex align-items-center mt-1">
+                                <label class="form-label mb-0 small fw-bold">Special Stats</label>
+                                <span title="Stats whose values get added to rolls directly rather than run through the normal modifier formula" style="cursor: default; user-select: none; color:var(--accent)" class="ms-1 small">?</span>
+                                <div class="flex-grow-1"></div>
+                                <button type="button" class="btn btn-primary btn-sm p-0" style="width:1.8em;height:1.8em" @onclick="() => AddSpecialStat(preset)">+</button>
+                            </div>
+                            <div class="d-flex flex-wrap gap-1 justify-content-center">
+                                @foreach (var stat in GetStatBlock(preset).SpecialStats.ToList()) {
+                                    <div class="stat-pill" style="width:5.5em; flex: 0 0 auto">
+                                        <div class="d-flex flex-nowrap" style="width:100%">
+                                            <input class="border-0 text-center" style="flex:1 1 0%; min-width:0; font-size:0.7em; padding:0.2em 0.2em; outline:none; color:#111; background:white; text-transform:uppercase; font-weight:600" @bind="stat.Name" />
+                                            <button class="flex-shrink-0" style="background:#ff4136; color:white; border:none; padding:0 0.3em; display:flex; align-items:center" @onclick="() => GetStatBlock(preset).SpecialStats.Remove(stat)">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" fill="currentColor" class="bi bi-trash-fill" viewBox="0 0 16 16">
+                                                    <path d="M2.5 1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1H3v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V4h.5a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1z"/>
+                                                </svg>
+                                            </button>
+                                        </div>
+                                        <input type="number" class="border-0 text-center w-100" style="font-size:1.1em; padding:0.3em; outline:none; color:white; font-weight:600; background:rgba(255,255,255,0.07)" @bind="stat.Value" />
+                                    </div>
+                                }
+                            </div>
+
+                            <div class="d-flex align-items-center mt-1">
+                                <label class="form-label mb-0 small fw-bold">Stats</label>
+                                <div class="flex-grow-1"></div>
+                                <button type="button" class="btn btn-primary btn-sm p-0" style="width:1.8em;height:1.8em" @onclick="() => AddStat(preset)">+</button>
+                            </div>
+                            <div class="d-flex flex-wrap gap-1 justify-content-center">
+                                @foreach (var stat in GetStatBlock(preset).Stats.ToList()) {
+                                    <div class="stat-pill" style="width:5.5em; flex: 0 0 auto">
+                                        <div class="d-flex flex-nowrap" style="width:100%">
+                                            <input class="border-0 text-center" style="flex:1 1 0%; min-width:0; font-size:0.7em; padding:0.2em 0.2em; outline:none; color:#111; background:white; text-transform:uppercase; font-weight:600" @bind="stat.Name" />
+                                            <button class="flex-shrink-0" style="background:#ff4136; color:white; border:none; padding:0 0.3em; display:flex; align-items:center" @onclick="() => GetStatBlock(preset).Stats.Remove(stat)">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" fill="currentColor" class="bi bi-trash-fill" viewBox="0 0 16 16">
+                                                    <path d="M2.5 1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1H3v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V4h.5a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1z"/>
+                                                </svg>
+                                            </button>
+                                        </div>
+                                        <input type="number" class="border-0 text-center w-100" style="font-size:1.1em; padding:0.3em; outline:none; color:white; font-weight:600; background:rgba(255,255,255,0.07)" @bind="stat.Value" />
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
 
     <div class="flex-grow-1"></div>
 
-    <button class="btn btn-primary form-control w-100" @onclick="SaveAsync">Save</button>
+    <button class="btn btn-primary form-control w-100 mt-3" @onclick="SaveAsync">Save</button>
 </div>
 
 @code {
@@ -45,24 +143,83 @@
     {
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
-
         var discordId = user.FindFirst("discord_id")?.Value ?? "Not logged in";
         Campaign.DungeonMasterId = discordId;
 
-        if (Campaign.Players == null)
-            Campaign.Players = new List<PlayerCharacter>();
+        if (Campaign.Id > 0 && Campaign.Presets == null)
+        {
+            var fresh = await CampaignService.GetByIdAsync(Campaign.Id);
+            Campaign.Presets = fresh?.Presets?.ToList() ?? new();
+        }
+        else
+        {
+            Campaign.Presets ??= new List<CharacterPreset>();
+        }
     }
 
-    void AddCharacter()
+    private IEnumerable<CharacterPreset> Presets =>
+        Campaign.Presets ?? Enumerable.Empty<CharacterPreset>();
+
+    private StatBlock GetStatBlock(CharacterPreset preset)
     {
-        Campaign.Players.Add(new PlayerCharacter());
-
-        Console.WriteLine($"Added character, total now: {Campaign.Players.Count}");
+        preset.StatBlock ??= new StatBlock { Stats = new(), SpecialStats = new() };
+        preset.StatBlock.Stats ??= new();
+        preset.StatBlock.SpecialStats ??= new();
+        return preset.StatBlock;
     }
+
+    async Task AddPresetAsync()
+    {
+        if (Campaign.Id > 0)
+        {
+            await CampaignService.AddPresetAsync(Campaign.Id);
+            var fresh = await CampaignService.GetByIdAsync(Campaign.Id);
+            Campaign.Presets = fresh?.Presets?.ToList() ?? new();
+        }
+        else
+        {
+            Campaign.Presets ??= new List<CharacterPreset>();
+            Campaign.Presets.Add(new CharacterPreset
+            {
+                Name = "New Preset",
+                Gauges = new(),
+                StatBlock = new() { Stats = new(), SpecialStats = new() },
+            });
+        }
+    }
+
+    async Task SavePresetAsync(CharacterPreset preset)
+    {
+        preset.Gauges = preset.Gauges;
+        if (preset.StatBlock != null) preset.StatBlock = preset.StatBlock;
+        if (Campaign.Id > 0 && preset.Id > 0)
+            await CampaignService.UpdatePresetAsync(preset);
+    }
+
+    async Task RemovePresetAsync(CharacterPreset preset)
+    {
+        if (Campaign.Id > 0 && preset.Id > 0)
+            await CampaignService.RemovePresetAsync(Campaign.Id, preset.Id);
+        Campaign.Presets?.Remove(preset);
+    }
+
+    void AddGauge(CharacterPreset preset) =>
+        preset.Gauges.Add(new PresetGauge { Name = $"unnamed-{preset.Gauges.Count}" });
+
+    void AddStat(CharacterPreset preset) =>
+        GetStatBlock(preset).Stats.Add(new Stat { Name = $"unnamed-{GetStatBlock(preset).Stats.Count}" });
+
+    void AddSpecialStat(CharacterPreset preset) =>
+        GetStatBlock(preset).SpecialStats.Add(new Stat { Name = $"unnamed-{GetStatBlock(preset).SpecialStats.Count}" });
 
     async Task SaveAsync()
     {
         await CampaignService.UpdateAsync(Campaign);
         Console.WriteLine($"Saved campaign {Campaign.Id}: {Campaign.Name}, owned by {Campaign.DungeonMasterId}");
+    }
+
+    protected override async Task OnAfterRenderAsync(bool first)
+    {
+        await JS.InvokeVoidAsync("fixGaugeText");
     }
 }

@@ -36,6 +36,7 @@ public IEnumerable<ValidationResult> Validate(ValidationContext ctx)
     [Key]
     public int Id { get; set; }
     public string? UserId { get; set; }
+    public bool IsNpc { get; set; } = false;
 
     public string? Name { get; set; }
 
