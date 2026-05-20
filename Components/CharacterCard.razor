@@ -15,6 +15,8 @@
         } else {
             @if (IsOwnCharacter) {
                 <a style="color:var(--accent)" href="@($"/characters/{Character.Id}")">@(Character.Name ?? "Unknown") (you)</a>
+            } else if (IsDM) {
+                <a style="color:var(--accent)" href="@($"/characters/{Character.Id}")">@(Character.Name ?? "Unknown")</a>
             } else {
                 <span>@(Character.Name ?? "Unknown")</span>
             }
@@ -142,6 +144,7 @@
     [Parameter] public PlayerCharacter Character { get; set; } = null!;
     [Parameter] public bool IsNpc { get; set; }
     [Parameter] public bool IsOwnCharacter { get; set; }
+    [Parameter] public bool IsDM { get; set; }
     [Parameter] public bool ShowCheckbox { get; set; }
     [Parameter] public bool IsSelected { get; set; }
     [Parameter] public EventCallback<bool> IsSelectedChanged { get; set; }

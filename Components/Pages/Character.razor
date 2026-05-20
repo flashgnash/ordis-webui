@@ -272,9 +272,10 @@ else
 
         DiscordId = user.FindFirst("discord_id")?.Value ?? "Not logged in";
 
-        // Only present the user with data if they are the character's owner
+        // Allow access if the user owns the character or is the DM of its campaign
         // (this is only safe because I'm using serverside blazor)
-        if (character?.UserId == DiscordId)
+        var isDm = character?.Campaign?.DungeonMasterId == DiscordId;
+        if (character != null && (character.UserId == DiscordId || isDm))
         {
             UserState.SelectedCharacter = character;
             Char = character;
