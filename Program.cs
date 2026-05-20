@@ -142,6 +142,12 @@ app.MapGet("/login", async (HttpContext ctx) =>
     });
 });
 
+app.MapGet("/logout", async (HttpContext ctx) =>
+{
+    await ctx.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+    ctx.Response.Redirect("/");
+});
+
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
