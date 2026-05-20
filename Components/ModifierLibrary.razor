@@ -1,21 +1,23 @@
 @inject BuffService BuffService
 @inject IJSRuntime JS
 
-<div class="d-flex align-items-center" style="border-bottom: 1px solid rgba(255,255,255,0.1)">
-    @foreach (var tab in modTabs)
-    {
-        var isActive = activeModTab == tab;
-        var count = campaignBuffs.Count(t => t.Type == tab);
-        <a href="javascript:void(0)"
-           @onclick="() => activeModTab = tab"
-           style="padding: 0.5em 0.7em; text-decoration: none; color: @(isActive ? "var(--accent)" : "rgba(255,255,255,0.5)"); border-bottom: 2px solid @(isActive ? "var(--accent)" : "transparent"); font-size: 0.85em; white-space: nowrap">
-            @ModTabLabel(tab)
-            @if (count > 0)
-            {
-                <span style="margin-left: 0.3em; font-size: 0.85em; opacity: 0.7">@count</span>
-            }
-        </a>
-    }
+<div class="d-flex align-items-center" style="border-bottom: 1px solid rgba(255,255,255,0.1); overflow-x: auto; min-width: 0">
+    <div class="d-flex flex-shrink-1" style="overflow-x: auto; min-width: 0">
+        @foreach (var tab in modTabs)
+        {
+            var isActive = activeModTab == tab;
+            var count = campaignBuffs.Count(t => t.Type == tab);
+            <a href="javascript:void(0)"
+               @onclick="() => activeModTab = tab"
+               style="padding: 0.5em 0.7em; text-decoration: none; color: @(isActive ? "var(--accent)" : "rgba(255,255,255,0.5)"); border-bottom: 2px solid @(isActive ? "var(--accent)" : "transparent"); font-size: 0.85em; white-space: nowrap">
+                @ModTabLabel(tab)
+                @if (count > 0)
+                {
+                    <span style="margin-left: 0.3em; font-size: 0.85em; opacity: 0.7">@count</span>
+                }
+            </a>
+        }
+    </div>
     <div class="flex-grow-1"></div>
     <button class="btn btn-primary btn-sm flex-shrink-0 me-2" @onclick="OpenAddDialog">+</button>
 </div>
@@ -43,7 +45,7 @@
                         </span>
                     }
                 </div>
-                <button class="btn btn-danger btn-sm" style="padding: 2px 7px; line-height: 1"
+                <button style="background:#ff4136; color:white; border:none; padding:2px 7px; line-height:1; border-radius:4px; font-size:0.85em"
                         @onclick="() => DeleteBuff(t)">
                     x
                 </button>
