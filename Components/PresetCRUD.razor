@@ -33,6 +33,12 @@
           <hr>
           <label class="form-label">Maximum</label>
           <input class="form-control" type="number" @bind="gauge.Max"/>
+          <label class="form-label">Type</label>
+          <select class="form-select" @bind="gauge.GaugeType">
+              @foreach (var t in Enum.GetValues<GaugeType>()) {
+                  <option value="@t">@t</option>
+              }
+          </select>
           <label class="form-label">Colour</label>
           <div class="d-flex flex-row gap-1">
             <input class="form-control" @bind="gauge.Colour"/>
@@ -86,7 +92,7 @@
     }
 
     public void AddGauge() =>
-        Preset.Gauges.Add(new PresetGauge { Name = $"gauge-{Preset.Gauges.Count}", Max = 10 });
+        Preset.Gauges.Add(new PresetGauge { Name = $"gauge-{Preset.Gauges.Count}", Max = 10, GaugeType = GaugeType.Orb });
 
     public void AddStat() =>
         Preset.StatBlock.Stats.Add(new Stat { Name = $"stat-{Preset.StatBlock.Stats.Count}", Value = 0 });

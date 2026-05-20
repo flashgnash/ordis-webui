@@ -76,6 +76,11 @@
                                             <input type="color" @bind="gauge.Colour" style="opacity:0; position:absolute; inset:0; width:100%; height:100%; cursor:pointer" />
                                         </label>
                                         <input class="form-control form-control-sm" style="flex:1 1 0%; min-width:0" @bind="gauge.Name" />
+                                        <select class="form-select form-select-sm flex-shrink-0" style="width:6em" @bind="gauge.GaugeType">
+                                            @foreach (var t in Enum.GetValues<GaugeType>()) {
+                                                <option value="@t">@t</option>
+                                            }
+                                        </select>
                                         <input class="form-control form-control-sm text-center flex-shrink-0" type="number" placeholder="Max" @bind="gauge.Max" style="width:5em" />
                                     </div>
                                 </ItemTemplate>
@@ -204,7 +209,7 @@
     }
 
     void AddGauge(CharacterPreset preset) =>
-        preset.Gauges.Add(new PresetGauge { Name = $"unnamed-{preset.Gauges.Count}" });
+        preset.Gauges.Add(new PresetGauge { Name = $"unnamed-{preset.Gauges.Count}", GaugeType = GaugeType.Orb });
 
     void AddStat(CharacterPreset preset) =>
         GetStatBlock(preset).Stats.Add(new Stat { Name = $"unnamed-{GetStatBlock(preset).Stats.Count}" });
