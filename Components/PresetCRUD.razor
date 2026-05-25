@@ -1,5 +1,6 @@
 @rendermode InteractiveServer
 @inject CampaignService CampaignService
+@inject AuthenticationStateProvider AuthStateProvider
 @inject IJSRuntime JS
 
 <EditForm Model="Preset" OnValidSubmit="SaveAsync" class="form h-100">
@@ -85,9 +86,13 @@
 
     public async Task SaveAsync()
     {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var discordId = authState.User.FindFirst("discord_id")?.Value;
+        if (string.IsNullOrEmpty(discordId)) return;
+
         Preset.Gauges = Preset.Gauges;
         Preset.StatBlock = Preset.StatBlock;
-        await CampaignService.UpdatePresetAsync(Preset);
+        await CampaignService.UpdatePresetAsync(Preset, discordId);
         await OnSaved.InvokeAsync();
     }
 

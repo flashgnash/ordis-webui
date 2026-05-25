@@ -144,12 +144,18 @@
     [Parameter]
     public Campaign Campaign { get; set; } = new Campaign();
 
+    private string? CallerDiscordId { get; set; }
+
     protected override async Task OnInitializedAsync()
     {
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
-        var discordId = user.FindFirst("discord_id")?.Value ?? "Not logged in";
-        Campaign.DungeonMasterId = discordId;
+        CallerDiscordId = user.FindFirst("discord_id")?.Value;
+
+        if (Campaign.Id == 0)
+        {
+            Campaign.DungeonMasterId = CallerDiscordId ?? "";
+        }
 
         if (Campaign.Id > 0 && Campaign.Presets == null)
         {
@@ -177,7 +183,8 @@
     {
         if (Campaign.Id > 0)
         {
-            await CampaignService.AddPresetAsync(Campaign.Id);
+            if (string.IsNullOrEmpty(CallerDiscordId)) return;
+            await CampaignService.AddPresetAsync(Campaign.Id, CallerDiscordId);
             var fresh = await CampaignService.GetByIdAsync(Campaign.Id);
             Campaign.Presets = fresh?.Presets?.ToList() ?? new();
         }
@@ -198,13 +205,19 @@
         preset.Gauges = preset.Gauges;
         if (preset.StatBlock != null) preset.StatBlock = preset.StatBlock;
         if (Campaign.Id > 0 && preset.Id > 0)
-            await CampaignService.UpdatePresetAsync(preset);
+        {
+            if (string.IsNullOrEmpty(CallerDiscordId)) return;
+            await CampaignService.UpdatePresetAsync(preset, CallerDiscordId);
+        }
     }
 
     async Task RemovePresetAsync(CharacterPreset preset)
     {
         if (Campaign.Id > 0 && preset.Id > 0)
-            await CampaignService.RemovePresetAsync(Campaign.Id, preset.Id);
+        {
+            if (string.IsNullOrEmpty(CallerDiscordId)) return;
+            await CampaignService.RemovePresetAsync(Campaign.Id, preset.Id, CallerDiscordId);
+        }
         Campaign.Presets?.Remove(preset);
     }
 
@@ -243,7 +256,8 @@
 
     async Task SaveAsync()
     {
-        await CampaignService.UpdateAsync(Campaign);
+        if (string.IsNullOrEmpty(CallerDiscordId)) return;
+        await CampaignService.UpdateAsync(Campaign, CallerDiscordId);
         Console.WriteLine($"Saved campaign {Campaign.Id}: {Campaign.Name}, owned by {Campaign.DungeonMasterId}");
     }
 
