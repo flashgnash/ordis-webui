@@ -3,9 +3,27 @@ using Microsoft.EntityFrameworkCore;
 public class CampaignService(IDbContextFactory<OrdisContext> dbFactory, LiveUpdateService liveUpdates)
 {
 
-    public async Task<PlayerCharacter> AddPlayerToCampaignAsync(int campaignId)
+    private async Task AssertIsDmAsync(OrdisContext db, int campaignId, string callerDiscordId)
+    {
+        if (string.IsNullOrEmpty(callerDiscordId))
+            throw new UnauthorizedAccessException("Missing caller identity.");
+
+        var dmId = await db.Campaigns
+            .Where(c => c.Id == campaignId)
+            .Select(c => c.DungeonMasterId)
+            .SingleOrDefaultAsync();
+
+        if (dmId == null)
+            throw new InvalidOperationException($"Campaign {campaignId} not found.");
+
+        if (dmId != callerDiscordId)
+            throw new UnauthorizedAccessException($"User {callerDiscordId} is not the DM of campaign {campaignId}.");
+    }
+
+    public async Task<PlayerCharacter> AddPlayerToCampaignAsync(int campaignId, string callerDiscordId)
     {
         await using var db = await dbFactory.CreateDbContextAsync();
+        await AssertIsDmAsync(db, campaignId, callerDiscordId);
         var campaign = await db.Campaigns.Include(c => c.Players).FirstOrDefaultAsync(c => c.Id == campaignId);
         if (campaign == null) throw new InvalidOperationException($"Campaign {campaignId} not found");
         var player = new PlayerCharacter
@@ -24,9 +42,10 @@ public class CampaignService(IDbContextFactory<OrdisContext> dbFactory, LiveUpda
         return player;
     }
 
-    public async Task<PlayerCharacter> AddNpcAsync(int campaignId)
+    public async Task<PlayerCharacter> AddNpcAsync(int campaignId, string callerDiscordId)
     {
         await using var db = await dbFactory.CreateDbContextAsync();
+        await AssertIsDmAsync(db, campaignId, callerDiscordId);
         var campaign = await db.Campaigns.Include(c => c.Players).FirstOrDefaultAsync(c => c.Id == campaignId);
         if (campaign == null) throw new InvalidOperationException($"Campaign {campaignId} not found");
 
@@ -48,9 +67,10 @@ public class CampaignService(IDbContextFactory<OrdisContext> dbFactory, LiveUpda
         return npc;
     }
 
-    public async Task RemovePlayerAsync(Campaign campaign, PlayerCharacter player) {
+    public async Task RemovePlayerAsync(Campaign campaign, PlayerCharacter player, string callerDiscordId) {
 
         await using var db = await dbFactory.CreateDbContextAsync();
+        await AssertIsDmAsync(db, campaign.Id, callerDiscordId);
         var fetchedCampaign = await db.Campaigns.Include(c => c.Players).FirstOrDefaultAsync(c => c.Id == campaign.Id);
         if (fetchedCampaign == null) return;
 
@@ -68,14 +88,35 @@ public class CampaignService(IDbContextFactory<OrdisContext> dbFactory, LiveUpda
 
     }
 
-    public async Task UpdateAsync(Campaign c)
+    public async Task UpdateAsync(Campaign c, string callerDiscordId)
     {
+        if (string.IsNullOrEmpty(callerDiscordId))
+            throw new UnauthorizedAccessException("Missing caller identity.");
+
         bool isNew = c.Id == 0;
         // Strip presets from cascade — managed separately
         var savedPresets = c.Presets;
         c.Presets = null;
 
         await using var db = await dbFactory.CreateDbContextAsync();
+
+        if (isNew)
+        {
+            c.DungeonMasterId = callerDiscordId;
+        }
+        else
+        {
+            var existingDmId = await db.Campaigns
+                .Where(x => x.Id == c.Id)
+                .Select(x => x.DungeonMasterId)
+                .SingleOrDefaultAsync();
+
+            if (existingDmId != callerDiscordId)
+                throw new UnauthorizedAccessException($"User {callerDiscordId} is not the DM of campaign {c.Id}.");
+
+            // Never trust client-supplied DM id on update
+            c.DungeonMasterId = existingDmId;
+        }
 
         db.Campaigns.Update(c);
 
@@ -123,9 +164,10 @@ public class CampaignService(IDbContextFactory<OrdisContext> dbFactory, LiveUpda
         },
     };
 
-    public async Task AddPresetAsync(int campaignId)
+    public async Task AddPresetAsync(int campaignId, string callerDiscordId)
     {
         await using var db = await dbFactory.CreateDbContextAsync();
+        await AssertIsDmAsync(db, campaignId, callerDiscordId);
         var campaign = await db.Campaigns.Include(c => c.Presets).FirstOrDefaultAsync(c => c.Id == campaignId);
         if (campaign == null) return;
         campaign.Presets ??= new List<CharacterPreset>();
@@ -139,26 +181,32 @@ public class CampaignService(IDbContextFactory<OrdisContext> dbFactory, LiveUpda
         liveUpdates.NotifyCampaignChanged(campaignId);
     }
 
-    public async Task RemovePresetAsync(int campaignId, int presetId)
+    public async Task RemovePresetAsync(int campaignId, int presetId, string callerDiscordId)
     {
         await using var db = await dbFactory.CreateDbContextAsync();
+        await AssertIsDmAsync(db, campaignId, callerDiscordId);
         var preset = await db.CharacterPresets.FindAsync(presetId);
-        if (preset != null) db.CharacterPresets.Remove(preset);
+        if (preset == null) return;
+        if (preset.CampaignId != campaignId)
+            throw new UnauthorizedAccessException($"Preset {presetId} does not belong to campaign {campaignId}.");
+        db.CharacterPresets.Remove(preset);
         await db.SaveChangesAsync();
         liveUpdates.NotifyCampaignChanged(campaignId);
     }
 
-    public async Task UpdatePresetAsync(CharacterPreset preset)
+    public async Task UpdatePresetAsync(CharacterPreset preset, string callerDiscordId)
     {
         await using var db = await dbFactory.CreateDbContextAsync();
+        await AssertIsDmAsync(db, preset.CampaignId, callerDiscordId);
         db.CharacterPresets.Update(preset);
         await db.SaveChangesAsync();
         liveUpdates.NotifyCampaignChanged(preset.CampaignId);
     }
 
-    public async Task<List<PlayerCharacter>> CreateCharactersFromPresetAsync(int campaignId, int presetId, bool isNpc, int count)
+    public async Task<List<PlayerCharacter>> CreateCharactersFromPresetAsync(int campaignId, int presetId, bool isNpc, int count, string callerDiscordId)
     {
         await using var db = await dbFactory.CreateDbContextAsync();
+        await AssertIsDmAsync(db, campaignId, callerDiscordId);
         var campaign = await db.Campaigns
             .Include(c => c.Players)
             .Include(c => c.Presets)
@@ -217,13 +265,14 @@ public class CampaignService(IDbContextFactory<OrdisContext> dbFactory, LiveUpda
         liveUpdates.NotifyCampaignChanged(campaignId);
         return created;
     }
-    public async Task DeleteAsync(int campaignId) {
+    public async Task DeleteAsync(int campaignId, string callerDiscordId) {
         await using var db = await dbFactory.CreateDbContextAsync();
+        await AssertIsDmAsync(db, campaignId, callerDiscordId);
 
         db.Campaigns.Remove(new Campaign(){Id = campaignId});
 
         await db.SaveChangesAsync();
-        
+
     }
 
     public async Task<Campaign?> GetByIdAsync(int id)

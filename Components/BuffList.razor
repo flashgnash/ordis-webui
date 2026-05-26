@@ -57,12 +57,9 @@
 
                                 if (gaugeValueOnly)
                                 {
-                                    <button class="btn @incClass d-flex align-items-center justify-content-center"
-                                            style="width: 1.8em; height: 1.8em; padding: 0"
+                                    <button class="btn btn-sm @incClass"
                                             @onclick="() => ApplyStack(cb)">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
-                                            <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
-                                        </svg>
+                                        Apply
                                     </button>
                                 }
                                 else
@@ -243,8 +240,27 @@
                         }
                         else
                         {
-                            <input class="form-control border-0" style="flex: 1 1 auto; min-width: 8em; color: black"
-                                   @bind="d.Raw" placeholder="e.g. str+=dex/2" />
+                            <div style="position: relative; flex: 1 1 auto; min-width: 8em">
+                                <input class="form-control border-0" style="color: black"
+                                       value="@d.Raw"
+                                       @oninput="e => OnAdvancedInput(d, e.Value?.ToString() ?? string.Empty)"
+                                       @onfocusin="() => _activeDraft = d"
+                                       @onfocusout="() => DismissSuggestions()"
+                                       placeholder="e.g. str+=dex/2" />
+                                @if (_activeDraft == d && _suggestions.Any())
+                                {
+                                    <div class="list-group" style="position: absolute; z-index: 100; width: 100%; max-height: 10em; overflow: auto; top: 100%">
+                                        @foreach (var s in _suggestions)
+                                        {
+                                            <button type="button" class="list-group-item list-group-item-action py-1"
+                                                    @onmousedown="() => AcceptSuggestion(d, s)"
+                                                    @onmousedown:preventDefault>
+                                                @s
+                                            </button>
+                                        }
+                                    </div>
+                                }
+                            </div>
                         }
 
                         <div class="d-flex align-items-center gap-2 ms-auto">
@@ -435,6 +451,81 @@
             }
             return new DraftEffect { AdvancedMode = true, Raw = effect.Formula, IsCumulative = effect.IsCumulative };
         }
+    }
+
+    // -- Advanced mode autocomplete --
+    private DraftEffect? _activeDraft;
+    private List<string> _suggestions = new();
+    private static readonly System.Text.RegularExpressions.Regex WordBoundary =
+        new(@"[+\-*/=<>(),\s]", System.Text.RegularExpressions.RegexOptions.Compiled);
+
+    private List<string> GetVariableNames()
+    {
+        var names = new List<string>();
+        if (Character?.StatBlock?.Stats != null)
+            foreach (var s in Character.StatBlock.Stats)
+                if (!string.IsNullOrWhiteSpace(s.Name)) names.Add(s.Name.ToLower());
+        if (Character?.StatBlock?.SpecialStats != null)
+            foreach (var s in Character.StatBlock.SpecialStats)
+                if (!string.IsNullOrWhiteSpace(s.Name)) names.Add(s.Name.ToLower());
+        if (Character?.Gauges != null)
+            foreach (var g in Character.Gauges)
+            {
+                if (string.IsNullOrWhiteSpace(g.Name)) continue;
+                var n = g.Name.ToLower();
+                names.Add(n);
+                names.Add(n + ".max");
+                names.Add(n + ".value");
+            }
+        return names;
+    }
+
+    private string GetCurrentToken(string text)
+    {
+        // Find the last token being typed (after any operator/separator)
+        var parts = WordBoundary.Split(text);
+        return parts.LastOrDefault(p => p.Length > 0) ?? "";
+    }
+
+    private void OnAdvancedInput(DraftEffect d, string value)
+    {
+        d.Raw = value;
+        var token = GetCurrentToken(value);
+        if (token.Length > 0)
+        {
+            _suggestions = GetVariableNames()
+                .Where(v => v.StartsWith(token, StringComparison.OrdinalIgnoreCase) && !v.Equals(token, StringComparison.OrdinalIgnoreCase))
+                .OrderBy(v => v)
+                .ToList();
+        }
+        else
+        {
+            _suggestions.Clear();
+        }
+    }
+
+    private void AcceptSuggestion(DraftEffect d, string suggestion)
+    {
+        var token = GetCurrentToken(d.Raw);
+        if (token.Length > 0)
+        {
+            var lastIdx = d.Raw.LastIndexOf(token, StringComparison.OrdinalIgnoreCase);
+            d.Raw = d.Raw[..lastIdx] + suggestion;
+        }
+        else
+        {
+            d.Raw += suggestion;
+        }
+        _suggestions.Clear();
+    }
+
+    private async Task DismissSuggestions()
+    {
+        // Small delay so mousedown on suggestion fires before blur clears the list
+        await Task.Delay(150);
+        _suggestions.Clear();
+        _activeDraft = null;
+        StateHasChanged();
     }
 
     private CharacterBuff? editingBuff;

@@ -98,7 +98,27 @@
             {
                 var idx = i;
                 <div class="d-flex gap-1 align-items-center mt-1">
-                    <input class="form-control" @bind="cbEffects[idx]" placeholder="e.g. str+=2" />
+                    <div style="position: relative; flex: 1 1 auto">
+                        <input class="form-control" value="@cbEffects[idx]"
+                               @oninput="e => OnEffectInput(idx, e.Value?.ToString() ?? string.Empty)"
+                               @onfocusin="() => _activeIdx = idx"
+                               @onfocusout="() => DismissSuggestions()"
+                               placeholder="e.g. str+=2" />
+                        @if (_activeIdx == idx && _suggestions.Any())
+                        {
+                            <div class="list-group" style="position: absolute; z-index: 100; width: 100%; max-height: 10em; overflow: auto; top: 100%">
+                                @foreach (var s in _suggestions)
+                                {
+                                    var capturedIdx = idx;
+                                    <button type="button" class="list-group-item list-group-item-action py-1"
+                                            @onmousedown="() => AcceptSuggestion(capturedIdx, s)"
+                                            @onmousedown:preventDefault>
+                                        @s
+                                    </button>
+                                }
+                            </div>
+                        }
+                    </div>
                     <button type="button" class="btn btn-danger btn-sm" @onclick="() => cbEffects.RemoveAt(idx)">x</button>
                 </div>
             }
@@ -113,6 +133,59 @@
 
 @code {
     [Parameter] public int CampaignId { get; set; }
+    [Parameter] public List<string> VariableNames { get; set; } = new();
+
+    // -- Autocomplete --
+    private int? _activeIdx;
+    private List<string> _suggestions = new();
+    private static readonly System.Text.RegularExpressions.Regex WordBoundary =
+        new(@"[+\-*/=<>(),\s]", System.Text.RegularExpressions.RegexOptions.Compiled);
+
+    private string GetCurrentToken(string text)
+    {
+        var parts = WordBoundary.Split(text);
+        return parts.LastOrDefault(p => p.Length > 0) ?? "";
+    }
+
+    private void OnEffectInput(int idx, string value)
+    {
+        cbEffects[idx] = value;
+        var token = GetCurrentToken(value);
+        if (token.Length > 0)
+        {
+            _suggestions = VariableNames
+                .Where(v => v.StartsWith(token, StringComparison.OrdinalIgnoreCase) && !v.Equals(token, StringComparison.OrdinalIgnoreCase))
+                .OrderBy(v => v)
+                .ToList();
+        }
+        else
+        {
+            _suggestions.Clear();
+        }
+    }
+
+    private void AcceptSuggestion(int idx, string suggestion)
+    {
+        var token = GetCurrentToken(cbEffects[idx]);
+        if (token.Length > 0)
+        {
+            var lastIdx2 = cbEffects[idx].LastIndexOf(token, StringComparison.OrdinalIgnoreCase);
+            cbEffects[idx] = cbEffects[idx][..lastIdx2] + suggestion;
+        }
+        else
+        {
+            cbEffects[idx] += suggestion;
+        }
+        _suggestions.Clear();
+    }
+
+    private async Task DismissSuggestions()
+    {
+        await Task.Delay(150);
+        _suggestions.Clear();
+        _activeIdx = null;
+        StateHasChanged();
+    }
 
     private List<BuffTemplate> campaignBuffs = new();
     private static readonly BuffType[] modTabs = [BuffType.Equipment, BuffType.Status, BuffType.Skill];

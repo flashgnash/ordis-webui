@@ -127,14 +127,14 @@
 
                         <table class="table spaced">
                             <tbody>
-                                @foreach (RollResult roll in (Char.Rolls ?? Enumerable.Empty<RollResult>()).OrderBy(r => r.Timestamp))
+                                @foreach (RollResult roll in (Char.Rolls ?? Enumerable.Empty<RollResult>()).OrderByDescending(r => r.Timestamp))
                                 {
                                     <tr>
                                        <td class="text-muted">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" class="bi bi-clock-fill" viewBox="0 0 16 16">
                                               <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71z"/>
                                             </svg>
-                                            @roll.Timestamp?.ToString("HH:mm")
+                                            @FormatRollTimestamp(roll.Timestamp)
                                         </td>
 
                                         <td>
@@ -272,9 +272,10 @@ else
 
         DiscordId = user.FindFirst("discord_id")?.Value ?? "Not logged in";
 
-        // Only present the user with data if they are the character's owner
+        // Allow access if the user owns the character or is the DM of its campaign
         // (this is only safe because I'm using serverside blazor)
-        if (character?.UserId == DiscordId)
+        var isDm = character?.Campaign?.DungeonMasterId == DiscordId;
+        if (character != null && (character.UserId == DiscordId || isDm))
         {
             UserState.SelectedCharacter = character;
             Char = character;
@@ -320,5 +321,23 @@ else
     public void Dispose()
     {
         LiveUpdates.OnCharacterChanged -= OnCharacterUpdated;
+    }
+
+    private static string FormatRollTimestamp(DateTime? timestamp)
+    {
+        if (timestamp == null) return "";
+
+        var local = timestamp.Value.Kind == DateTimeKind.Utc
+            ? timestamp.Value.ToLocalTime()
+            : timestamp.Value;
+        var now = DateTime.Now;
+
+        if (local.Date != now.Date)
+            return local.ToString("MMM d HH:mm");
+
+        var age = now - local;
+        if (age.TotalSeconds < 60) return "now";
+        if (age.TotalMinutes < 60) return $"{(int)age.TotalMinutes}m ago";
+        return $"{(int)age.TotalHours}h ago";
     }
 }

@@ -4,7 +4,7 @@ using System.Text.RegularExpressions;
 
 public static class BuffFormula
 {
-    private static readonly string[] Operators = ["+=", "-=", "*=", "/="];
+    private static readonly string[] Operators = ["+=", "-=", "*=", "/=", "="];
 
     /// Parse "str+=1" or "health*=dex/2" into (target, op, expr).
     public static (string target, string op, string expr)? Parse(string formula)
@@ -91,6 +91,7 @@ public static class BuffFormula
                         "-=" => effective - val.Value,
                         "*=" => effective * val.Value,
                         "/=" => val.Value != 0 ? effective / val.Value : effective,
+                        "=" => val.Value,
                         _ => effective
                     };
             }
@@ -139,7 +140,7 @@ public static class BuffFormula
         var parsed = Parse(formula);
         if (parsed == null) return formula;
         var (target, op, expr) = parsed.Value;
-        var sym = op switch { "+=" => "+", "-=" => "-", "*=" => "×", "/=" => "÷", _ => op };
+        var sym = op switch { "+=" => "+", "-=" => "-", "*=" => "×", "/=" => "÷", "=" => "=", _ => op };
         return $"{FormatTarget(target)} {sym} {expr}";
     }
 

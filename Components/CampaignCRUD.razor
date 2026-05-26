@@ -32,7 +32,7 @@
             </div>
             <hr class="mt-1 mb-2" style="border-color: rgba(255,255,255,0.15)" />
             <div class="card p-0" style="color: white">
-                <ModifierLibrary CampaignId="@Campaign.Id" />
+                <ModifierLibrary CampaignId="@Campaign.Id" VariableNames="@GetVariableNames()" />
             </div>
         </div>
 
@@ -76,6 +76,11 @@
                                             <input type="color" @bind="gauge.Colour" style="opacity:0; position:absolute; inset:0; width:100%; height:100%; cursor:pointer" />
                                         </label>
                                         <input class="form-control form-control-sm" style="flex:1 1 0%; min-width:0" @bind="gauge.Name" />
+                                        <select class="form-select form-select-sm flex-shrink-0" style="width:6em" @bind="gauge.GaugeType">
+                                            @foreach (var t in Enum.GetValues<GaugeType>()) {
+                                                <option value="@t">@t</option>
+                                            }
+                                        </select>
                                         <input class="form-control form-control-sm text-center flex-shrink-0" type="number" placeholder="Max" @bind="gauge.Max" style="width:5em" />
                                     </div>
                                 </ItemTemplate>
@@ -139,12 +144,18 @@
     [Parameter]
     public Campaign Campaign { get; set; } = new Campaign();
 
+    private string? CallerDiscordId { get; set; }
+
     protected override async Task OnInitializedAsync()
     {
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
-        var discordId = user.FindFirst("discord_id")?.Value ?? "Not logged in";
-        Campaign.DungeonMasterId = discordId;
+        CallerDiscordId = user.FindFirst("discord_id")?.Value;
+
+        if (Campaign.Id == 0)
+        {
+            Campaign.DungeonMasterId = CallerDiscordId ?? "";
+        }
 
         if (Campaign.Id > 0 && Campaign.Presets == null)
         {
@@ -172,7 +183,8 @@
     {
         if (Campaign.Id > 0)
         {
-            await CampaignService.AddPresetAsync(Campaign.Id);
+            if (string.IsNullOrEmpty(CallerDiscordId)) return;
+            await CampaignService.AddPresetAsync(Campaign.Id, CallerDiscordId);
             var fresh = await CampaignService.GetByIdAsync(Campaign.Id);
             Campaign.Presets = fresh?.Presets?.ToList() ?? new();
         }
@@ -193,18 +205,24 @@
         preset.Gauges = preset.Gauges;
         if (preset.StatBlock != null) preset.StatBlock = preset.StatBlock;
         if (Campaign.Id > 0 && preset.Id > 0)
-            await CampaignService.UpdatePresetAsync(preset);
+        {
+            if (string.IsNullOrEmpty(CallerDiscordId)) return;
+            await CampaignService.UpdatePresetAsync(preset, CallerDiscordId);
+        }
     }
 
     async Task RemovePresetAsync(CharacterPreset preset)
     {
         if (Campaign.Id > 0 && preset.Id > 0)
-            await CampaignService.RemovePresetAsync(Campaign.Id, preset.Id);
+        {
+            if (string.IsNullOrEmpty(CallerDiscordId)) return;
+            await CampaignService.RemovePresetAsync(Campaign.Id, preset.Id, CallerDiscordId);
+        }
         Campaign.Presets?.Remove(preset);
     }
 
     void AddGauge(CharacterPreset preset) =>
-        preset.Gauges.Add(new PresetGauge { Name = $"unnamed-{preset.Gauges.Count}" });
+        preset.Gauges.Add(new PresetGauge { Name = $"unnamed-{preset.Gauges.Count}", GaugeType = GaugeType.Orb });
 
     void AddStat(CharacterPreset preset) =>
         GetStatBlock(preset).Stats.Add(new Stat { Name = $"unnamed-{GetStatBlock(preset).Stats.Count}" });
@@ -212,9 +230,34 @@
     void AddSpecialStat(CharacterPreset preset) =>
         GetStatBlock(preset).SpecialStats.Add(new Stat { Name = $"unnamed-{GetStatBlock(preset).SpecialStats.Count}" });
 
+    private List<string> GetVariableNames()
+    {
+        var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var preset in Presets)
+        {
+            var sb = preset.StatBlock;
+            if (sb?.Stats != null)
+                foreach (var s in sb.Stats)
+                    if (!string.IsNullOrWhiteSpace(s.Name)) names.Add(s.Name.ToLower());
+            if (sb?.SpecialStats != null)
+                foreach (var s in sb.SpecialStats)
+                    if (!string.IsNullOrWhiteSpace(s.Name)) names.Add(s.Name.ToLower());
+            foreach (var g in preset.Gauges)
+            {
+                if (string.IsNullOrWhiteSpace(g.Name)) continue;
+                var n = g.Name.ToLower();
+                names.Add(n);
+                names.Add(n + ".max");
+                names.Add(n + ".value");
+            }
+        }
+        return names.OrderBy(n => n).ToList();
+    }
+
     async Task SaveAsync()
     {
-        await CampaignService.UpdateAsync(Campaign);
+        if (string.IsNullOrEmpty(CallerDiscordId)) return;
+        await CampaignService.UpdateAsync(Campaign, CallerDiscordId);
         Console.WriteLine($"Saved campaign {Campaign.Id}: {Campaign.Name}, owned by {Campaign.DungeonMasterId}");
     }
 
