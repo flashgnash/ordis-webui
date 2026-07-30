@@ -1,0 +1,10 @@
+{
+  "name": "ow3n",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Character sheet app.",
+  "type": "module",
+  "scripts": {
+    "test": "node --test"
+  }
+}
