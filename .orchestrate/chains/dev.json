@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "id": "dev",
+  "name": "Dev",
+  "description": null,
+  "stages": [
+    {
+      "id": "dev",
+      "order": 0,
+      "parallelGroup": null,
+      "role": "dev",
+      "runner": "claude-code",
+      "model": "claude-opus-4-8",
+      "promptRef": "dev.md",
+      "importDesign": false,
+      "allowConfigEdits": false,
+      "provider": "anthropic",
+      "account": "anthropic/main",
+      "reasoning": null,
+      "allowUiDesigner": false,
+      "importUiDesignHandoff": false
+    },
+    {
+      "id": "review",
+      "order": 1,
+      "parallelGroup": null,
+      "role": "review",
+      "runner": "claude-code",
+      "model": "claude-opus-4-8",
+      "promptRef": "review.md",
+      "importDesign": false,
+      "allowConfigEdits": false,
+      "provider": "anthropic",
+      "account": "anthropic/main",
+      "reasoning": null,
+      "allowUiDesigner": false,
+      "importUiDesignHandoff": false
+    }
+  ]
+}
