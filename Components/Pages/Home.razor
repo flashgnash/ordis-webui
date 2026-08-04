@@ -124,7 +124,7 @@
                                         {
                                             <div class="flex-shrink-0">
                                                 <DieShape Expression="@(lastRoll.Rolls?.FirstOrDefault()?.Expression ?? lastRoll.Message)">
-                                                    @lastRoll.Result
+                                                    <RollFace Roll="lastRoll" Size="2.5em" />
                                                 </DieShape>
                                             </div>
                                         }

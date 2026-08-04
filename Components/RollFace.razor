@@ -1,0 +1,20 @@
+@* Renders a roll outcome. When the roll was a lone custom die whose face is overridden,
+   shows the face's image or text; otherwise falls back to the numeric result. *@
+@if (!string.IsNullOrWhiteSpace(Roll?.FaceImage))
+{
+    <img src="@Roll!.FaceImage" alt="@(Roll.FaceText ?? Roll.Result.ToString())"
+         style="max-width: @Size; max-height: @Size; object-fit: contain; vertical-align: middle" />
+}
+else if (!string.IsNullOrWhiteSpace(Roll?.FaceText))
+{
+    <span>@Roll!.FaceText</span>
+}
+else
+{
+    @(Roll?.Result)
+}
+
+@code {
+    [Parameter] public RollResult? Roll { get; set; }
+    [Parameter] public string Size { get; set; } = "2em";
+}

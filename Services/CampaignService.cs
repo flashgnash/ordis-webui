@@ -265,6 +265,51 @@ public class CampaignService(IDbContextFactory<OrdisContext> dbFactory, LiveUpda
         liveUpdates.NotifyCampaignChanged(campaignId);
         return created;
     }
+    // -- Custom dice --
+
+    public async Task<List<CustomDie>> GetCustomDiceAsync(int campaignId)
+    {
+        await using var db = await dbFactory.CreateDbContextAsync();
+        return await db.CustomDice
+            .Where(d => d.CampaignId == campaignId)
+            .OrderBy(d => d.Name)
+            .ToListAsync();
+    }
+
+    public async Task<CustomDie> SaveCustomDieAsync(CustomDie die, string callerDiscordId)
+    {
+        await using var db = await dbFactory.CreateDbContextAsync();
+        await AssertIsDmAsync(db, die.CampaignId, callerDiscordId);
+
+        var existing = die.Id != Guid.Empty ? await db.CustomDice.FindAsync(die.Id) : null;
+        if (existing == null)
+        {
+            if (die.Id == Guid.Empty) die.Id = Guid.NewGuid();
+            db.CustomDice.Add(die);
+        }
+        else
+        {
+            existing.Name = die.Name;
+            existing.Sides = die.Sides;
+            existing.FacesJson = die.FacesJson;
+        }
+
+        await db.SaveChangesAsync();
+        liveUpdates.NotifyCampaignChanged(die.CampaignId);
+        return existing ?? die;
+    }
+
+    public async Task DeleteCustomDieAsync(Guid dieId, string callerDiscordId)
+    {
+        await using var db = await dbFactory.CreateDbContextAsync();
+        var die = await db.CustomDice.FindAsync(dieId);
+        if (die == null) return;
+        await AssertIsDmAsync(db, die.CampaignId, callerDiscordId);
+        db.CustomDice.Remove(die);
+        await db.SaveChangesAsync();
+        liveUpdates.NotifyCampaignChanged(die.CampaignId);
+    }
+
     public async Task DeleteAsync(int campaignId, string callerDiscordId) {
         await using var db = await dbFactory.CreateDbContextAsync();
         await AssertIsDmAsync(db, campaignId, callerDiscordId);
@@ -292,6 +337,8 @@ public class CampaignService(IDbContextFactory<OrdisContext> dbFactory, LiveUpda
                     .ThenInclude(b => b.Template)
 
             .Include(g => g.Presets)
+
+            .Include(g => g.CustomDice)
 
             .SingleOrDefaultAsync(c => c.Id == id);
     }

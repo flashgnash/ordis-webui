@@ -1,5 +1,6 @@
 @rendermode InteractiveServer
 @inject PlayerCharacterService CharacterService
+@inject CampaignService CampaignService
 @inject DiscordService DiscordService
 @inject ILogger<RollMenu> Logger
 <!-- Middle -->
@@ -43,6 +44,21 @@
   }
 </div>
 
+  @if(CustomDice.Any()) {
+    <div id="customDice" class="m-auto flex-grow-1">
+      <h3 class="text-center">Custom Dice</h3>
+      <div class="d-flex flex-wrap">
+        @foreach (var die in CustomDice)
+        {
+            <button class="btn btn-secondary flex-fill m-1" @onclick="() => AddDie(die)">
+                @die.Name (d@die.Sides)
+            </button>
+        }
+      </div>
+    </div>
+    <br>
+  }
+
   @if(Character.SavedRollsDict != null) {
     <div id="savedRolls" class="m-auto flex-grow-1">
       <h3 class="text-center">Custom Rolls</h3>
@@ -83,7 +99,7 @@
       <h3 class="text-danger">@ErrorMessage</h3>
     }
 
-    <h4><strong>@LastResult?.Result</strong></h4>
+    <h4><strong><RollFace Roll="LastResult" Size="3em" /></strong></h4>
       @if(LastResult?.Result != null) {
         <span class="text-muted">
         (@foreach (var g in LastResult?.Rolls.GroupBy(r => r.Expression)) {
@@ -150,15 +166,27 @@
 
     private PlayerCharacter? _prevCharacter;
 
+    public List<CustomDie> CustomDice { get; set; } = new();
+
     protected override void OnInitialized() {
         ClearRoll();
     }
 
-    protected override void OnParametersSet() {
+    protected override async Task OnParametersSetAsync() {
         if (Character != _prevCharacter) {
             _prevCharacter = Character;
             ClearRoll();
+
+            CustomDice = Character?.Campaign?.Id is int campaignId
+                ? await CampaignService.GetCustomDiceAsync(campaignId)
+                : new();
         }
+    }
+
+    private void AddDie(CustomDie die)
+    {
+        var token = $"1d{die.Name}";
+        RollText = string.IsNullOrWhiteSpace(RollText) ? token : $"{RollText}+{token}";
     }
 
     private string Truncate(string input, int length = 3)

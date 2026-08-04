@@ -19,6 +19,12 @@
 	    </div>
 	</Modal>
 
+	<Modal Title="Custom Dice" id="customDiceDialog">
+	    <div class=p-3>
+			<CustomDiceEditor CampaignId="@Campaign.Id" DiscordId="@DiscordId" />
+	    </div>
+	</Modal>
+
     <Modal Title="Roll" id="rollDialog">
         <div class=p-3>
             <RollMenu Character="@_rollDialogCharacter" />
@@ -45,6 +51,11 @@
                         <span class="badge bg-secondary">Default die: @Campaign.DefaultRollDie</span>
                     }
                     <span class="badge bg-secondary">Modifier formula: @(Campaign.StatModifierFormula ?? "5e")</span>
+                    @if (IsDM) {
+                        <button class="badge bg-secondary border-0" onClick="customDiceDialog.showModal()">
+                            Custom dice
+                        </button>
+                    }
                 </div>
             </div>
             <a onClick="rollDialog.showModal()" class="btn btn-primary p-2 rounded-3 d-flex justify-content-center flex-shrink-0">

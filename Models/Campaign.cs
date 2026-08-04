@@ -10,6 +10,8 @@ public class Campaign
 
     public ICollection<CharacterPreset>? Presets { get; set; }
 
+    public ICollection<CustomDie>? CustomDice { get; set; }
+
     public string? DefaultRollDie { get; set; }
     public string? StatModifierFormula { get; set; }
 }
