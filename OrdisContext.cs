@@ -20,6 +20,8 @@ public partial class OrdisContext : DbContext
 
     public virtual DbSet<CharacterPreset> CharacterPresets { get; set; }
 
+    public virtual DbSet<CustomDie> CustomDice { get; set; }
+
     public virtual DbSet<User> Users { get; set; }
 
     public virtual DbSet<BuffTemplate> BuffTemplates { get; set; }
@@ -59,6 +61,14 @@ public partial class OrdisContext : DbContext
         {
             entity.HasMany(e => e.Players).WithOne(e => e.Campaign).OnDelete(DeleteBehavior.Cascade);
             entity.HasMany(e => e.Presets).WithOne(e => e.Campaign).HasForeignKey(e => e.CampaignId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasMany(e => e.CustomDice).WithOne(e => e.Campaign).HasForeignKey(e => e.CampaignId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<CustomDie>(entity =>
+        {
+            entity.ToTable("custom_dice");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.FacesJson).HasColumnName("faces");
         });
 
         modelBuilder.Entity<CharacterPreset>(entity =>

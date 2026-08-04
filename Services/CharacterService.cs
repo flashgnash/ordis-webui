@@ -25,8 +25,14 @@ public class PlayerCharacterService(IDbContextFactory<OrdisContext> dbFactory, H
 
     public async Task<RollResult> RollFor(PlayerCharacter character, String rollFormula)
     {
+        // Resolve any custom dice defined on the character's campaign. In a formula a custom
+        // die is treated as its underlying numeric die; if rolled on its own we later show
+        // the rolled face's text/image override instead of the number.
+        var customDice = await GetCustomDiceForCharacterAsync(character.Id);
+        var resolvedFormula = CustomDie.TranslateFormula(rollFormula, customDice);
+
         var response = await httpClient.PostAsync(
-            $"http://localhost:3000/roll/{character.Id}/{rollFormula}",
+            $"http://localhost:3000/roll/{character.Id}/{resolvedFormula}",
             null
         );
 
@@ -48,10 +54,28 @@ public class PlayerCharacterService(IDbContextFactory<OrdisContext> dbFactory, H
             throw new InvalidRollException();
         }
         if (rollResult == null) throw new InvalidRollException();
-        
+
+        // If the whole roll was a single custom die, surface the rolled face's override.
+        var loneDie = CustomDie.MatchLone(rollFormula, customDice);
+        var face = loneDie?.FaceFor((int)Math.Round(rollResult.Result));
+        if (face != null)
+        {
+            rollResult.FaceText = face.Text;
+            rollResult.FaceImage = face.Image;
+        }
+
         await SaveRollAsync(character.Id, rollResult);
 
         return rollResult;
+    }
+
+    private async Task<List<CustomDie>> GetCustomDiceForCharacterAsync(int characterId)
+    {
+        using var db = await dbFactory.CreateDbContextAsync();
+        var campaign = await db.Campaigns
+            .Include(c => c.CustomDice)
+            .FirstOrDefaultAsync(c => c.Players!.Any(p => p.Id == characterId));
+        return campaign?.CustomDice?.ToList() ?? new();
     }
 
     public async Task SaveRollAsync(int id, RollResult rollResult) {

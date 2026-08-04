@@ -25,4 +25,12 @@ public class RollResult
 
     [JsonPropertyName("message")]
     public string Message { get; set; }
+
+    // When a lone custom die is rolled, the rolled face's overridden text/image (if any).
+    // Not part of the roll-service payload — populated after the roll and persisted for display.
+    [JsonIgnore]
+    public string? FaceText { get; set; }
+
+    [JsonIgnore]
+    public string? FaceImage { get; set; }
 }

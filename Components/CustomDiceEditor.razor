@@ -1,0 +1,170 @@
+@inject CampaignService CampaignService
+
+@* DM tool for defining custom dice whose faces can be overridden with text or images.
+   In formulas a custom die behaves as its numeric die (e.g. "1dfate" rolls a d6); when a
+   die is rolled on its own, an overridden face's text/image is shown instead of the number. *@
+
+<div class="d-flex flex-column gap-2" style="min-width: 300px">
+    @if (!Dice.Any())
+    {
+        <span class="text-muted">No custom dice yet. Add one below.</span>
+    }
+
+    @foreach (var die in Dice)
+    {
+        <div class="card">
+            <div class="card-header py-1 px-2 d-flex align-items-center gap-2">
+                <input class="form-control form-control-sm" style="width: 8em" @bind="die.Name" placeholder="name" />
+                <span class="text-muted">d</span>
+                <input type="number" class="form-control form-control-sm" style="width: 5em" min="1" max="1000"
+                       value="@die.Sides"
+                       @onchange="e => SetSides(die, e.Value?.ToString())" />
+                <div class="flex-grow-1"></div>
+                <button class="btn btn-sm btn-secondary" @onclick="() => Toggle(die.Id)">
+                    @(_expanded == die.Id ? "Hide faces" : "Faces")
+                </button>
+                <button class="btn btn-sm btn-primary" @onclick="() => SaveAsync(die)">Save</button>
+                <button class="btn btn-sm btn-danger" @onclick="() => DeleteAsync(die)">x</button>
+            </div>
+            @if (_expanded == die.Id)
+            {
+                <div class="card-body p-2">
+                    <p class="text-muted mb-2" style="font-size: 0.8em">
+                        Leave a face blank to keep its number. Text or an image URL overrides how that face is shown.
+                    </p>
+                    <table class="table table-sm mb-0">
+                        <thead>
+                            <tr><th style="width: 3em">Face</th><th>Text</th><th>Image URL</th><th style="width: 2.5em"></th></tr>
+                        </thead>
+                        <tbody>
+                            @for (int value = 1; value <= die.Sides; value++)
+                            {
+                                var v = value;
+                                var face = GetFace(die, v);
+                                <tr>
+                                    <td class="align-middle">@v</td>
+                                    <td>
+                                        <input class="form-control form-control-sm" value="@face.Text"
+                                               @onchange="e => SetFace(die, v, text: e.Value?.ToString())" />
+                                    </td>
+                                    <td>
+                                        <input class="form-control form-control-sm" value="@face.Image"
+                                               @onchange="e => SetFace(die, v, image: e.Value?.ToString())" />
+                                    </td>
+                                    <td class="align-middle text-center">
+                                        @if (!string.IsNullOrWhiteSpace(face.Image))
+                                        {
+                                            <img src="@face.Image" alt="@v" style="max-width: 2em; max-height: 2em; object-fit: contain" />
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    }
+
+    <div class="d-flex align-items-center gap-2 mt-1">
+        <input class="form-control form-control-sm" style="width: 8em" @bind="_newName" placeholder="name" />
+        <span class="text-muted">d</span>
+        <input type="number" class="form-control form-control-sm" style="width: 5em" min="1" max="1000" @bind="_newSides" />
+        <button class="btn btn-sm btn-primary" @onclick="AddAsync">Add die</button>
+    </div>
+    @if (!string.IsNullOrEmpty(_error))
+    {
+        <span class="text-danger" style="font-size: 0.85em">@_error</span>
+    }
+</div>
+
+@code {
+    [Parameter] public int CampaignId { get; set; }
+    [Parameter] public string? DiscordId { get; set; }
+
+    private List<CustomDie> Dice { get; set; } = new();
+    private Guid? _expanded;
+    private string _newName = "";
+    private int _newSides = 6;
+    private string? _error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (CampaignId > 0)
+            Dice = await CampaignService.GetCustomDiceAsync(CampaignId);
+    }
+
+    private void Toggle(Guid id) => _expanded = _expanded == id ? null : id;
+
+    private static readonly System.Text.RegularExpressions.Regex NameRegex =
+        new(@"^[A-Za-z][A-Za-z0-9_]*$", System.Text.RegularExpressions.RegexOptions.Compiled);
+
+    private void SetSides(CustomDie die, string? raw)
+    {
+        if (int.TryParse(raw, out var s) && s >= 1)
+            die.Sides = Math.Min(s, 1000);
+    }
+
+    // Faces are stored as JSON, so edit a working copy and write it back.
+    private DieFace GetFace(CustomDie die, int value)
+    {
+        var faces = die.Faces;
+        return faces.FirstOrDefault(f => f.Value == value) ?? new DieFace { Value = value };
+    }
+
+    private void SetFace(CustomDie die, int value, string? text = null, string? image = null)
+    {
+        var faces = die.Faces;
+        var face = faces.FirstOrDefault(f => f.Value == value);
+        if (face == null)
+        {
+            face = new DieFace { Value = value };
+            faces.Add(face);
+        }
+        if (text != null) face.Text = string.IsNullOrWhiteSpace(text) ? null : text;
+        if (image != null) face.Image = string.IsNullOrWhiteSpace(image) ? null : image;
+
+        // Drop faces that no longer carry an override to keep the JSON tidy.
+        die.Faces = faces.Where(f => f.HasOverride).ToList();
+    }
+
+    private async Task AddAsync()
+    {
+        _error = null;
+        if (!NameRegex.IsMatch(_newName))
+        {
+            _error = "Name must start with a letter and contain only letters, numbers or underscores.";
+            return;
+        }
+        if (Dice.Any(d => string.Equals(d.Name, _newName, StringComparison.OrdinalIgnoreCase)))
+        {
+            _error = "A die with that name already exists.";
+            return;
+        }
+
+        var die = new CustomDie { Name = _newName, Sides = Math.Clamp(_newSides, 1, 1000), CampaignId = CampaignId };
+        var saved = await CampaignService.SaveCustomDieAsync(die, DiscordId ?? "");
+        Dice.Add(saved);
+        _expanded = saved.Id;
+        _newName = "";
+        _newSides = 6;
+    }
+
+    private async Task SaveAsync(CustomDie die)
+    {
+        _error = null;
+        if (!NameRegex.IsMatch(die.Name))
+        {
+            _error = "Name must start with a letter and contain only letters, numbers or underscores.";
+            return;
+        }
+        await CampaignService.SaveCustomDieAsync(die, DiscordId ?? "");
+    }
+
+    private async Task DeleteAsync(CustomDie die)
+    {
+        await CampaignService.DeleteCustomDieAsync(die.Id, DiscordId ?? "");
+        Dice.Remove(die);
+        if (_expanded == die.Id) _expanded = null;
+    }
+}
