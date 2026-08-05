@@ -117,7 +117,12 @@ env -i \
   Discord__ClientId=local-browser-test \
   Discord__ClientSecret=local-browser-test-secret \
   DiscordWebhookUrl=http://127.0.0.1:3000/webhook \
-  "$OW3N_APP" >"$app_log" 2>&1 &
+  "$OW3N_APP" --testing >"$app_log" 2>&1 &
+  # --testing enables OW3N's TEST-ONLY auth bypass: it auto-authenticates requests
+  # as auto-generated 3-digit test accounts (0-999, never a real Discord id) and
+  # seeds a usable test character for each, so browser tests can reach the roll
+  # panel without real Discord OAuth. This flag is the disposable stack's only way
+  # in — see RUNBOOK.md and TestingSupport.cs. Never pass it in production.
 app_pid=$!
 
 http_status=""

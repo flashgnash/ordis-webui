@@ -1,13 +1,26 @@
-using System.Security.Claims;
-using System.Text.Json;
 using DotNetEnv;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication.OAuth;
 using Microsoft.EntityFrameworkCore;
 using Ordis.Components;
 
-var builder = WebApplication.CreateBuilder(args);
+// TEST-ONLY auth bypass gate. `--testing` is the ONLY way to enable it — there is
+// deliberately no env-var/config fallback, so it can never be on in production.
+// See TestingSupport.cs for the full explanation.
+var testingMode = TestingAuth.IsEnabled(args);
+
+// Strip the flag before it reaches the command-line configuration provider (which
+// would otherwise reject a value-less switch), so it can only be read as a raw
+// argument via TestingAuth.IsEnabled above.
+var builder = WebApplication.CreateBuilder(
+    args.Where(a => a != TestingAuth.TestingFlag).ToArray());
+
+if (testingMode)
+{
+    Console.WriteLine(
+        "[TESTING] --testing flag set: auto-authenticating as auto-generated 3-digit " +
+        "test accounts. Do NOT use this in production.");
+}
 
 builder.Configuration.AddEnvironmentVariables();
 Env.Load();
@@ -41,67 +54,9 @@ var discordConfig = builder.Configuration.GetSection("Discord");
 var clientId = discordConfig["ClientId"]!;
 var clientSecret = discordConfig["ClientSecret"]!;
 
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = "Discord";
-})
-
-.AddCookie(o =>
-{
-    o.LoginPath = "/login";
-    o.Cookie.SameSite = SameSiteMode.None;
-    o.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-})
-.AddOAuth("Discord", options =>
-{
-    options.ClientId = clientId;
-    options.ClientSecret = clientSecret;
-
-    options.CorrelationCookie.SameSite = SameSiteMode.None;
-    options.CorrelationCookie.SecurePolicy = CookieSecurePolicy.Always;
-
-    options.AuthorizationEndpoint = "https://discord.com/oauth2/authorize";
-    options.TokenEndpoint = "https://discord.com/api/oauth2/token";
-    options.UserInformationEndpoint = "https://discord.com/api/users/@me";
-
-    options.CallbackPath = "/signin-discord";
-    options.Scope.Add("identify");
-    options.SaveTokens = true;
-
-    options.Events = new OAuthEvents
-    {
-        OnCreatingTicket = async ctx =>
-        {
-            var req = new HttpRequestMessage(HttpMethod.Get, ctx.Options.UserInformationEndpoint);
-            req.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", ctx.AccessToken);
-            var res = await ctx.Backchannel.SendAsync(req);
-            var json = JsonDocument.Parse(await res.Content.ReadAsStringAsync());
-
-            var discordId = json.RootElement.GetProperty("id").GetString()!;
-            var discordName = json.RootElement.GetProperty("username").GetString()!;
-
-            ctx.Identity!.AddClaim(new Claim("discord_id", discordId));
-            ctx.Identity.AddClaim(new Claim("discord_name", discordName));
-
-            // Add to DB if not exist
-            using var scope = ctx.HttpContext.RequestServices.CreateScope();
-            var db = scope.ServiceProvider.GetRequiredService<OrdisContext>();
-
-            var user = await db.Users.FindAsync(discordId);
-            if (user == null)
-            {
-                user = new User
-                {
-                    Id = discordId,
-                    Username = discordName
-                };
-                db.Users.Add(user);
-                await db.SaveChangesAsync();
-            }
-        }
-    };
-});
+// Normal Discord OAuth in production. When --testing is set, this also registers
+// the auto-authenticating test scheme and makes it the default (see TestingSupport.cs).
+TestingAuth.ConfigureAuthentication(builder.Services, testingMode, clientId, clientSecret);
 
 builder.Services.AddAuthorization(options =>
 {
@@ -148,6 +103,13 @@ app.MapGet("/logout", async (HttpContext ctx) =>
     ctx.Response.Redirect("/");
 });
 
+if (testingMode)
+{
+    // TEST-ONLY: /testlogin lets browser tests switch between (or auto-create)
+    // 3-digit test accounts. Only mapped under --testing (see TestingSupport.cs).
+    TestingAuth.MapTestingEndpoints(app);
+}
+
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
@@ -155,4 +117,13 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<OrdisContext>();
     db.Database.Migrate();
-}app.Run();
+}
+
+if (testingMode)
+{
+    // TEST-ONLY: seed the default test accounts + a usable character for each so
+    // the roll panel is reachable for automated browser testing.
+    await TestingAuth.SeedTestDataAsync(app.Services);
+}
+
+app.Run();
