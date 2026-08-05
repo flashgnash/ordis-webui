@@ -148,15 +148,18 @@
 
     Dictionary<string, string> btnClasses = new();
 
-    private PlayerCharacter? _prevCharacter;
+    private int? _prevCharacterId;
 
     protected override void OnInitialized() {
         ClearRoll();
     }
 
     protected override void OnParametersSet() {
-        if (Character != _prevCharacter) {
-            _prevCharacter = Character;
+        // Compare by character Id rather than object reference: a live update
+        // reloads the character into a new object instance for the *same*
+        // character, which must not wipe the currently displayed roll result.
+        if (Character?.Id != _prevCharacterId) {
+            _prevCharacterId = Character?.Id;
             ClearRoll();
         }
     }
