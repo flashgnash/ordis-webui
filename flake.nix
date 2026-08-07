@@ -209,6 +209,43 @@
         };
         dotnetPkg = pkgs.dotnetCorePackages.sdk_9_0;
         dotnetRuntime = pkgs.dotnetCorePackages.aspnetcore_9_0;
+
+        # Implements `nix run .#build`: the repository-local, sandbox-safe build wrapper.
+        buildCommand = pkgs.writeShellApplication {
+          name = "ow3n-build";
+          runtimeInputs = with pkgs; [
+            dart-sass
+            dotnetPkg
+            nodejs
+          ];
+          text = ''
+            if [[ ! -f Ordis.csproj ]]; then
+              echo "Run this command from the OW3N repository root." >&2
+              exit 1
+            fi
+
+            export XDG_CACHE_HOME="''${XDG_CACHE_HOME:-''${TMPDIR:-/tmp}/ow3n-build-cache}"
+            mkdir -p "$XDG_CACHE_HOME"
+            exec dotnet build --nologo -p:UseAppHost=false "$@"
+          '';
+        };
+
+        # Implements `nix run .#test-serve`: an isolated PostgreSQL + stub + packaged app stack.
+        testServeCommand = pkgs.writeShellApplication {
+          name = "ow3n-test-serve";
+          runtimeInputs = with pkgs; [
+            coreutils
+            curl
+            postgresql
+            python3
+          ];
+          text = ''
+            export OW3N_APP="${self.packages.${system}.default}/bin/Ordis"
+            export OW3N_INIT_DB="${./initDb.sql}"
+            export OW3N_ROLL_STUB="${./test-support/roll-stub.py}"
+            ${builtins.readFile ./test-support/test-serve.sh}
+          '';
+        };
       in
       {
         packages.default = pkgs.buildDotnetModule {
@@ -248,6 +285,14 @@
             description = "OW3N - Blazor Server application";
             mainProgram = "Ordis";
           };
+        };
+
+        apps = {
+          # Build OW3N without an apphost and with a writable XDG cache: `nix run .#build`.
+          build = flake-utils.lib.mkApp { drv = buildCommand; };
+
+          # Launch the disposable browser-test stack: `nix run .#test-serve`.
+          test-serve = flake-utils.lib.mkApp { drv = testServeCommand; };
         };
 
         devShells.default = pkgs.mkShell {

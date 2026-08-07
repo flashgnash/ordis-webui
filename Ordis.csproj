@@ -11,6 +11,11 @@
     <RazorCompileOnBuild>true</RazorCompileOnBuild>
     <RazorCompileOnPublish>true</RazorCompileOnPublish>
     <EnableDefaultScopedCssItems>true</EnableDefaultScopedCssItems>
+
+    <!-- The xUnit test project lives under tests/ (its own project + packages).
+         Keep it out of the main app's default source/content globs so it never
+         gets compiled into Ordis. -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);tests/**</DefaultItemExcludes>
   </PropertyGroup>
 
   <ItemGroup></ItemGroup>
